@@ -13,7 +13,6 @@ using System;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
-using S1API.Map.Buildings;
 
 namespace CustomNPCExample.NPCs
 {
@@ -209,7 +208,6 @@ namespace CustomNPCExample.NPCs
                           }
                       );
                 })
-
 .WithRelationshipDefaults(r =>
 {
     r.WithDelta(2.5f)
@@ -217,7 +215,7 @@ namespace CustomNPCExample.NPCs
      .SetUnlockType(
          NPCRelationship.UnlockType.Recommendation
      )
-     .WithConnectionsById(new[]
+     .WithConnectionsById(new string[]
      {
          "dean_webster"
      });

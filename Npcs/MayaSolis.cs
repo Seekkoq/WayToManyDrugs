@@ -70,7 +70,7 @@ namespace CustomNPCExample.NPCs
     r.WithDelta(1.5f)
      .SetUnlocked(false)
      .SetUnlockType(
-         NPCRelationship.UnlockType.DirectApproach
+         NPCRelationship.UnlockType.Recommendation
      )
      .WithConnectionsById(new string[]
      {
@@ -84,9 +84,9 @@ namespace CustomNPCExample.NPCs
                     plan.UseVendingMachine(1030, null, null);
                     plan.StayInBuilding(supermarket, 1100, 90, null, null);
                     plan.StayInBuilding(arcade, 1300, 150, null, null);
-                    plan.UseATM(1600, null, null);
-                    plan.StayInBuilding(bar, 1630, 150, null, null);
-                    plan.StayInBuilding(home, 2000, 600, null, null);
+                    plan.UseATM(1500, null, null);
+                    plan.StayInBuilding(bar, 1550, 150, null, null);
+                    plan.StayInBuilding(home, 1700, 800, null, null);
                 });
         }
 

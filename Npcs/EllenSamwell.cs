@@ -22,19 +22,50 @@ namespace CustomNPCExample.NPCs
         public const string NpcId =
             "custom_ellen_samwell";
 
-        private static readonly Vector3 FixedPosition =
+        /*
+         * Daytime outdoor spot (already correct).
+         */
+        private static readonly Vector3 DayPosition =
             new Vector3(
                 -18.449f,
                 -3.57f,
                 138.357f
             );
 
-        private static readonly Quaternion FixedRotation =
+        private static readonly Quaternion DayRotation =
             Quaternion.Euler(
                 0f,
                 359.144f,
                 0f
             );
+
+        /*
+         * Standing spot inside Dan's Hardware Upstairs.
+         */
+        private static readonly Vector3 NightPosition =
+            new Vector3(
+                -18.449f,
+                -2.00f,
+                138.357f
+            );
+
+        private static readonly Quaternion NightRotation =
+            Quaternion.Euler(
+                0f,
+                180f,
+                0f
+            );
+
+        /*
+         * 18:00 -> 07:00 night
+         * 07:00 -> 18:00 day
+         */
+        private const int MorningStart = 700;
+        private const int EveningStart = 1800;
+
+        private bool _watcherStarted;
+        private bool _isNightPlacement;
+        private bool _hasPlacement;
 
         public override bool IsPhysical => true;
 
@@ -49,19 +80,15 @@ namespace CustomNPCExample.NPCs
                     "Ellen",
                     "Samwell"
                 )
-
                 .WithSpawnPosition(
-                    FixedPosition,
-                    FixedRotation
+                    DayPosition,
+                    DayRotation
                 )
-
                 .WithRegion(
                     Region.Downtown
                 )
-
                 .WithAppearanceDefaults(av =>
                 {
-                    // Older woman, similar age range to Dan.
                     av.Gender = 1f;
                     av.Height = 0.96f;
                     av.Weight = 0.72f;
@@ -72,32 +99,22 @@ namespace CustomNPCExample.NPCs
                     av.LeftEyeLidColor = av.SkinColor;
                     av.RightEyeLidColor = av.SkinColor;
 
-                    // Tired, pale eyes.
                     av.EyeBallTint =
                         new Color(0.74f, 0.72f, 0.66f, 1f);
 
                     av.PupilDilation = 0.42f;
 
-                    // Heavy brows / tired expression.
                     av.EyebrowScale = 1.18f;
                     av.EyebrowThickness = 1.25f;
                     av.EyebrowRestingHeight = -0.22f;
                     av.EyebrowRestingAngle = -5f;
 
-                    // Older half-lidded eyes.
                     av.LeftEye =
-                        new ValueTuple<float, float>(
-                            0.34f,
-                            0.46f
-                        );
+                        new ValueTuple<float, float>(0.34f, 0.46f);
 
                     av.RightEye =
-                        new ValueTuple<float, float>(
-                            0.34f,
-                            0.46f
-                        );
+                        new ValueTuple<float, float>(0.34f, 0.46f);
 
-                    // Grey bun so she reads older and distinct from Dan.
                     av.HairPath =
                         "Avatar/Hair/Bun/Bun";
 
@@ -109,7 +126,6 @@ namespace CustomNPCExample.NPCs
                         new Color(0.92f, 0.82f, 0.74f, 1f)
                     );
 
-                    // Similar blue top to Dan.
                     av.WithBodyLayer(
                         "Avatar/Layers/Top/ButtonUp",
                         new Color(0.23f, 0.46f, 0.78f, 1f)
@@ -125,49 +141,19 @@ namespace CustomNPCExample.NPCs
                         new Color(0.06f, 0.06f, 0.07f, 1f)
                     );
                 })
-
-                // Make her a real customer so talking works.
                 .EnsureCustomer()
-
                 .WithCustomerDefaults(cd =>
                 {
-                    cd.WithSpending(
-                          90f,
-                          220f
-                      )
-                      .WithOrdersPerWeek(
-                          1,
-                          2
-                      )
-                      .WithPreferredOrderDay(
-                          Day.Friday
-                      )
-                      .WithOrderTime(
-                          1600
-                      )
-                      .WithStandards(
-                          CustomerStandard.Moderate
-                      )
-
-                      // Important: allow player to talk/order directly.
-                      .AllowDirectApproach(
-                          true
-                      )
-
-                      .GuaranteeFirstSample(
-                          false
-                      )
-                      .WithMutualRelationRequirement(
-                          1f,
-                          3f
-                      )
-                      .WithCallPoliceChance(
-                          0f
-                      )
-                      .WithDependence(
-                          0.04f,
-                          0.28f
-                      )
+                    cd.WithSpending(90f, 220f)
+                      .WithOrdersPerWeek(1, 2)
+                      .WithPreferredOrderDay(Day.Friday)
+                      .WithOrderTime(1600)
+                      .WithStandards(CustomerStandard.Moderate)
+                      .AllowDirectApproach(true)
+                      .GuaranteeFirstSample(false)
+                      .WithMutualRelationRequirement(1f, 3f)
+                      .WithCallPoliceChance(0f)
+                      .WithDependence(0.04f, 0.28f)
                       .WithAffinities(
                           new ValueTuple<DrugType, float>[]
                           {
@@ -175,17 +161,14 @@ namespace CustomNPCExample.NPCs
                                   DrugType.Marijuana,
                                   0.40f
                               ),
-
                               new ValueTuple<DrugType, float>(
                                   DrugType.Shrooms,
                                   -0.10f
                               ),
-
                               new ValueTuple<DrugType, float>(
                                   DrugType.Cocaine,
                                   -0.70f
                               ),
-
                               new ValueTuple<DrugType, float>(
                                   DrugType.Methamphetamine,
                                   -0.95f
@@ -200,10 +183,6 @@ namespace CustomNPCExample.NPCs
                           }
                       );
                 })
-
-                // For now, make her unlocked so talking works immediately.
-                // After testing, switch this back to Jennifer recommendation
-                // if desired.
                 .WithRelationshipDefaults(r =>
                 {
                     r.WithDelta(2f)
@@ -220,7 +199,7 @@ namespace CustomNPCExample.NPCs
                 });
 
             MelonLogger.Msg(
-                "[Ellen] ConfigurePrefab completed."
+                "[Ellen] ConfigurePrefab completed (manual day/night placement)."
             );
         }
 
@@ -230,61 +209,348 @@ namespace CustomNPCExample.NPCs
 
             Appearance.Build();
 
+            /*
+             * FORCE-DISABLE the schedule and wipe its events.
+             * This stops S1API's default customer "StayInBuilding" event
+             * from ticking, which removes the NullReferenceException spam.
+             */
+            try
+            {
+                Schedule.Disable();
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning(
+                    "[Ellen] Could not disable schedule: " + ex.Message
+                );
+            }
+
+            ClearScheduleEvents();
+
             Region = Region.Downtown;
             Aggressiveness = 0f;
 
             Instance = this;
 
-            MelonCoroutines.Start(
-                PlaceAtHardwareAfterLoad()
-            );
+            if (!_watcherStarted)
+            {
+                _watcherStarted = true;
+                MelonCoroutines.Start(DailyPlacementRoutine());
+            }
 
             MelonLogger.Msg(
                 "[Ellen] Ellen Samwell loaded as Dan's wife/customer."
             );
         }
 
-        private static IEnumerator PlaceAtHardwareAfterLoad()
+        private void ClearScheduleEvents()
         {
-            yield return new WaitForSeconds(2f);
+            try
+            {
+                object schedule = Schedule;
 
-            EllenSamwell ellen =
-                Instance;
+                if (schedule == null)
+                    return;
+
+                string[] memberNames =
+                {
+            "Events",
+            "events",
+            "_events",
+            "ScheduleEvents",
+            "scheduleEvents",
+            "_scheduleEvents"
+        };
+
+                for (int i = 0; i < memberNames.Length; i++)
+                {
+                    object events =
+                        GetMemberValue(
+                            schedule,
+                            memberNames[i]
+                        );
+
+                    if (events == null)
+                        continue;
+
+                    MethodInfo clear =
+                        events.GetType().GetMethod(
+                            "Clear",
+                            BindingFlags.Instance |
+                            BindingFlags.Public |
+                            BindingFlags.NonPublic
+                        );
+
+                    if (clear != null &&
+                        clear.GetParameters().Length == 0)
+                    {
+                        clear.Invoke(events, null);
+
+                        MelonLogger.Msg(
+                            "[Ellen] Cleared schedule events via '" +
+                            memberNames[i] +
+                            "'."
+                        );
+
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning(
+                    "[Ellen] Could not clear schedule events: " +
+                    ex.Message
+                );
+            }
+        }
+
+        private IEnumerator DailyPlacementRoutine()
+        {
+            // Let the world finish loading first.
+            yield return new WaitForSeconds(3f);
+
+            while (true)
+            {
+                EllenSamwell ellen = Instance;
+
+                if (ellen != null &&
+                    ellen.gameObject != null)
+                {
+                    bool night = IsNightTime();
+
+                    if (!_hasPlacement ||
+                        night != _isNightPlacement)
+                    {
+                        if (night)
+                        {
+                            PlaceAt(
+                                NightPosition,
+                                NightRotation,
+                                "night / upstairs"
+                            );
+                        }
+                        else
+                        {
+                            PlaceAt(
+                                DayPosition,
+                                DayRotation,
+                                "day / outdoor"
+                            );
+                        }
+
+                        _isNightPlacement = night;
+                        _hasPlacement = true;
+                    }
+                }
+
+                yield return new WaitForSeconds(10f);
+            }
+        }
+
+        private static bool IsNightTime()
+        {
+            int time = GetCurrentMilitaryTime();
+
+            if (time < 0)
+            {
+                // If time API fails, keep her at day spot.
+                return false;
+            }
+
+            // 18:00-23:59 or 00:00-06:59
+            return time >= EveningStart ||
+                   time < MorningStart;
+        }
+
+        private static int GetCurrentMilitaryTime()
+        {
+            try
+            {
+                Type timeManagerType =
+                    Type.GetType(
+                        "S1API.GameTime.TimeManager, S1API"
+                    )
+                    ?? Type.GetType(
+                        "Il2CppScheduleOne.GameTime.TimeManager, Assembly-CSharp"
+                    );
+
+                if (timeManagerType == null)
+                    return -1;
+
+                PropertyInfo instanceProp =
+                    timeManagerType.GetProperty(
+                        "Instance",
+                        BindingFlags.Public | BindingFlags.Static
+                    );
+
+                object instance =
+                    instanceProp?.GetValue(null);
+
+                if (instance == null)
+                    return -1;
+
+                string[] names =
+                {
+                    "CurrentTime",
+                    "Time",
+                    "CurrentTimeInt",
+                    "MinuteOfDay"
+                };
+
+                foreach (string name in names)
+                {
+                    PropertyInfo prop =
+                        timeManagerType.GetProperty(
+                            name,
+                            BindingFlags.Public |
+                            BindingFlags.NonPublic |
+                            BindingFlags.Instance
+                        );
+
+                    if (prop != null)
+                    {
+                        int converted =
+                            ConvertToMilitary(
+                                prop.GetValue(instance),
+                                name
+                            );
+
+                        if (converted >= 0)
+                            return converted;
+                    }
+
+                    FieldInfo field =
+                        timeManagerType.GetField(
+                            name,
+                            BindingFlags.Public |
+                            BindingFlags.NonPublic |
+                            BindingFlags.Instance
+                        );
+
+                    if (field != null)
+                    {
+                        int converted =
+                            ConvertToMilitary(
+                                field.GetValue(instance),
+                                name
+                            );
+
+                        if (converted >= 0)
+                            return converted;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return -1;
+        }
+
+        private static int ConvertToMilitary(
+            object value,
+            string sourceName)
+        {
+            if (value == null)
+                return -1;
+
+            try
+            {
+                if (value is int intValue)
+                {
+                    if (string.Equals(
+                            sourceName,
+                            "MinuteOfDay",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        int hour = intValue / 60;
+                        int minute = intValue % 60;
+                        return (hour * 100) + minute;
+                    }
+
+                    if (intValue >= 0 && intValue <= 2359)
+                        return intValue;
+                }
+
+                if (value is float floatValue)
+                {
+                    int mins = Mathf.RoundToInt(floatValue);
+                    int hour = mins / 60;
+                    int minute = mins % 60;
+
+                    if (hour < 24)
+                        return (hour * 100) + minute;
+                }
+            }
+            catch
+            {
+            }
+
+            return -1;
+        }
+
+        private static void PlaceAt(
+            Vector3 position,
+            Quaternion rotation,
+            string reason)
+        {
+            EllenSamwell ellen = Instance;
 
             if (ellen == null ||
                 ellen.gameObject == null)
             {
-                yield break;
+                return;
             }
 
-            TryWarpNpc(
-                ellen.gameObject,
-                FixedPosition
-            );
+            if (TryWarpNpc(
+                    ellen.gameObject,
+                    position,
+                    rotation))
+            {
+                MelonLogger.Msg(
+                    "[Ellen] Placed via Warp (" + reason + "): " +
+                    position
+                );
+
+                return;
+            }
+
+            try
+            {
+                ellen.gameObject.transform.position = position;
+                ellen.gameObject.transform.rotation = rotation;
+
+                MelonLogger.Msg(
+                    "[Ellen] Placed via transform (" + reason + "): " +
+                    position
+                );
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning(
+                    "[Ellen] Placement failed: " + ex.Message
+                );
+            }
         }
 
-        private static void TryWarpNpc(
+        private static bool TryWarpNpc(
             GameObject npcObject,
-            Vector3 position)
+            Vector3 position,
+            Quaternion rotation)
         {
             Component[] components =
-                npcObject.GetComponentsInChildren<Component>(
-                    true
-                );
+                npcObject.GetComponentsInChildren<Component>(true);
 
             for (int i = 0; i < components.Length; i++)
             {
-                Component component =
-                    components[i];
+                Component component = components[i];
 
                 if (component == null)
                     continue;
 
-                Type type =
-                    component.GetType();
-
-                string typeName =
-                    type.Name;
+                Type type = component.GetType();
+                string typeName = type.Name;
 
                 if (typeName != "NPCMovement" &&
                     !typeName.Contains("Movement"))
@@ -314,24 +580,62 @@ namespace CustomNPCExample.NPCs
                         }
                     );
 
-                    MelonLogger.Msg(
-                        "[Ellen] Warped to exact hardware position."
-                    );
-
-                    return;
+                    npcObject.transform.rotation = rotation;
+                    return true;
                 }
-                catch (System.Exception ex)
+                catch
                 {
-                    MelonLogger.Warning(
-                        "[Ellen] Warp failed: " +
-                        ex.Message
-                    );
                 }
             }
 
-            MelonLogger.Warning(
-                "[Ellen] No NPCMovement Warp method found."
-            );
+            return false;
+        }
+
+        private static object GetMemberValue(
+            object target,
+            string name)
+        {
+            if (target == null || string.IsNullOrEmpty(name))
+                return null;
+
+            Type type = target.GetType();
+
+            while (type != null)
+            {
+                try
+                {
+                    PropertyInfo property = type.GetProperty(
+                        name,
+                        BindingFlags.Instance |
+                        BindingFlags.Public |
+                        BindingFlags.NonPublic |
+                        BindingFlags.DeclaredOnly
+                    );
+
+                    if (property != null && property.GetIndexParameters().Length == 0)
+                        return property.GetValue(target);
+                }
+                catch { }
+
+                try
+                {
+                    FieldInfo field = type.GetField(
+                        name,
+                        BindingFlags.Instance |
+                        BindingFlags.Public |
+                        BindingFlags.NonPublic |
+                        BindingFlags.DeclaredOnly
+                    );
+
+                    if (field != null)
+                        return field.GetValue(target);
+                }
+                catch { }
+
+                type = type.BaseType;
+            }
+
+            return null;
         }
     }
 }

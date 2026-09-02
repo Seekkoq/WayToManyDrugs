@@ -141,7 +141,7 @@ namespace CustomNPCExample.NPCs
                      // CHANGED: unlock through Lisa Gardener instead of Jax
                      .WithConnectionsById(new string[]
                      {
-                         "lisa_gardener"
+                         "Lisa_Gardener"
                      });
                 })
 

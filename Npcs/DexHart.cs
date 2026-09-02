@@ -22,6 +22,7 @@ namespace CustomNPCExample.NPCs
 
         protected override void ConfigurePrefab(NPCPrefabBuilder builder)
         {
+            // Look up buildings with null checks
             Building home = NPCBuildingLookup.Get("North apartments");
             Building gasMart = NPCBuildingLookup.Get("West Gas-Mart");
             Building pawnShop = NPCBuildingLookup.Get("Pawn Shop");
@@ -29,12 +30,22 @@ namespace CustomNPCExample.NPCs
             Building shootingRange = NPCBuildingLookup.Get("Shooting Range");
             Building nightclub = NPCBuildingLookup.Get("Nightclub");
             Building motel = NPCBuildingLookup.Get("Motel Office");
+            Building arcade =
+    NPCBuildingLookup.Get("Arcade");
+
+            // Log any missing buildings so you can fix the names
+            if (home == null) MelonLogger.Warning("[DexHart] Missing building: North apartments");
+            if (gasMart == null) MelonLogger.Warning("[DexHart] Missing building: West Gas-Mart");
+            if (pawnShop == null) MelonLogger.Warning("[DexHart] Missing building: Pawn Shop");
+            if (hardware == null) MelonLogger.Warning("[DexHart] Missing building: Dan's Hardware Upstairs");
+            if (shootingRange == null) MelonLogger.Warning("[DexHart] Missing building: Shooting Range");
+            if (nightclub == null) MelonLogger.Warning("[DexHart] Missing building: Nightclub");
+            if (motel == null) MelonLogger.Warning("[DexHart] Missing building: Motel Office");
 
             Vector3 spawnPos = new Vector3(-68.5f, -0.76f, -66f);
 
             builder
                 .WithIdentity("custom_dex_hart", "Dex", "Hart")
-                // VOICE REMOVED
                 .WithAppearanceDefaults(av =>
                 {
                     av.Gender = 0f; av.Height = 1f; av.Weight = 0.82f;
@@ -66,36 +77,35 @@ namespace CustomNPCExample.NPCs
                       })
                       .WithPreferredProperties(new PropertyBase[] { Property.Energizing, Property.AntiGravity, Property.Sneaky });
                 })
-.WithRelationshipDefaults(r =>
-{
-    r.WithDelta(1f)
-     .SetUnlocked(false)
-     .SetUnlockType(
-         NPCRelationship.UnlockType.DirectApproach
-     )
-     .WithConnectionsById(new string[]
-     {
-         "lucy_pennington"
-     });
-})
+                .WithRelationshipDefaults(r =>
+                {
+                    r.WithDelta(1f)
+                     .SetUnlocked(false)
+                     .SetUnlockType(NPCRelationship.UnlockType.Recommendation)
+                     .WithConnectionsById(new string[] { "lucy_pennington" });
+                })
+                // Only add schedule events for buildings that exist
                 .WithSchedule(plan =>
                 {
-                    plan.StayInBuilding(home, 600, 120, null, null);
-                    plan.StayInBuilding(gasMart, 830, 45, null, null);
-                    plan.StayInBuilding(pawnShop, 1000, 120, null, null);
-                    plan.StayInBuilding(hardware, 1230, 90, null, null);
-                    plan.StayInBuilding(shootingRange, 1430, 180, null, null);
+                    if (home != null) plan.StayInBuilding(arcade, 600, 120, null, null);
+                    if (gasMart != null) plan.StayInBuilding(shootingRange, 830, 45, null, null);
+                    if (pawnShop != null) plan.StayInBuilding(arcade, 1000, 120, null, null);
+                    if (hardware != null) plan.StayInBuilding(hardware, 1230, 90, null, null);
+                    if (shootingRange != null) plan.StayInBuilding(shootingRange, 1430, 180, null, null);
                     plan.UseATM(1800, null, null);
-                    plan.StayInBuilding(nightclub, 1900, 270, null, null);
-                    plan.StayInBuilding(motel, 0, 360, null, null);
+                    if (nightclub != null) plan.StayInBuilding(nightclub, 1900, 270, null, null);
+                    if (motel != null) plan.StayInBuilding(motel, 0, 360, null, null);
                 });
         }
 
-
         protected override void OnCreated()
         {
-            base.OnCreated(); Appearance.Build(); Aggressiveness = 0f;
-            Region = Region.Downtown; Schedule.Enable(); Instance = this;
+            base.OnCreated();
+            Appearance.Build();
+            Aggressiveness = 0f;
+            Region = Region.Downtown;
+            Schedule.Enable();
+            Instance = this;
             MelonLogger.Msg("Dex Hart loaded in Downtown!");
         }
     }

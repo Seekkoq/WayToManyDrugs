@@ -71,23 +71,23 @@ namespace CustomNPCExample.NPCs
     r.WithDelta(2f)
      .SetUnlocked(false)
      .SetUnlockType(
-         NPCRelationship.UnlockType.DirectApproach
+         NPCRelationship.UnlockType.Recommendation
      )
      .WithConnectionsById(new string[]
      {
-         "doris_lubin"
+         "doris_lubbin"
      });
                 })
                 .WithSchedule(plan =>
                 {
-                    plan.StayInBuilding(home, 600, 90, null, null);
-                    plan.StayInBuilding(gasMart, 730, 45, null, null);
-                    plan.StayInBuilding(arcade, 830, 150, null, null);
+                    plan.StayInBuilding(home, 600, 130, null, null);
+                    plan.StayInBuilding(gasMart, 730, 100, null, null);
+                    plan.StayInBuilding(arcade, 830, 270, null, null);
                     plan.UseATM(1100, null, null);
-                    plan.StayInBuilding(chinese, 1115, 90, null, null);
-                    plan.StayInBuilding(cafe, 1500, 120, null, null);
-                    plan.StayInBuilding(bar, 1730, 180, null, null);
-                    plan.StayInBuilding(nightclub, 2100, 240, null, null);
+                    plan.StayInBuilding(chinese, 1390, 90, null, null);
+                    plan.StayInBuilding(cafe, 1480, 100, null, null);
+                    plan.StayInBuilding(bar, 1580, 100, null, null);
+                    plan.StayInBuilding(nightclub, 1680, 820, null, null);
                 });
         }
 

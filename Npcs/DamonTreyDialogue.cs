@@ -7,36 +7,36 @@ using S1API.Entities;
 
 namespace CustomNPCExample.NPCs
 {
-    public static class RoscoeDialogue
+    public static class DamonTreyDialogue
     {
         public const string ContainerName =
-            "wvc_roscoe_mdma_intro";
+            "wvc_damon_trey_dmt_intro";
 
         private const string EntryNode = "ENTRY";
-        private const string DetailsNode = "MDMA_DETAILS";
-        private const string StockNode = "MDMA_STOCK";
-        private const string SampleNode = "MDMA_SAMPLE";
-        private const string RecipeNode = "MDMA_RECIPE";
-        private const string DropNode = "MDMA_DROP";
+        private const string DetailsNode = "DMT_DETAILS";
+        private const string StockNode = "DMT_STOCK";
+        private const string SampleNode = "DMT_SAMPLE";
+        private const string RecipeNode = "DMT_RECIPE";
+        private const string DropNode = "DMT_DROP";
 
-        private const string AskChoice = "roscoe_mdma_ask";
-        private const string BrowseChoice = "roscoe_mdma_browse";
-        private const string SampleChoice = "roscoe_mdma_sample";
-        private const string RecipeChoice = "roscoe_mdma_recipe";
-        private const string DropChoice = "roscoe_mdma_drop";
-        private const string LeaveChoice = "roscoe_mdma_leave";
-        private const string FinishChoice = "roscoe_mdma_finish";
+        private const string AskChoice = "damon_dmt_ask";
+        private const string BrowseChoice = "damon_dmt_browse";
+        private const string SampleChoice = "damon_dmt_sample";
+        private const string RecipeChoice = "damon_dmt_recipe";
+        private const string DropChoice = "damon_dmt_drop";
+        private const string LeaveChoice = "damon_dmt_leave";
+        private const string FinishChoice = "damon_dmt_finish";
 
         private static bool _callbackHooked;
-        private static bool _suppressedForMeeting;
 
         private static NPCDialogue _activeDialogue;
 
         public static bool SampleClaimed =>
-            SupplierSampleSaveManager.IsSampleClaimed(SupplierSampleSaveManager.RoscoeKey);
+            SupplierSampleSaveManager.IsSampleClaimed(SupplierSampleSaveManager.DamonTreyKey);
 
         public static bool TryRegisterAndArm(
-            NPCDialogue dialogue)
+            NPCDialogue dialogue
+        )
         {
             if (dialogue == null)
                 return false;
@@ -54,18 +54,8 @@ namespace CustomNPCExample.NPCs
                 }
 
                 MelonLogger.Msg(
-                    "[Roscoe] Sample already claimed. " +
+                    "[DamonTrey] Sample already claimed. " +
                     "Intro dialogue stays disabled."
-                );
-
-                return true;
-            }
-
-            if (_suppressedForMeeting)
-            {
-                MelonLogger.Msg(
-                    "[Roscoe] Intro dialogue not armed: " +
-                    "native meetup is active."
                 );
 
                 return true;
@@ -79,16 +69,22 @@ namespace CustomNPCExample.NPCs
                     {
                         builder.SetAllowExit(true);
 
+                        // ============================================
+                        // ENTRY
+                        // ============================================
                         builder.AddNode(
                             EntryNode,
-                            "Roscoe Bellweather. I move precursor stock. " +
-                            "Safrole oil and PMK, three grades. " +
-                            "You handle the cook, I keep you supplied.",
+
+                            "Name's Damon. Damon Trey. " +
+                            "Yeah, people shorten it. " +
+                            "I deal in short-run crystal stock. " +
+                            "Strong, expensive, and not for tourists.",
+
                             choices =>
                             {
                                 choices.Add(
                                     RecipeChoice,
-                                    "How do I make MDMA?",
+                                    "How do I make DMT?",
                                     RecipeNode
                                 );
 
@@ -118,18 +114,26 @@ namespace CustomNPCExample.NPCs
                             }
                         );
 
+                        // ============================================
+                        // RECIPE / INSTRUCTIONS
+                        // ============================================
                         builder.AddNode(
                             RecipeNode,
-                            "Simple cook. One cauldron run.\n\n" +
+
+                            "Alright, listen close. Two-step cook.\n\n" +
                             "CAULDRON:\n" +
-                            "- 2x Safrole Oil\n" +
-                            "- 3x PMK Powder\n" +
-                            "- 1x Gasoline (liquid slot)\n\n" +
-                            "That gives you a batch of MDMA.\n\n" +
-                            "The PMK grade sets your quality:\n" +
-                            "- Standard PMK -> Standard\n" +
-                            "- Refined PMK -> Premium\n" +
-                            "- Lab-Grade PMK -> Heavenly. You can also see how to make it in the phone app",
+                            "- 3x Mimosa Root Bark\n" +
+                            "- 2x Caustic Base\n" +
+                            "- 1x Lab Solvent\n" +
+                            "- 1x Gasoline (liquid slot)\n" +
+                            "That gives you Crude DMT Extract.\n\n" +
+                            "Toss in a Crystalizer and you get " +
+                            "Premium Crude Extract instead.\n\n" +
+                            "LAB OVEN:\n" +
+                            "- Drop the extract in and cook it.\n" +
+                            "- Out comes 15x DMT. Premium extract " +
+                            "makes premium product. You can also see how to make it in the phone app",
+
                             choices =>
                             {
                                 choices.Add(
@@ -152,9 +156,14 @@ namespace CustomNPCExample.NPCs
                             }
                         );
 
+                        // ============================================
+                        // DEAD DROP LOCATION
+                        // ============================================
                         builder.AddNode(
                             DropNode,
+
                             BuildDropText(),
+
                             choices =>
                             {
                                 choices.Add(
@@ -177,11 +186,17 @@ namespace CustomNPCExample.NPCs
                             }
                         );
 
+                        // ============================================
+                        // DETAILS (flavor)
+                        // ============================================
                         builder.AddNode(
                             DetailsNode,
-                            "Two things drive it. Safrole oil is the base. " +
-                            "PMK does the heavy lifting, and the grade you " +
-                            "run decides how clean the batch comes out.",
+
+                            "Four materials. Mimosa root bark is the base. " +
+                            "Caustic base prepares the batch. Lab solvent " +
+                            "handles the extraction, and crystalizer finishes " +
+                            "it into something worth selling. No shortcuts.",
+
                             choices =>
                             {
                                 choices.Add(
@@ -204,12 +219,18 @@ namespace CustomNPCExample.NPCs
                             }
                         );
 
+                        // ============================================
+                        // STOCK
+                        // ============================================
                         builder.AddNode(
                             StockNode,
-                            "Safrole oil, and PMK in standard, refined, " +
-                            "and lab-grade. Leave payment at the drop or " +
-                            "hit me up for bulk orders. I've got a sample too " +
-                            "if you want to see the finished product.",
+
+                            "Mimosa root bark, caustic base, lab solvent, " +
+                            "and crystalizer. Order through your phone " +
+                            "whenever you're ready. I keep the supply steady, " +
+                            "but I don't give out my sources. I've also got " +
+                            "a sample if you want to see the finished product.",
+
                             choices =>
                             {
                                 choices.Add(
@@ -238,11 +259,16 @@ namespace CustomNPCExample.NPCs
                             }
                         );
 
+                        // ============================================
+                        // SAMPLE
+                        // ============================================
                         builder.AddNode(
                             SampleNode,
-                            "Here's a taste of the finished product. " +
-                            "Like it, order the precursors and run your " +
-                            "own batch through the cauldron.",
+
+                            "One sample. Don't waste it. " +
+                            "If you like what you see, order the materials " +
+                            "and make your own batch through the lab.",
+
                             choices =>
                             {
                                 choices.Add(
@@ -279,7 +305,7 @@ namespace CustomNPCExample.NPCs
                 if (armed)
                 {
                     MelonLogger.Msg(
-                        "[Roscoe] MDMA dialogue armed " +
+                        "[DamonTrey] DMT dialogue armed " +
                         "until sample is claimed."
                     );
                 }
@@ -289,7 +315,7 @@ namespace CustomNPCExample.NPCs
             catch (Exception ex)
             {
                 MelonLogger.Warning(
-                    "[Roscoe] Dialogue setup failed: " +
+                    "[DamonTrey] Dialogue setup failed: " +
                     ex.Message
                 );
 
@@ -297,94 +323,36 @@ namespace CustomNPCExample.NPCs
             }
         }
 
-        public static void SuppressForMeeting()
-        {
-            if (_suppressedForMeeting)
-                return;
-
-            _suppressedForMeeting = true;
-
-            if (SampleClaimed)
-                return;
-
-            try
-            {
-                _activeDialogue?.StopOverride();
-
-                MelonLogger.Msg(
-                    "[Roscoe] Intro dialogue suppressed for " +
-                    "native supplier meetup."
-                );
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning(
-                    "[Roscoe] Could not suppress intro dialogue: " +
-                    ex.Message
-                );
-            }
-        }
-
-        public static void RestoreAfterMeeting()
-        {
-            if (!_suppressedForMeeting)
-                return;
-
-            _suppressedForMeeting = false;
-
-            if (SampleClaimed)
-                return;
-
-            if (_activeDialogue == null)
-                return;
-
-            try
-            {
-                bool armed =
-                    _activeDialogue.UseContainerOnInteract(
-                        ContainerName
-                    );
-
-                MelonLogger.Msg(
-                    "[Roscoe] Intro dialogue restored after meetup. " +
-                    "Armed=" + armed
-                );
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning(
-                    "[Roscoe] Could not restore intro dialogue: " +
-                    ex.Message
-                );
-            }
-        }
+        // ================================================================
+        // Dead drop location text
+        // ================================================================
 
         private static string BuildDropText()
         {
             try
             {
                 DeadDropInstance drop =
-                    DeadDropManager.Get<GreyDocksBuilding>();
+                    DeadDropManager.Get<BehindLaundromat>();
 
                 if (drop != null)
                 {
                     return
-                        "Payment goes to the grey building down at the " +
-                        "docks. It's marked on your map. Leave the cash, " +
-                        "I collect it.";
+                        "You'll leave payment behind the Laundromat. " +
+                        "It's marked on your map now. " +
+                        "Drop the cash there";
                 }
             }
             catch (Exception ex)
             {
                 MelonLogger.Warning(
-                    "[Roscoe] Drop lookup failed: " +
+                    "[DamonTrey] Drop lookup failed: " +
                     ex.Message
                 );
             }
 
             return
-                "The drop's the grey building at the docks. " +
-                "Leave the cash, pick up your order later.";
+                "The drop's behind the Laundromat. " +
+                "Leave the cash there, pick up your order later.";
         }
 
         private static void OnSampleChosen()
@@ -392,25 +360,28 @@ namespace CustomNPCExample.NPCs
             if (SampleClaimed)
             {
                 MelonLogger.Msg(
-                    "[Roscoe] Sample already claimed."
+                    "[DamonTrey] Sample already claimed."
                 );
 
                 return;
             }
 
             bool given =
-                WvcGiveItem.TryGive("mdma", 1);
+                WvcGiveItem.TryGive(
+                    "dmt",
+                    1
+                );
 
             if (!given)
             {
                 MelonLogger.Warning(
-                    "[Roscoe] Could not give MDMA sample. Can retry."
+                    "[DamonTrey] Could not give DMT sample. Can retry."
                 );
 
                 return;
             }
 
-            SupplierSampleSaveManager.MarkSampleClaimed(SupplierSampleSaveManager.RoscoeKey);
+            SupplierSampleSaveManager.MarkSampleClaimed(SupplierSampleSaveManager.DamonTreyKey);
 
             try
             {
@@ -419,24 +390,23 @@ namespace CustomNPCExample.NPCs
             catch (Exception ex)
             {
                 MelonLogger.Warning(
-                    "[Roscoe] Failed to clear override: " +
+                    "[DamonTrey] Failed to clear override: " +
                     ex.Message
                 );
             }
 
             MelonLogger.Msg(
-                "[Roscoe] Gave player 1 MDMA sample. " +
+                "[DamonTrey] Gave player 1 DMT sample. " +
                 "Intro dialogue disabled."
             );
         }
 
         public static void ResetSampleState()
         {
-            SupplierSampleSaveManager.ResetSample(SupplierSampleSaveManager.RoscoeKey);
-            _suppressedForMeeting = false;
+            SupplierSampleSaveManager.ResetSample(SupplierSampleSaveManager.DamonTreyKey);
 
             MelonLogger.Msg(
-                "[Roscoe] Sample state reset."
+                "[DamonTrey] Sample state reset."
             );
         }
     }

@@ -1,54 +1,59 @@
-﻿using CustomNPCExample.Products;
+using CustomNPCExample.Products;
 using Il2CppScheduleOne.Economy;
 using MelonLoader;
 using S1API.DeadDrops;
+using S1API.DeadDrops.Native;
 using S1API.Entities;
+using S1API.Entities.Appearances.AccessoryFields;
+using S1API.Entities.Appearances.BodyLayerFields;
+using S1API.Entities.Appearances.CustomizationFields;
+using S1API.Entities.Appearances.FaceLayerFields;
 using S1API.Entities.Relation;
 using S1API.Map;
 using System;
 using System.Collections;
+using System.Reflection;
 using UnityEngine;
 
 namespace CustomNPCExample.NPCs
 {
     public sealed class RoscoeBellweather : NPC
     {
-        public static RoscoeBellweather Instance
-        {
-            get;
-            private set;
-        }
+        public static RoscoeBellweather Instance { get; private set; }
 
-        public const string NpcId =
-            "custom_roscoe_bellweather";
+        public const string NpcId = "custom_roscoe_bellweather";
+        public const string SupplierPersistentId = "wvc_roscoe_bellweather_v2";
 
-        public const string SupplierPersistentId =
-            "wvc_roscoe_bellweather";
+        public static readonly Vector3 HomePosition =
+            new Vector3(
+                -72f,
+                -0.76f,
+                -58f
+            );
 
-        private const string PaymentDropName =
-            "Roscoe's Payment Drop";
+        public static readonly Quaternion HomeRotation =
+            Quaternion.identity;
+
+        private static bool _scheduleSuspendedForBulkMeeting;
+
+        private const string PaymentDropName = "Roscoe's Payment Drop";
 
         private const string PaymentDropDescription =
             "Roscoe's payment drop. Leave what you owe here. " +
             "He'll know when the cash lands.";
 
-        private bool _deadDropSetupStarted;
         private bool _dialogueSetupStarted;
+        private bool _deadDropSetupStarted;
+        private bool _bulkMeetupSetupStarted;
 
         public override bool IsPhysical => true;
+        public override bool IsSupplier => true;
 
-        protected override void ConfigurePrefab(
-            NPCPrefabBuilder builder)
+        protected override void ConfigurePrefab(NPCPrefabBuilder builder)
         {
-            MelonLogger.Msg(
-                "[Roscoe] ConfigurePrefab started."
-            );
+            MelonLogger.Msg("[Roscoe] ConfigurePrefab started.");
 
-            Building budsBar =
-                NPCBuildingLookup.Get("Bud's Bar");
-
-            Vector3 spawnPosition =
-                new Vector3(-72f, -0.76f, -58f);
+            Building budsBar = NPCBuildingLookup.Get("Bud's Bar");
 
             builder
                 .WithIdentity(
@@ -57,10 +62,12 @@ namespace CustomNPCExample.NPCs
                     "Bellweather"
                 )
                 .WithSpawnPosition(
-                    spawnPosition,
-                    Quaternion.identity
+                    HomePosition,
+                    HomeRotation
                 )
-                .WithRegion(Region.Docks)
+                .WithRegion(
+                    Region.Docks
+                )
                 .WithAppearanceDefaults(av =>
                 {
                     av.Gender = 0f;
@@ -68,13 +75,25 @@ namespace CustomNPCExample.NPCs
                     av.Weight = 0.88f;
 
                     av.SkinColor =
-                        new Color(0.78f, 0.60f, 0.49f);
+                        new Color32(
+                            199,
+                            153,
+                            125,
+                            255
+                        );
 
-                    av.LeftEyeLidColor = av.SkinColor;
-                    av.RightEyeLidColor = av.SkinColor;
+                    av.LeftEyeLidColor =
+                        av.SkinColor;
+
+                    av.RightEyeLidColor =
+                        av.SkinColor;
 
                     av.EyeBallTint =
-                        new Color(0.82f, 0.84f, 0.80f);
+                        new Color(
+                            0.82f,
+                            0.84f,
+                            0.80f
+                        );
 
                     av.PupilDilation = 0.38f;
 
@@ -83,103 +102,111 @@ namespace CustomNPCExample.NPCs
                     av.EyebrowRestingHeight = -0.34f;
                     av.EyebrowRestingAngle = -9f;
 
-                    av.LeftEye =
-                        new ValueTuple<float, float>(
-                            0.34f,
-                            0.46f
-                        );
-
-                    av.RightEye =
-                        new ValueTuple<float, float>(
-                            0.34f,
-                            0.46f
-                        );
-
-                    // The beanie is the only head covering.
                     av.HairPath = string.Empty;
 
                     av.HairColor =
-                        new Color(0.62f, 0.61f, 0.58f);
+                        new Color32(
+                            158,
+                            156,
+                            148,
+                            255
+                        );
 
-                    av.WithFaceLayer(
-                        "Avatar/Layers/Face/Face_Neutral",
-                        new Color(0.10f, 0.10f, 0.10f)
+                    av.WithFaceLayer<Face>(
+                        Face.Neutral,
+                        new Color(
+                            0.10f,
+                            0.10f,
+                            0.10f
+                        )
                     );
 
-                    av.WithFaceLayer(
-                        "Avatar/Layers/Face/FacialHair_Goatee",
-                        new Color(0.58f, 0.57f, 0.54f)
+                    av.WithBodyLayer<Shirts>(
+                        Shirts.Overalls,
+                        new Color32(
+                            61,
+                            79,
+                            112,
+                            255
+                        )
                     );
 
-                    av.WithBodyLayer(
-                        "Avatar/Layers/Top/Overalls",
-                        new Color(0.24f, 0.31f, 0.44f)
+                    av.WithBodyLayer<Pants>(
+                        Pants.Jeans,
+                        new Color32(
+                            74,
+                            77,
+                            56,
+                            255
+                        )
                     );
 
-                    av.WithBodyLayer(
-                        "Avatar/Layers/Bottom/Jeans",
-                        new Color(0.29f, 0.30f, 0.22f)
+                    av.WithAccessoryLayer<Head>(
+                        Head.Beanie,
+                        new Color32(
+                            140,
+                            46,
+                            31,
+                            255
+                        )
                     );
 
-                    av.WithAccessoryLayer(
-                        "Avatar/Accessories/Head/Beanie/Beanie",
-                        new Color(0.55f, 0.18f, 0.12f)
+                    av.WithAccessoryLayer<Waist>(
+                        Waist.Belt,
+                        new Color32(
+                            51,
+                            31,
+                            18,
+                            255
+                        )
                     );
 
-                    av.WithAccessoryLayer(
-                        "Avatar/Accessories/Waist/Belt/Belt",
-                        new Color(0.20f, 0.12f, 0.07f)
-                    );
-
-                    av.WithAccessoryLayer(
-                        "Avatar/Accessories/Feet/DressShoes/DressShoes",
-                        new Color(0.15f, 0.10f, 0.08f)
+                    av.WithAccessoryLayer<Feet>(
+                        Feet.DressShoes,
+                        new Color32(
+                            38,
+                            26,
+                            20,
+                            255
+                        )
                     );
                 })
                 .EnsureSupplier()
-                .WithSupplierDefaults(s =>
-                {
-                    s.WithPersistentId(
-                        SupplierPersistentId
-                    )
-                    .WithOrderLimits(
-                        100f,
-                        2000f
-                    )
-                    .WithDeliveryItem(
-                        MollyIngredients.SafroleId
-                    )
-                    .WithDeliveryItem(
-                        MollyIngredients.PmkId
-                    )
+                .WithSupplierDefaults(s => s
+                    .WithPersistentId(SupplierPersistentId)
+                    .WithOrderLimits(100f, 15000f)
+                    .WithStashDeadDrop<GreyDocksBuilding>()
+
+                    // Shop stock — these appear in Roscoe's meetup shop
+                    .WithDeliveryItem(MollyIngredients.SafroleId)
+                    .WithDeliveryItem(MollyIngredients.PmkId)
+                    .WithDeliveryItem(MollyIngredients.PmkRefinedId)
+                    .WithDeliveryItem(MollyIngredients.PmkLabGradeId)
+
                     .WithRecommendationMessage(
                         "Hey, I know a guy that can give you the stuff " +
                         "for a new product. He's got good stuff, maybe " +
                         "go and see him. I gave him your number, he " +
-                        "should hit you up soon."
-                    )
+                        "should hit you up soon.")
                     .WithUnlockHint(
-                        "Roscoe is now available. You can order " +
-                        "Safrole Oil and PMK Powder from him at Bud's Bar."
+                        "Roscoe is now available. Find him at Bud's Bar."))
+                .WithRelationshipDefaults(r => r
+                    .WithDelta(
+                        3f
                     )
-                    .WithStashDeadDrop<
-                        S1API.DeadDrops.Native.GreyDocksBuilding
-                    >();
-                })
-                .WithRelationshipDefaults(r =>
-                {
-                    r.WithDelta(2.5f)
-                     .SetUnlocked(false)
-                     .SetUnlockType(
-                         NPCRelationship.UnlockType.Recommendation
-                     )
-                     .WithConnectionsById(
-                         new[]
-                         {
-                             "anna_chesterfield"
-                         }
-                     );
-                });
+                    .SetUnlocked(
+                        false
+                    )
+                    .SetUnlockType(
+                        NPCRelationship.UnlockType.Recommendation
+                    )
+                    .WithConnectionsById(
+                        new[]
+                        {
+                            "anna_chesterfield"
+                        }
+                    )
+                );
 
             if (budsBar != null)
             {
@@ -195,8 +222,7 @@ namespace CustomNPCExample.NPCs
                 });
 
                 MelonLogger.Msg(
-                    "[Roscoe] Schedule assigned: " +
-                    "Bud's Bar, 00:00-24:00."
+                    "[Roscoe] Schedule assigned: Bud's Bar, 00:00-24:00."
                 );
             }
             else
@@ -213,51 +239,286 @@ namespace CustomNPCExample.NPCs
 
         protected override void OnCreated()
         {
-            base.OnCreated();
-
-            Appearance.Build();
-
-            Aggressiveness = 0f;
-            Region = Region.Docks;
-
-            Schedule.Enable();
-
-            Instance = this;
-
-            // Dialogue components may not be fully initialized when
-            // OnCreated runs, so registration is retried briefly.
-            if (!_dialogueSetupStarted)
+            try
             {
-                _dialogueSetupStarted = true;
+                base.OnCreated();
 
-                MelonCoroutines.Start(
-                    ConfigureDialogueAfterLoad()
+                Instance = this;
+                _scheduleSuspendedForBulkMeeting = false;
+
+                Aggressiveness = 0f;
+                Region = Region.Docks;
+
+                Appearance.Build();
+                Schedule.Enable();
+
+                try
+                {
+                    var s = gameObject?.GetComponent<Il2CppScheduleOne.Economy.Supplier>()
+                        ?? gameObject?.GetComponentInChildren<Il2CppScheduleOne.Economy.Supplier>(true);
+                    if (s != null)
+                    {
+                        s.DeliveriesEnabled = false;
+                    }
+                }
+                catch { }
+
+                if (!_dialogueSetupStarted)
+                {
+                    _dialogueSetupStarted = true;
+
+                    MelonCoroutines.Start(
+                        ConfigureDialogueAfterLoad()
+                    );
+                }
+
+                if (!_deadDropSetupStarted)
+                {
+                    _deadDropSetupStarted = true;
+
+                    MelonCoroutines.Start(
+                        ConfigureExistingDeadDropAfterLoad()
+                    );
+                }
+
+                if (!_bulkMeetupSetupStarted)
+                {
+                    _bulkMeetupSetupStarted = true;
+
+                    MelonCoroutines.Start(
+                        ConfigureBulkMeetupsAfterLoad()
+                    );
+                }
+
+                MelonLogger.Msg(
+                    "[Roscoe] Roscoe Bellweather loaded as a supplier at Bud's Bar."
+                );
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error(
+                    "[Roscoe] OnCreated failed: " +
+                    ex
+                );
+            }
+        }
+
+        // ------------------------------------------------------------
+        // Safe Warp-then-Enable Sequence
+        // ------------------------------------------------------------
+
+        public static void SuspendIdleScheduleForBulkMeeting()
+        {
+            if (Instance == null)
+                return;
+
+            if (_scheduleSuspendedForBulkMeeting)
+                return;
+
+            try
+            {
+                Instance.Schedule.Disable();
+                _scheduleSuspendedForBulkMeeting = true;
+
+                MelonLogger.Msg(
+                    "[Roscoe] Idle schedule disabled for native meetup."
+                );
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning(
+                    "[Roscoe] Could not suspend idle schedule: " +
+                    ex.Message
+                );
+            }
+        }
+
+        public static void ResumeIdleScheduleAfterBulkMeeting()
+        {
+            if (Instance == null)
+                return;
+
+            // Run the safe warp-then-enable sequence inside a frame-delayed routine
+            MelonCoroutines.Start(Instance.ResumeScheduleRoutine());
+        }
+
+        private IEnumerator ResumeScheduleRoutine()
+        {
+            // 1. Teleport him home while the schedule is still completely DISABLED
+            TryWarpHome();
+            MelonLogger.Msg("[Roscoe] Teleported Roscoe home before enabling schedule.");
+
+            // 2. Wait half a second for physics and transform updates to settle on the server
+            yield return new WaitForSeconds(0.5f);
+
+            // 3. Re-enable his StayInBuilding schedule now that he is already at Bud's Bar
+            try
+            {
+                Schedule.Enable();
+                _scheduleSuspendedForBulkMeeting = false;
+                MelonLogger.Msg("[Roscoe] Schedule enabled safely at destination.");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning(
+                    "[Roscoe] Could not enable schedule: " +
+                    ex.Message
+                );
+            }
+        }
+
+        public static bool TryWarpHome()
+        {
+            return TryWarp(HomePosition, HomeRotation);
+        }
+
+        public static bool TryWarp(Vector3 targetPosition)
+        {
+            if (Instance == null || Instance.gameObject == null)
+                return false;
+            return TryWarp(targetPosition, Instance.gameObject.transform.rotation);
+        }
+
+        public static bool TryWarp(Vector3 targetPosition, Quaternion targetRotation)
+        {
+            if (Instance == null ||
+                Instance.gameObject == null)
+            {
+                return false;
+            }
+
+            GameObject npcObject =
+                Instance.gameObject;
+
+            Quaternion rot = targetRotation;
+
+            try
+            {
+                Component[] components =
+                    npcObject.GetComponentsInChildren<Component>(
+                        true
+                    );
+
+                for (int i = 0;
+                     i < components.Length;
+                     i++)
+                {
+                    Component component =
+                        components[i];
+
+                    if (component == null)
+                        continue;
+
+                    Type type =
+                        component.GetType();
+
+                    string typeName =
+                        type.Name ?? string.Empty;
+
+                    if (typeName.IndexOf(
+                            "Movement",
+                            StringComparison.OrdinalIgnoreCase
+                        ) < 0)
+                    {
+                        continue;
+                    }
+
+                    MethodInfo warp =
+                        type.GetMethod(
+                            "Warp",
+                            BindingFlags.Instance |
+                            BindingFlags.Public |
+                            BindingFlags.NonPublic,
+                            null,
+                            new[]
+                            {
+                                typeof(Vector3)
+                            },
+                            null
+                        );
+
+                    if (warp == null)
+                        continue;
+
+                    try
+                    {
+                        warp.Invoke(
+                            component,
+                            new object[]
+                            {
+                                targetPosition
+                            }
+                        );
+
+                        npcObject.transform.rotation = rot;
+
+                        return true;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            try
+            {
+                npcObject.transform.position =
+                    targetPosition;
+
+                npcObject.transform.rotation =
+                    rot;
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool RequestBulkMeetup()
+        {
+            return RoscoeBulkMeetupManager.RequestBulkMeetup();
+        }
+
+        // ------------------------------------------------------------
+        // Setup Coroutines
+        // ------------------------------------------------------------
+
+        private IEnumerator ConfigureBulkMeetupsAfterLoad()
+        {
+            for (int attempt = 0;
+                 attempt < 80;
+                 attempt++)
+            {
+                if (RoscoeBulkMeetupManager.TryRegister(this))
+                {
+                    MelonLogger.Msg(
+                        "[Roscoe] Bulk meetup system ready."
+                    );
+
+                    yield break;
+                }
+
+                yield return new WaitForSeconds(
+                    0.25f
                 );
             }
 
-            if (!_deadDropSetupStarted)
-            {
-                _deadDropSetupStarted = true;
-
-                MelonCoroutines.Start(
-                    ConfigureExistingDeadDropAfterLoad()
-                );
-            }
-
-            MelonLogger.Msg(
-                "[Roscoe] Roscoe Bellweather loaded as a supplier " +
-                "at Bud's Bar."
+            MelonLogger.Warning(
+                "[Roscoe] Timed out waiting for native Supplier component."
             );
         }
 
         private IEnumerator ConfigureDialogueAfterLoad()
         {
-            // DialogueHandler, DialogueController, and their container
-            // list may be initialized shortly after OnCreated.
-            for (int attempt = 0; attempt < 80; attempt++)
+            for (int attempt = 0;
+                 attempt < 60;
+                 attempt++)
             {
                 if (Dialogue != null &&
-                    RoscoeDialogue.TryRegisterAndArm(Dialogue))
+                    RoscoeDialogue.TryRegisterAndArm(
+                        Dialogue
+                    ))
                 {
                     MelonLogger.Msg(
                         "[Roscoe] MDMA supplier introduction is ready."
@@ -266,32 +527,32 @@ namespace CustomNPCExample.NPCs
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.25f);
+                yield return new WaitForSeconds(
+                    0.25f
+                );
             }
 
             MelonLogger.Warning(
-                "[Roscoe] Timed out waiting for Roscoe's " +
-                "dialogue components."
+                "[Roscoe] Timed out waiting for dialogue components."
             );
         }
 
-        private static IEnumerator
-            ConfigureExistingDeadDropAfterLoad()
+        private IEnumerator ConfigureExistingDeadDropAfterLoad()
         {
-            // Dead drops may not be registered when OnCreated fires.
-            for (int attempt = 0; attempt < 80; attempt++)
+            for (int attempt = 0;
+                 attempt < 80;
+                 attempt++)
             {
                 if (TryConfigureExistingDeadDrop())
-                {
                     yield break;
-                }
 
-                yield return new WaitForSeconds(0.25f);
+                yield return new WaitForSeconds(
+                    0.25f
+                );
             }
 
             MelonLogger.Warning(
-                "[Roscoe] Timed out waiting for the existing " +
-                "GreyDocksBuilding dead drop."
+                "[Roscoe] Timed out waiting for dead drop."
             );
         }
 
@@ -301,24 +562,20 @@ namespace CustomNPCExample.NPCs
             {
                 DeadDropInstance selectedDrop =
                     DeadDropManager.Get<
-                        S1API.DeadDrops.Native.GreyDocksBuilding
+                        GreyDocksBuilding
                     >();
 
                 if (selectedDrop == null)
-                {
                     return false;
-                }
 
-                string selectedGuid =
+                string guid =
                     selectedDrop.GUID;
 
-                if (string.IsNullOrWhiteSpace(selectedGuid))
-                {
+                if (string.IsNullOrWhiteSpace(guid))
                     return false;
-                }
 
-                Il2CppSystem.Collections.Generic.List<DeadDrop>
-                    nativeDrops = DeadDrop.DeadDrops;
+                var nativeDrops =
+                    DeadDrop.DeadDrops;
 
                 if (nativeDrops == null ||
                     nativeDrops.Count == 0)
@@ -326,41 +583,31 @@ namespace CustomNPCExample.NPCs
                     return false;
                 }
 
-                for (int i = 0; i < nativeDrops.Count; i++)
+                for (int i = 0;
+                     i < nativeDrops.Count;
+                     i++)
                 {
-                    DeadDrop drop = nativeDrops[i];
+                    DeadDrop drop =
+                        nativeDrops[i];
 
                     if (drop == null)
-                    {
                         continue;
-                    }
 
-                    string runtimeGuid =
-                        drop.GUID.ToString();
-
-                    string bakedGuid =
-                        drop.BakedGUID;
-
-                    bool guidMatches =
+                    bool match =
                         string.Equals(
-                            runtimeGuid,
-                            selectedGuid,
+                            drop.GUID.ToString(),
+                            guid,
                             StringComparison.OrdinalIgnoreCase
-                        )
-                        ||
+                        ) ||
                         string.Equals(
-                            bakedGuid,
-                            selectedGuid,
+                            drop.BakedGUID,
+                            guid,
                             StringComparison.OrdinalIgnoreCase
                         );
 
-                    if (!guidMatches)
-                    {
+                    if (!match)
                         continue;
-                    }
 
-                    // This is an existing native drop. We are only
-                    // renaming and re-describing it.
                     drop.DeadDropName =
                         PaymentDropName;
 
@@ -368,9 +615,8 @@ namespace CustomNPCExample.NPCs
                         PaymentDropDescription;
 
                     MelonLogger.Msg(
-                        "[Roscoe] Existing dead drop claimed successfully: " +
-                        "Name='" + drop.DeadDropName + "', " +
-                        "GUID='" + selectedGuid + "'"
+                        "[Roscoe] Dead drop claimed: " +
+                        guid
                     );
 
                     return true;
@@ -379,7 +625,7 @@ namespace CustomNPCExample.NPCs
             catch (Exception ex)
             {
                 MelonLogger.Warning(
-                    "[Roscoe] Existing dead-drop setup failed: " +
+                    "[Roscoe] Dead drop setup failed: " +
                     ex.Message
                 );
             }
