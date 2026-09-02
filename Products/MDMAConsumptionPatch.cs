@@ -1,6 +1,12 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
+using CustomNPCExample.Products.Edibles;
+
+using NativeEQuality = Il2CppScheduleOne.ItemFramework.EQuality;
+using NativeItemDefinition = Il2CppScheduleOne.ItemFramework.ItemDefinition;
+using NativePlayer = Il2CppScheduleOne.PlayerScripts.Player;
+using NativeWeedInstance = Il2CppScheduleOne.Product.WeedInstance;
 
 namespace CustomNPCExample.Products
 {
@@ -21,166 +27,70 @@ namespace CustomNPCExample.Products
 
             try
             {
-                _harmony = new HarmonyLib.Harmony(
-                    "westvilleconnection.mdma.playerconsume"
-                );
+                _harmony = new HarmonyLib.Harmony("westvilleconnection.mdma.playerconsume");
 
-                Type playerType = Type.GetType(
-                    "Il2CppScheduleOne.PlayerScripts.Player, Assembly-CSharp",
-                    false
-                );
+                Type playerType = Type.GetType("Il2CppScheduleOne.PlayerScripts.Player, Assembly-CSharp", false);
 
                 if (playerType == null)
                 {
-                    MelonLogger.Error(
-                        "[MDMA Patch] Player type was not found."
-                    );
-
+                    MelonLogger.Error("[WVC Patch] Player type was not found.");
                     return;
                 }
 
-                MethodInfo playerPrefix =
-                    typeof(MDMAConsumptionPatch).GetMethod(
-                        nameof(PrefixPlayerConsumption),
-                        BindingFlags.Static |
-                        BindingFlags.Public
-                    );
+                MethodInfo playerPrefix = typeof(MDMAConsumptionPatch).GetMethod(
+                    nameof(PrefixPlayerConsumption), BindingFlags.Static | BindingFlags.Public);
 
-                if (playerPrefix == null)
-                {
-                    MelonLogger.Error(
-                        "[MDMA Patch] Player prefix was not found."
-                    );
-
-                    return;
-                }
-
-                // Patch all player product consumption methods we know from your dump
-                string[] playerConsumeMethods =
-                {
-                    "ConsumeProductInternal",
-                    "ConsumeProduct",
-                    "ReceiveConsumeProduct"
-                };
+                string[] playerConsumeMethods = { "ConsumeProductInternal", "ConsumeProduct", "ReceiveConsumeProduct" };
 
                 foreach (string methodName in playerConsumeMethods)
                 {
                     MethodInfo target = playerType.GetMethod(
-                        methodName,
-                        BindingFlags.Instance |
-                        BindingFlags.Public |
-                        BindingFlags.NonPublic
-                    );
+                        methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-                    if (target == null)
-                    {
-                        MelonLogger.Msg(
-                            $"[MDMA Patch] Player.{methodName} not found."
-                        );
-
-                        continue;
-                    }
+                    if (target == null) continue;
 
                     try
                     {
-                        _harmony.Patch(
-                            target,
-                            prefix: new HarmonyLib.HarmonyMethod(playerPrefix)
-                        );
-
+                        _harmony.Patch(target, prefix: new HarmonyLib.HarmonyMethod(playerPrefix));
                         _playerMethodsPatched++;
-
-                        MelonLogger.Msg(
-                            $"[MDMA Patch] Hooked Player.{methodName}."
-                        );
                     }
                     catch (Exception ex)
                     {
-                        MelonLogger.Warning(
-                            $"[MDMA Patch] Could not hook Player.{methodName}: {ex.Message}"
-                        );
+                        MelonLogger.Warning($"[WVC Patch] Could not hook Player.{methodName}: {ex.Message}");
                     }
                 }
 
-                // Capture player instance on Awake
                 MethodInfo playerAwake = playerType.GetMethod(
-                    "Awake",
-                    BindingFlags.Instance |
-                    BindingFlags.Public |
-                    BindingFlags.NonPublic
-                );
+                    "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-                MethodInfo capturePostfix =
-                    typeof(MDMAConsumptionPatch).GetMethod(
-                        nameof(CapturePlayerPostfix),
-                        BindingFlags.Static |
-                        BindingFlags.Public
-                    );
+                MethodInfo capturePostfix = typeof(MDMAConsumptionPatch).GetMethod(
+                    nameof(CapturePlayerPostfix), BindingFlags.Static | BindingFlags.Public);
 
                 if (playerAwake != null && capturePostfix != null)
-                {
-                    try
-                    {
-                        _harmony.Patch(
-                            playerAwake,
-                            postfix: new HarmonyLib.HarmonyMethod(capturePostfix)
-                        );
-
-                        MelonLogger.Msg(
-                            "[MDMA Patch] Hooked Player.Awake for player capture."
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        MelonLogger.Warning(
-                            "[MDMA Patch] Player capture hook failed: " +
-                            ex.Message
-                        );
-                    }
-                }
-
-                // Patch cuke drink so it clears custom MDMA effects
-                ApplyCukePatch();
+                    _harmony.Patch(playerAwake, postfix: new HarmonyLib.HarmonyMethod(capturePostfix));
 
                 _patchApplied = true;
-
-                MelonLogger.Msg(
-                    $"[MDMA Patch] Consumption setup complete. " +
-                    $"Player methods patched: {_playerMethodsPatched}"
-                );
+                MelonLogger.Msg($"[WVC Patch] Consumption setup complete. Hooked {_playerMethodsPatched} methods.");
             }
             catch (Exception ex)
             {
-                MelonLogger.Error(
-                    "[MDMA Patch] ApplyPatch failed: " + ex
-                );
+                MelonLogger.Error("[WVC Patch] ApplyPatch failed: " + ex);
             }
         }
 
         public static void CapturePlayerPostfix(object __instance)
         {
-            if (__instance == null)
-                return;
+            if (__instance == null) return;
 
             if (_player == null)
             {
                 _player = __instance;
                 MDMAEyeEffect.SetPlayer(__instance);
-
-                MelonLogger.Msg(
-                    "[MDMA Patch] Local player reference captured."
-                );
+                MelonLogger.Msg("[WVC Patch] Local player reference captured.");
             }
         }
 
-        /// <summary>
-        /// Harmony prefix for Player consumption methods.
-        /// __0 is usually ProductItemInstance.
-        /// </summary>
-        public static void PrefixPlayerConsumption(
-            object __instance,
-            object __0
-        )
+        public static void PrefixPlayerConsumption(object __instance, object __0)
         {
             try
             {
@@ -191,316 +101,343 @@ namespace CustomNPCExample.Products
                 }
 
                 string itemId = ExtractId(__0);
+                if (string.IsNullOrEmpty(itemId)) itemId = GetCurrentEquippedItemId();
 
-                if (string.IsNullOrEmpty(itemId))
-                {
-                    itemId = GetCurrentEquippedItemId();
-                }
-
-                MelonLogger.Msg(
-                    $"[MDMA Patch] Player consumption hook fired. " +
-                    $"Item: {itemId ?? "(unknown)"}"
-                );
-
+                MelonLogger.Msg($"[WVC Patch] Player consumed item: {itemId ?? "(unknown)"}");
                 TryTriggerForId(itemId);
             }
             catch (Exception ex)
             {
-                MelonLogger.Warning(
-                    "[MDMA Patch] Player consumption prefix failed: " +
-                    ex.Message
-                );
+                MelonLogger.Warning("[WVC Patch] Player consumption prefix failed: " + ex.Message);
             }
         }
 
         private static void TryTriggerForId(string itemId)
         {
-            if (string.IsNullOrEmpty(itemId))
-                return;
-
+            if (string.IsNullOrEmpty(itemId)) return;
             string lower = itemId.ToLowerInvariant();
 
-            // Cuke instantly cancels MDMA custom effects
-            bool isCuke =
-                lower == "cuke" ||
-                lower.Contains(":cuke") ||
-                lower.Contains("cuke");
+            // 1. CUKE (Sobriety check for real in-game Cuke drinks)
+            bool isCuke = lower == "cuke" || lower.Contains(":cuke") || lower.Contains("cuke");
 
             if (isCuke)
             {
-                MelonLogger.Msg("[MDMA Patch] Cuke consumed. Clearing MDMA effects.");
+                MelonLogger.Msg("[WVC Patch] Cuke consumed. Clearing all effects.");
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+                return;
+            }
+
+            // 2. DMT
+            bool isDmt = lower == DMT.ProductId.ToLowerInvariant() || lower.Contains("dmt") || lower.Contains("dim");
+
+            if (isDmt)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                MelonLogger.Msg("[WVC Patch] DMT consumed. Activating visual sweep & walls.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
                 MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
 
+                DMTEffectManager.TriggerEffect();
                 return;
             }
 
-            bool isMdma =
-                lower.Contains("mdma") ||
-                lower.Contains("molly") ||
-                lower.Contains("ecstasy") ||
-                lower.Contains("westvilleconnection");
+            // 3. THC GUMMIES
+            bool isGummy = lower == THCGummies.ProductId.ToLowerInvariant() || lower.Contains("thc_gummies") || lower.Contains("gummy");
 
-            if (!isMdma)
-                return;
-
-            // Prevent duplicate triggers from multiple consumption methods
-            if (UnityEngine.Time.time - _lastTriggerTime < 0.75f)
+            if (isGummy)
             {
-                MelonLogger.Msg(
-                    "[MDMA Patch] Duplicate consumption event ignored."
-                );
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
 
+                MelonLogger.Msg("[WVC Patch] Gummies consumed. Applying weed FX.");
+
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+
+                ApplyNativeWeedEffectsToPlayer();
                 return;
             }
 
-            _lastTriggerTime = UnityEngine.Time.time;
+            // 4. MDMA
+            bool isMdma = lower == MDMA.ProductId.ToLowerInvariant() || (lower.Contains("mdma") && !isGummy) || (lower.Contains("molly") && !isGummy);
 
-            MelonLogger.Msg(
-                "[MDMA Patch] MDMA player consumption confirmed."
-            );
+            if (isMdma)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
 
-            MDMAEffectManager.TriggerEffect();
-            MDMAEyeEffect.StartEyeEffect();
-            MDMANpcLoveEyes.Start();
+                MelonLogger.Msg("[WVC Patch] MDMA consumption confirmed.");
+
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+
+                MDMAEffectManager.TriggerEffect();
+                MDMAEyeEffect.StartEyeEffect();
+                MDMANpcLoveEyes.Start();
+                return;
+            }
+
+            // 5. BROWNIE (Edible)
+            bool isBrownie = lower == Brownie.ProductId.ToLowerInvariant() || lower.Contains("brownie");
+
+            if (isBrownie)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                MelonLogger.Msg("[WVC Patch] Brownie consumed. Applying warm edible high.");
+
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+
+                BrownieEffectManager.TriggerEffect();
+                return;
+            }
+
+            // 6. COOKIE (Edible)
+            bool isCookie = lower == THCCookie.ProductId.ToLowerInvariant() || lower.Contains("cookie");
+
+            if (isCookie)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                MelonLogger.Msg("[WVC Patch] THC Cookie consumed. Applying cozy cookie high.");
+
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+
+                THCCookieEffectManager.TriggerEffect();
+                return;
+            }
+
+            // 7. VAPE CART
+            bool isCart = lower == VapeCartProduct.ProductId.ToLowerInvariant() ||
+                          lower == VapeCartProduct.ProductId_Premium.ToLowerInvariant() ||
+                          lower == VapeCartProduct.ProductId_Heavenly.ToLowerInvariant() ||
+                          lower.Contains("vape_cart") ||
+                          lower.Contains("vapecart");
+
+            if (isCart)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                MelonLogger.Msg("[WVC Patch] Vape Cart consumed. Applying airy buzz.");
+
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+
+                VapeCartEffectManager.TriggerEffect();
+                return;
+            }
         }
 
-        private static void ApplyCukePatch()
+        // ============================================================
+        // Native Weed FX
+        // ============================================================
+
+        private static void ApplyNativeWeedEffectsToPlayer()
         {
             try
             {
-                Type cukeType = Type.GetType(
-                    "Il2CppScheduleOne.Equipping.Equippable_Cuke, Assembly-CSharp",
-                    false
-                );
+                NativePlayer player = ResolvePlayer();
+                if (player == null) return;
 
-                if (cukeType == null)
-                {
-                    MelonLogger.Warning(
-                        "[MDMA Patch] Equippable_Cuke type not found."
-                    );
+                NativeItemDefinition weedDef = FindNativeWeedDefinition();
+                if (weedDef == null) return;
 
-                    return;
-                }
-
-                MethodInfo drinkMethod = cukeType.GetMethod(
-                    "Drink",
-                    BindingFlags.Instance |
-                    BindingFlags.Public |
-                    BindingFlags.NonPublic
-                );
-
-                MethodInfo prefix =
-                    typeof(MDMAConsumptionPatch).GetMethod(
-                        nameof(CukeDrinkPrefix),
-                        BindingFlags.Static |
-                        BindingFlags.Public
-                    );
-
-                if (drinkMethod == null || prefix == null)
-                {
-                    MelonLogger.Warning(
-                        "[MDMA Patch] Could not prepare Cuke.Drink patch."
-                    );
-
-                    return;
-                }
-
-                _harmony.Patch(
-                    drinkMethod,
-                    prefix: new HarmonyLib.HarmonyMethod(prefix)
-                );
-
-                MelonLogger.Msg("[MDMA Patch] Hooked Equippable_Cuke.Drink.");
+                var weedInstance = new NativeWeedInstance(weedDef, 1, (NativeEQuality)1, null);
+                weedInstance.ApplyEffectsToPlayer(player);
             }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning(
-                    "[MDMA Patch] Cuke patch failed: " + ex.Message
-                );
-            }
+            catch { }
         }
 
-        public static void CukeDrinkPrefix()
+        private static void ClearNativeWeedEffectsFromPlayer()
         {
-            MelonLogger.Msg("[MDMA Patch] Cuke drank. Clearing MDMA effects.");
+            try
+            {
+                NativePlayer player = ResolvePlayer();
+                NativeItemDefinition weedDef = FindNativeWeedDefinition();
+                if (player == null || weedDef == null) return;
 
-            MDMAEffectManager.StopEffect();
-            MDMAEyeEffect.StopEyeEffect();
-            MDMANpcLoveEyes.Stop();
+                var weedInstance = new NativeWeedInstance(weedDef, 1, (NativeEQuality)1, null);
+                weedInstance.ClearEffectsFromPlayer(player);
+            }
+            catch { }
         }
+
+        private static NativePlayer ResolvePlayer()
+        {
+            if (_player is NativePlayer captured && captured != null) return captured;
+            try { return NativePlayer.Local; } catch { return null; }
+        }
+
+        private static NativeItemDefinition FindNativeWeedDefinition()
+        {
+            string[] strainIds = { "ogkush", "sourdiesel", "greencrack", "granddaddypurple" };
+            foreach (string id in strainIds)
+            {
+                try
+                {
+                    object wrapper = S1API.Items.ItemManager.GetDefinition(id);
+                    if (wrapper == null) continue;
+                    NativeItemDefinition def = UnwrapDefinition(wrapper);
+                    if (def != null) return def;
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        private static NativeItemDefinition UnwrapDefinition(object wrapper)
+        {
+            if (wrapper == null) return null;
+            if (wrapper is NativeItemDefinition already) return already;
+
+            try
+            {
+                IntPtr rawPointer = IntPtr.Zero;
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                string[] pointerNames = { "Pointer", "NativePointer", "ObjectPointer", "_pointer" };
+                Type t = wrapper.GetType();
+
+                foreach (string name in pointerNames)
+                {
+                    PropertyInfo prop = t.GetProperty(name, flags);
+                    if (prop != null && prop.PropertyType == typeof(IntPtr))
+                    {
+                        rawPointer = (IntPtr)prop.GetValue(wrapper);
+                        if (rawPointer != IntPtr.Zero) break;
+                    }
+
+                    FieldInfo field = t.GetField(name, flags);
+                    if (field != null && field.FieldType == typeof(IntPtr))
+                    {
+                        rawPointer = (IntPtr)field.GetValue(wrapper);
+                        if (rawPointer != IntPtr.Zero) break;
+                    }
+                }
+
+                if (rawPointer == IntPtr.Zero) return null;
+                return new NativeItemDefinition(rawPointer);
+            }
+            catch { return null; }
+        }
+
+        // ============================================================
+        // ID Extraction Helpers
+        // ============================================================
 
         private static string GetCurrentEquippedItemId()
         {
-            if (_player == null)
-            {
-                MelonLogger.Msg(
-                    "[MDMA Patch] Player reference is not available."
-                );
-
-                return null;
-            }
-
+            if (_player == null) return null;
             try
             {
-                MethodInfo getEquippedItem =
-                    _player.GetType().GetMethod(
-                        "GetEquippedItem",
-                        BindingFlags.Instance |
-                        BindingFlags.Public |
-                        BindingFlags.NonPublic
-                    );
-
-                if (getEquippedItem == null)
-                {
-                    MelonLogger.Msg(
-                        "[MDMA Patch] Player.GetEquippedItem was not found."
-                    );
-
-                    return null;
-                }
-
+                MethodInfo getEquippedItem = _player.GetType().GetMethod("GetEquippedItem", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (getEquippedItem == null) return null;
                 object item = getEquippedItem.Invoke(_player, null);
-
                 return ExtractId(item);
             }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning(
-                    "[MDMA Patch] GetEquippedItem failed: " +
-                    ex.Message
-                );
-
-                return null;
-            }
+            catch { return null; }
         }
 
         private static string ExtractId(object source)
         {
-            if (source == null)
-                return null;
+            if (source == null) return null;
+            string directId = TryGetString(source, new string[] { "ID", "Id", "id", "ItemID", "ItemId", "itemID", "itemId", "Name", "name", "ItemName", "itemName" });
+            if (!string.IsNullOrEmpty(directId)) return directId;
 
-            string directId = TryGetString(
-                source,
-                new string[]
-                {
-                    "ID",
-                    "Id",
-                    "id",
-                    "ItemID",
-                    "ItemId",
-                    "itemID",
-                    "itemId",
-                    "Name",
-                    "name",
-                    "ItemName",
-                    "itemName"
-                }
-            );
-
-            if (!string.IsNullOrEmpty(directId))
-                return directId;
-
-            object definition = FindMember(
-                source,
-                new string[]
-                {
-                    "Definition",
-                    "definition",
-                    "_definition",
-                    "ItemDefinition",
-                    "itemDefinition",
-                    "ProductDefinition",
-                    "productDefinition",
-                    "Def",
-                    "def"
-                }
-            );
-
+            object definition = FindMember(source, new string[] { "Definition", "definition", "_definition", "ItemDefinition", "itemDefinition", "ProductDefinition", "productDefinition", "Def", "def" });
             if (definition != null)
             {
-                string definitionId = TryGetString(
-                    definition,
-                    new string[]
-                    {
-                        "ID",
-                        "Id",
-                        "id",
-                        "ItemID",
-                        "ItemId",
-                        "Name",
-                        "name",
-                        "ItemName",
-                        "itemName"
-                    }
-                );
-
-                if (!string.IsNullOrEmpty(definitionId))
-                    return definitionId;
+                string definitionId = TryGetString(definition, new string[] { "ID", "Id", "id", "ItemID", "ItemId", "Name", "name", "ItemName", "itemName" });
+                if (!string.IsNullOrEmpty(definitionId)) return definitionId;
             }
-
             return source.ToString();
         }
 
-        private static string TryGetString(
-            object obj,
-            string[] names
-        )
+        private static string TryGetString(object obj, string[] names)
         {
             object value = FindMember(obj, names);
             return value?.ToString();
         }
 
-        private static object FindMember(
-            object obj,
-            string[] names
-        )
+        private static object FindMember(object obj, string[] names)
         {
-            if (obj == null)
-                return null;
-
+            if (obj == null) return null;
             Type type = obj.GetType();
-
-            const BindingFlags flags =
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic;
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
             foreach (string name in names)
             {
                 try
                 {
-                    PropertyInfo property =
-                        type.GetProperty(name, flags);
-
+                    PropertyInfo property = type.GetProperty(name, flags);
                     if (property != null)
                     {
                         object value = property.GetValue(obj);
-
-                        if (value != null)
-                            return value;
+                        if (value != null) return value;
                     }
                 }
                 catch { }
 
                 try
                 {
-                    FieldInfo field =
-                        type.GetField(name, flags);
-
+                    FieldInfo field = type.GetField(name, flags);
                     if (field != null)
                     {
                         object value = field.GetValue(obj);
-
-                        if (value != null)
-                            return value;
+                        if (value != null) return value;
                     }
                 }
                 catch { }
             }
-
             return null;
         }
     }

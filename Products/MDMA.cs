@@ -48,8 +48,22 @@ namespace CustomNPCExample.Products
         {
             try
             {
-                var template = ItemManager.GetDefinition("cocaine") as S1ProductDefinition;
+                // Cocaine is only kept as a fallback donor.
+                var cocaineTemplate =
+                    ItemManager.GetDefinition("cocaine") as S1ProductDefinition;
+
+                // Shroom is the donor we actually want, because its native
+                // representation should carry the eating animation instead of snorting.
+                var shroomTemplate =
+                    ItemManager.GetDefinition("shroom") as S1ProductDefinition;
+
+                S1ProductDefinition template = shroomTemplate ?? cocaineTemplate;
+
                 if (template == null) return false;
+
+                if (shroomTemplate == null)
+                {
+                }
 
                 var baggie = ItemManager.GetDefinition("baggie") as S1PackagingDefinition;
                 var jar = ItemManager.GetDefinition("jar") as S1PackagingDefinition;
@@ -59,12 +73,12 @@ namespace CustomNPCExample.Products
 
                 if (_productKind == null)
                 {
+                    // DO NOT change this to a shroom drug type. It breaks the item.
                     _productKind = new ProductKindBuilder(ProductKindId)
                         .WithCompatibilityDrugType(S1DrugType.Cocaine)
                         .Build();
                 }
 
-                // Register mixing profile (enables dynamic color changes)
                 MDMAMixing.Register(_productKind);
 
                 EnsurePresentationRegistered();
@@ -78,14 +92,13 @@ namespace CustomNPCExample.Products
                     .WithLegalStatus((S1LegalStatus)1)
                     .WithBaseAddictiveness(0.65f)
                     .WithDefaultQuality((S1Quality)2)
-                    .WithRepresentationsFrom(template)
+                    .WithRepresentationsFrom(template)   // <-- shroom, not cocaine
                     .WithValidPackaging(new S1PackagingDefinition[] { baggie, jar, brick })
                     .WithEffectDurations(240, 480)
                     .WithNativeMixerMap((ProductMixingMap)2)
                     .Build();
 
                 _built = true;
-                MelonLogger.Msg("[Westville Connection] MDMA heart tablet built.");
                 return true;
             }
             catch (Exception ex)
@@ -164,11 +177,24 @@ namespace CustomNPCExample.Products
 
         private static GameObject GetOrCreateVisualSource()
         {
-            if (_visualSource != null) return _visualSource;
+            GameObject custom =
+                MdmaObjVisual.GetOrCreate();
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                         ?? Shader.Find("Standard")
-                         ?? Shader.Find("Sprites/Default");
+            if (custom != null)
+                return custom;
+
+            return GetOrCreateProceduralHeartFallback();
+        }
+
+        private static GameObject GetOrCreateProceduralHeartFallback()
+        {
+            if (_visualSource != null)
+                return _visualSource;
+
+            Shader shader =
+                Shader.Find("Universal Render Pipeline/Lit")
+                ?? Shader.Find("Standard")
+                ?? Shader.Find("Sprites/Default");
 
             if (shader == null)
                 throw new InvalidOperationException("No shader for MDMA heart.");
@@ -204,7 +230,11 @@ namespace CustomNPCExample.Products
             UnityEngine.Object.DontDestroyOnLoad(go);
 
             _visualSource = go;
-            MelonLogger.Msg("[Westville Connection] Created upright pink heart MDMA visual.");
+
+            MelonLogger.Warning(
+                "[Westville Connection] OBJ visual missing. Using procedural heart fallback."
+            );
+
             return _visualSource;
         }
 
@@ -397,18 +427,14 @@ namespace CustomNPCExample.Products
                 new ProductPresentationTransform(
                     Vector3.zero,
                     new Vector3(90f, 0f, 180f),
-                    Vector3.one * 1.0f
+                    Vector3.one * 0.04f
                 );
 
-            /*
-             * Same orientation for held view so the player sees
-             * the face of the heart instead of a sideways sliver.
-             */
             ProductPresentationTransform held =
                 new ProductPresentationTransform(
                     Vector3.zero,
                     new Vector3(90f, 0f, 180f),
-                    Vector3.one * 1.0f
+                    Vector3.one * 0.06f
                 );
 
             _presentationProfile = new ProductPresentationProfileBuilder()
@@ -442,163 +468,194 @@ namespace CustomNPCExample.Products
         }
 
         private static void EnsurePackagingRegistered()
-        {
+{
             /*
              * BAGGIE:
-             * Face the heart toward the front of the bag.
+             * Scale should match loose scale (~0.08f), not exceed it.
              */
             if (_baggieProfile == null)
             {
                 _baggieProfile =
                     new ProductPackagingContentProfileBuilder()
-                        .WithContent(
-                            () => GetOrCreateVisualSource()
-                        )
-                        .AddPlacement(
-                            new ProductPresentationTransform(
-                                new Vector3(0f, -0.002f, 0f),
+                    .WithContent(
+                        () => GetOrCreateVisualSource()
+                    )
+                    .AddPlacement(
+                        new ProductPresentationTransform(
+                            new Vector3(
+                                0f,
+                                -0.002f,
+                                -0.001f
+                            ),
 
-                                // Face heart outward, point down.
-                                new Vector3(90f, 0f, 180f),
+                            /*
+                             * Turn the tablet face toward the front of the bag.
+                             * Without X=90, the OBJ appears edge-on/invisible.
+                             */
+                            new Vector3(
+                                90f,
+                                0f,
+                                180f
+                            ),
 
-                                Vector3.one * 0.95f
-                            )
+                            /*
+                             * Keep your corrected packaging size.
+                             */
+                            Vector3.one * 0.028f
                         )
-                        .Build();
+                    )
+                    .Build();
             }
 
             /*
              * JAR:
-             * Hearts lie flat inside the jar. Keep positions near the center
-             * so they do not pass through the glass.
+             * Multiple pills lying flat. Keep scales small so they don't clip.
              */
             if (_jarProfile == null)
-            {
-                _jarProfile =
-                    new ProductPackagingContentProfileBuilder()
-                        .WithContent(
-                            () => GetOrCreateVisualSource()
-                        )
-                        .AddPlacements(
-                            new ProductPresentationTransform[]
-                            {
-                        JarHeart(
-                            -0.010f,
-                             0.006f,
-                            -0.008f,
-                             20f,
-                             1.00f
-                        ),
+    {
+        _jarProfile =
+            new ProductPackagingContentProfileBuilder()
+            .WithContent(
+                () => GetOrCreateVisualSource()
+            )
+            .AddPlacements(
+                new ProductPresentationTransform[]
+                {
+                    JarHeart(
+                        -0.010f,
+                         0.006f,
+                        -0.008f,
+                         20f,
+                         0.019f
+                    ),
 
-                        JarHeart(
-                             0.010f,
-                             0.006f,
-                            -0.006f,
-                            -30f,
-                             1.00f
-                        ),
+                    JarHeart(
+                         0.010f,
+                         0.006f,
+                        -0.006f,
+                        -30f,
+                         0.019f
+                    ),
 
-                        JarHeart(
-                             0.000f,
-                             0.006f,
-                             0.010f,
-                             55f,
-                             1.00f
-                        ),
+                    JarHeart(
+                         0.000f,
+                         0.006f,
+                         0.010f,
+                         55f,
+                         0.019f
+                    ),
 
-                        JarHeart(
-                            -0.007f,
-                             0.016f,
-                             0.003f,
-                            -60f,
-                             0.95f
-                        ),
+                    JarHeart(
+                        -0.007f,
+                         0.016f,
+                         0.003f,
+                        -60f,
+                         0.019f
+                    ),
 
-                        JarHeart(
-                             0.007f,
-                             0.016f,
-                            -0.003f,
-                             70f,
-                             0.95f
-                        )
-                            }
-                        )
-                        .Build();
-            }
+                    JarHeart(
+                         0.007f,
+                         0.016f,
+                        -0.003f,
+                         70f,
+                         0.019f
+                    )
+                }
+            )
+            .Build();
+    }
 
-            if (_brickProfile == null)
-            {
-                _brickProfile =
-                    new ProductPackagingContentProfileBuilder()
-                        .WithNativeFilledVisualScaffold(
-                            ProductPackagingVisualTemplate.Cocaine,
-                            clone => ApplyBrickMaterial(clone),
-                            null
-                        )
-                        .Build();
-            }
+    if (_brickProfile == null)
+    {
+        _brickProfile =
+            new ProductPackagingContentProfileBuilder()
+            .WithNativeFilledVisualScaffold(
+                ProductPackagingVisualTemplate.Cocaine,
+                clone => ApplyBrickMaterial(clone),
+                null
+            )
+            .Build();
+    }
 
-            ProductPackagingContentProfileRegistry.Register(
-                "westvilleconnection",
-                ProductId,
-                "baggie",
-                _baggieProfile
-            );
+    ProductPackagingContentProfileRegistry.Register(
+        "westvilleconnection",
+        ProductId,
+        "baggie",
+        _baggieProfile
+    );
 
-            ProductPackagingContentProfileRegistry.Register(
-                "westvilleconnection",
-                ProductId,
-                "jar",
-                _jarProfile
-            );
+    ProductPackagingContentProfileRegistry.Register(
+        "westvilleconnection",
+        ProductId,
+        "jar",
+        _jarProfile
+    );
 
-            ProductPackagingContentProfileRegistry.Register(
-                "westvilleconnection",
-                ProductId,
-                "brick",
-                _brickProfile
-            );
+    ProductPackagingContentProfileRegistry.Register(
+        "westvilleconnection",
+        ProductId,
+        "brick",
+        _brickProfile
+    );
 
-            ProductPackagingContentProfileRegistry.RegisterForProductKind(
-                "westvilleconnection",
-                ProductKindId,
-                "baggie",
-                _baggieProfile
-            );
+    ProductPackagingContentProfileRegistry.RegisterForProductKind(
+        "westvilleconnection",
+        ProductKindId,
+        "baggie",
+        _baggieProfile
+    );
 
-            ProductPackagingContentProfileRegistry.RegisterForProductKind(
-                "westvilleconnection",
-                ProductKindId,
-                "jar",
-                _jarProfile
-            );
+    ProductPackagingContentProfileRegistry.RegisterForProductKind(
+        "westvilleconnection",
+        ProductKindId,
+        "jar",
+        _jarProfile
+    );
 
-            ProductPackagingContentProfileRegistry.RegisterForProductKind(
-                "westvilleconnection",
-                ProductKindId,
-                "brick",
-                _brickProfile
-            );
-        }
+    ProductPackagingContentProfileRegistry.RegisterForProductKind(
+        "westvilleconnection",
+        ProductKindId,
+        "brick",
+        _brickProfile
+    );
+}
 
         private static ProductPresentationTransform JarHeart(
     float x,
     float y,
     float z,
     float yRotation,
-    float scale
-)
+    float scale)
         {
-            /*
-             * X 90 = lays the XY heart flat in the jar.
-             * Z 180 = point faces down.
-             * Y rotation gives each tablet slight variation.
-             */
             return new ProductPresentationTransform(
                 new Vector3(x, y, z),
-                new Vector3(90f, yRotation, 180f),
+
+                // Flat on the jar floor.
+                new Vector3(
+                    0f,
+                    yRotation,
+                    0f
+                ),
+
                 Vector3.one * scale
             );
+        }
+
+        public static Sprite DeliveryIcon
+        {
+            get
+            {
+                try
+                {
+                    return _definition != null
+                        ? _definition.Icon
+                        : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
         }
 
         private static void ApplyBrickMaterial(GameObject clone)

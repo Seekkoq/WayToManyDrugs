@@ -13,23 +13,41 @@ namespace CustomNPCExample.Products
     public static class MollyIngredients
     {
         public const string SafroleId =
-            "westvilleconnection:ingredients/safrole_oil";
+    "westvilleconnection:ingredients/safrole_oil";
 
         public const string PmkId =
             "westvilleconnection:ingredients/pmk_powder";
 
+        public const string PmkRefinedId =
+            "westvilleconnection:ingredients/pmk_refined";
+
+        public const string PmkLabGradeId =
+            "westvilleconnection:ingredients/pmk_lab_grade";
+
         // Balanced against MDMA's $95 base value.
         private const float SafrolePrice = 40f;
         private const float PmkPrice = 35f;
+        private const float PmkRefinedPrice = 75f;
+        private const float PmkLabGradePrice = 140f;
 
         private static bool _registered;
         private static bool _failed;
 
         private static GameObject _safroleVisual;
         private static GameObject _pmkVisual;
+        private static GameObject _pmkRefinedVisual;
+        private static GameObject _pmkLabGradeVisual;
 
         private static Sprite _safroleIcon;
         private static Sprite _pmkIcon;
+        private static Sprite _pmkRefinedIcon;
+        private static Sprite _pmkLabGradeIcon;
+
+        private static readonly Dictionary<string, PropertyInfo> PropertyCache =
+    new Dictionary<string, PropertyInfo>();
+
+        private static readonly Dictionary<string, FieldInfo> FieldCache =
+            new Dictionary<string, FieldInfo>();
 
         public static GameObject GetSafroleVisual()
         {
@@ -39,6 +57,16 @@ namespace CustomNPCExample.Products
         public static GameObject GetPmkVisual()
         {
             return _pmkVisual;
+        }
+
+        public static GameObject GetPmkRefinedVisual()
+        {
+            return _pmkRefinedVisual;
+        }
+
+        public static GameObject GetPmkLabGradeVisual()
+        {
+            return _pmkLabGradeVisual;
         }
 
         public static bool TryRegister()
@@ -66,6 +94,10 @@ namespace CustomNPCExample.Products
                     return false;
                 }
 
+                // ============================================================
+                // Safrole Oil
+                // ============================================================
+
                 MixIngredientItemCreator
                     .CloneFrom("motoroil")
                     .WithBasicInfo(
@@ -79,12 +111,16 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
+                // ============================================================
+                // Standard PMK
+                // ============================================================
+
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
                     .WithBasicInfo(
                         PmkId,
                         "PMK Powder",
-                        "A crystalline chemical precursor used with Safrole Oil.",
+                        "Standard-grade PMK used with Safrole Oil.",
                         ItemCategory.Ingredient
                     )
                     .WithEffects(
@@ -93,21 +129,103 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                RegisterAliasSafely(
-                    "safrole",
-                    SafroleId
-                );
+                // ============================================================
+                // Refined PMK
+                // ============================================================
 
-                RegisterAliasSafely(
-                    "pmk",
-                    PmkId
-                );
+                MixIngredientItemCreator
+                    .CloneFrom("iodine")
+                    .WithBasicInfo(
+                        PmkRefinedId,
+                        "Refined PMK Powder",
+                        "Higher-purity PMK that produces premium-quality MDMA.",
+                        ItemCategory.Ingredient
+                    )
+                    .WithEffects(
+                        Property.AntiGravity,
+                        Property.Energizing
+                    )
+                    .Build();
+
+                // ============================================================
+                // Lab-Grade PMK
+                // ============================================================
+
+                MixIngredientItemCreator
+                    .CloneFrom("iodine")
+                    .WithBasicInfo(
+                        PmkLabGradeId,
+                        "Lab-Grade PMK Powder",
+                        "Near-pure PMK used to produce top-quality MDMA.",
+                        ItemCategory.Ingredient
+                    )
+                    .WithEffects(
+                        Property.AntiGravity,
+                        Property.Energizing
+                    )
+                    .Build();
+
+                // ============================================================
+                // Console aliases
+                // ============================================================
+
+                // --- Console Aliases ---
+                RegisterAliasSafely("safrole", SafroleId);
+
+                // Standard PMK Aliases
+                RegisterAliasSafely("pmk", PmkId);
+                RegisterAliasSafely("pmkpowder", PmkId);
+
+                // Refined PMK Aliases
+                RegisterAliasSafely("refinedpmk", PmkRefinedId);
+                RegisterAliasSafely("refinedpmkpowder", PmkRefinedId);
+                RegisterAliasSafely("rpp", PmkRefinedId);
+                RegisterAliasSafely("pmkrefined", PmkRefinedId);
+
+                // Lab-Grade PMK Aliases
+                RegisterAliasSafely("labpmk", PmkLabGradeId);
+                RegisterAliasSafely("labgradepmk", PmkLabGradeId);
+                RegisterAliasSafely("labgradepmkpowder", PmkLabGradeId);
+                RegisterAliasSafely("lgpp", PmkLabGradeId);
+                RegisterAliasSafely("pmklab", PmkLabGradeId);
+
+                // ============================================================
+                // Models
+                // ============================================================
 
                 _safroleVisual =
-                    CreateSafroleBottle();
+    CreateSafroleBottle();
 
                 _pmkVisual =
                     CreatePmkJar();
+
+                _pmkRefinedVisual =
+                    CreatePmkJarStyled(
+                        "WVC_Custom_RefinedPmk_Jar",
+                        new Color(0.62f, 0.85f, 0.96f, 1f),
+                        new Color(0.05f, 0.30f, 0.42f, 1f),
+                        new Color(0.95f, 0.99f, 1f, 1f),
+                        new Color(0.07f, 0.42f, 0.55f, 1f),
+                        Color.white,
+                        "PMK",
+                        "II"
+                    );
+
+                _pmkLabGradeVisual =
+                    CreatePmkJarStyled(
+                        "WVC_Custom_LabGradePmk_Jar",
+                        new Color(0.11f, 0.11f, 0.13f, 1f),
+                        new Color(0.86f, 0.66f, 0.14f, 1f),
+                        new Color(1f, 0.98f, 0.90f, 1f),
+                        new Color(0.90f, 0.72f, 0.16f, 1f),
+                        Color.black,
+                        "PMK",
+                        "III"
+                    );
+
+                // ============================================================
+                // Native representations
+                // ============================================================
 
                 ApplyCustomRepresentations(
                     SafroleId,
@@ -118,6 +236,20 @@ namespace CustomNPCExample.Products
                     PmkId,
                     _pmkVisual
                 );
+
+                ApplyCustomRepresentations(
+                    PmkRefinedId,
+                    _pmkRefinedVisual
+                );
+
+                ApplyCustomRepresentations(
+                    PmkLabGradeId,
+                    _pmkLabGradeVisual
+                );
+
+                // ============================================================
+                // Icons
+                // ============================================================
 
                 _safroleIcon =
                     RenderModelIcon(
@@ -131,6 +263,18 @@ namespace CustomNPCExample.Products
                         "WVC_PmkPowder_Icon"
                     );
 
+                _pmkRefinedIcon =
+                    RenderModelIcon(
+                        _pmkRefinedVisual,
+                        "WVC_RefinedPmk_Icon"
+                    );
+
+                _pmkLabGradeIcon =
+                    RenderModelIcon(
+                        _pmkLabGradeVisual,
+                        "WVC_LabGradePmk_Icon"
+                    );
+
                 ApplyIcon(
                     SafroleId,
                     _safroleIcon
@@ -140,6 +284,20 @@ namespace CustomNPCExample.Products
                     PmkId,
                     _pmkIcon
                 );
+
+                ApplyIcon(
+                    PmkRefinedId,
+                    _pmkRefinedIcon
+                );
+
+                ApplyIcon(
+                    PmkLabGradeId,
+                    _pmkLabGradeIcon
+                );
+
+                // ============================================================
+                // Prices
+                // ============================================================
 
                 SetIngredientPrice(
                     SafroleId,
@@ -151,14 +309,33 @@ namespace CustomNPCExample.Products
                     PmkPrice
                 );
 
+                SetIngredientPrice(
+                    PmkRefinedId,
+                    PmkRefinedPrice
+                );
+
+                SetIngredientPrice(
+                    PmkLabGradeId,
+                    PmkLabGradePrice
+                );
+
+                // ============================================================
+                // Preserve model sources
+                // ============================================================
+
                 MoveSourceOffscreen(_safroleVisual);
                 MoveSourceOffscreen(_pmkVisual);
+                MoveSourceOffscreen(_pmkRefinedVisual);
+                MoveSourceOffscreen(_pmkLabGradeVisual);
 
                 _registered = true;
 
                 MelonLogger.Msg(
                     "[WVC Ingredients] Registration complete. " +
-                    $"Safrole=${SafrolePrice}, PMK=${PmkPrice}."
+                    $"Safrole=${SafrolePrice}, " +
+                    $"PMK=${PmkPrice}, " +
+                    $"Refined PMK=${PmkRefinedPrice}, " +
+                    $"Lab-Grade PMK=${PmkLabGradePrice}."
                 );
 
                 return true;
@@ -204,13 +381,18 @@ namespace CustomNPCExample.Products
                  * Held items need to be smaller.
                  * World/stored representations can stay full size.
                  */
+                bool isPmk =
+                    string.Equals(itemId, PmkId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(itemId, PmkRefinedId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(itemId, PmkLabGradeId, StringComparison.OrdinalIgnoreCase);
+
                 float heldMultiplier =
-                    itemId == PmkId
+                    isPmk
                         ? 1.25f
                         : 0.95f;
 
                 float worldMultiplier =
-                    itemId == PmkId
+                    isPmk
                         ? 1.40f
                         : 1.15f;
 
@@ -682,6 +864,8 @@ namespace CustomNPCExample.Products
             if (model == null)
                 return null;
 
+            const int IconSize = 256;
+
             GameObject rig =
                 new GameObject(iconName + "_Rig");
 
@@ -699,13 +883,6 @@ namespace CustomNPCExample.Products
             instance.transform.localPosition =
                 Vector3.zero;
 
-            /*
-             * Tilt the model forward so the camera sees the top.
-             *
-             * Rotating around X tips the jar/bottle toward the camera,
-             * exposing the lid and, for PMK, the pour holes.
-             * The Y rotation keeps the label readable at an angle.
-             */
             instance.transform.localRotation =
                 Quaternion.Euler(
                     35f,
@@ -728,6 +905,12 @@ namespace CustomNPCExample.Products
                 return null;
             }
 
+            foreach (Renderer r in renderers)
+            {
+                if (r != null)
+                    r.enabled = true;
+            }
+
             Bounds bounds =
                 renderers[0].bounds;
 
@@ -737,6 +920,7 @@ namespace CustomNPCExample.Products
                     bounds.Encapsulate(renderers[i].bounds);
             }
 
+            // Main directional light
             GameObject lightObject =
                 new GameObject(iconName + "_Light");
 
@@ -748,15 +932,9 @@ namespace CustomNPCExample.Products
             Light light =
                 lightObject.AddComponent<Light>();
 
-            light.type =
-                LightType.Directional;
+            light.type = LightType.Directional;
+            light.intensity = 1.6f;
 
-            light.intensity = 1.5f;
-
-            /*
-             * Light comes from above-front so the top surface and
-             * pour holes are clearly lit.
-             */
             lightObject.transform.rotation =
                 Quaternion.Euler(
                     55f,
@@ -764,6 +942,29 @@ namespace CustomNPCExample.Products
                     0f
                 );
 
+            // Secondary fill light
+            GameObject fillObject =
+                new GameObject(iconName + "_FillLight");
+
+            fillObject.transform.SetParent(
+                rig.transform,
+                false
+            );
+
+            Light fill =
+                fillObject.AddComponent<Light>();
+
+            fill.type = LightType.Directional;
+            fill.intensity = 0.8f;
+
+            fillObject.transform.rotation =
+                Quaternion.Euler(
+                    -20f,
+                    140f,
+                    0f
+                );
+
+            // Icon camera
             GameObject cameraObject =
                 new GameObject(iconName + "_Camera");
 
@@ -799,12 +1000,8 @@ namespace CustomNPCExample.Products
                 );
 
             camera.nearClipPlane = 0.01f;
-            camera.farClipPlane = 20f;
+            camera.farClipPlane = 50f;
 
-            /*
-             * Position the camera slightly above and in front so it
-             * looks down at the model, showing the top.
-             */
             camera.transform.position =
                 bounds.center +
                 new Vector3(
@@ -819,8 +1016,8 @@ namespace CustomNPCExample.Products
 
             RenderTexture target =
                 new RenderTexture(
-                    256,
-                    256,
+                    IconSize,
+                    IconSize,
                     24,
                     RenderTextureFormat.ARGB32
                 );
@@ -837,8 +1034,8 @@ namespace CustomNPCExample.Products
 
             Texture2D texture =
                 new Texture2D(
-                    256,
-                    256,
+                    IconSize,
+                    IconSize,
                     TextureFormat.RGBA32,
                     false
                 );
@@ -846,12 +1043,15 @@ namespace CustomNPCExample.Products
             texture.name =
                 iconName + "_Texture";
 
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+
             texture.ReadPixels(
                 new Rect(
                     0f,
                     0f,
-                    256f,
-                    256f
+                    IconSize,
+                    IconSize
                 ),
                 0,
                 0
@@ -865,17 +1065,9 @@ namespace CustomNPCExample.Products
             camera.targetTexture =
                 null;
 
-            UnityEngine.Object.Destroy(
-                target
-            );
-
-            UnityEngine.Object.Destroy(
-                rig
-            );
-
-            UnityEngine.Object.DontDestroyOnLoad(
-                texture
-            );
+            UnityEngine.Object.Destroy(target);
+            UnityEngine.Object.Destroy(rig);
+            UnityEngine.Object.DontDestroyOnLoad(texture);
 
             Sprite sprite =
                 Sprite.Create(
@@ -883,8 +1075,8 @@ namespace CustomNPCExample.Products
                     new Rect(
                         0f,
                         0f,
-                        256f,
-                        256f
+                        IconSize,
+                        IconSize
                     ),
                     new Vector2(
                         0.5f,
@@ -894,9 +1086,7 @@ namespace CustomNPCExample.Products
 
             sprite.name = iconName;
 
-            UnityEngine.Object.DontDestroyOnLoad(
-                sprite
-            );
+            UnityEngine.Object.DontDestroyOnLoad(sprite);
 
             return sprite;
         }
@@ -1021,319 +1211,120 @@ namespace CustomNPCExample.Products
 
         private static GameObject CreatePmkJar()
         {
-            GameObject root =
-                new GameObject(
-                    "WVC_Custom_PmkPowder_Jar"
-                );
+            return CreatePmkJarStyled(
+                "WVC_Custom_PmkPowder_Jar",
+                new Color(0.92f, 0.93f, 0.94f, 1f),   // body
+                new Color(0.06f, 0.10f, 0.18f, 1f),   // lid
+                new Color(0.97f, 0.96f, 0.92f, 1f),   // powder
+                new Color(0.12f, 0.34f, 0.58f, 1f),   // label bg
+                Color.white,                          // label text
+                "PMK",
+                "POWDER"
+            );
+        }
+
+        private static GameObject CreatePmkJarStyled(
+            string rootName,
+            Color bodyColor,
+            Color lidColor,
+            Color powderColor,
+            Color labelColor,
+            Color labelTextColor,
+            string labelLine1,
+            string labelLine2
+        )
+        {
+            GameObject root = new GameObject(rootName);
 
             AddCylinder(
                 root.transform,
                 "WhiteJarBody",
                 0.040f,
                 0.058f,
-                new Vector3(
-                    0f,
-                    0.029f,
-                    0f
-                ),
-                new Color(
-                    0.92f,
-                    0.93f,
-                    0.94f,
-                    1f
-                ),
+                new Vector3(0f, 0.029f, 0f),
+                bodyColor,
                 0.15f
             );
 
-            /*
-             * Recessed interior so the holes read as openings,
-             * not as decals sitting on top of a solid lid.
-             */
             AddCylinder(
                 root.transform,
                 "JarInterior",
                 0.034f,
                 0.006f,
-                new Vector3(
-                    0f,
-                    0.0575f,
-                    0f
-                ),
-                new Color(
-                    0.055f,
-                    0.060f,
-                    0.070f,
-                    1f
-                ),
+                new Vector3(0f, 0.0575f, 0f),
+                new Color(0.055f, 0.060f, 0.070f, 1f),
                 0.05f
             );
 
-            /*
-             * Powder sitting just below the openings.
-             */
             AddCylinder(
                 root.transform,
                 "PowderSurface",
                 0.033f,
                 0.003f,
-                new Vector3(
-                    0f,
-                    0.0605f,
-                    0f
-                ),
-                new Color(
-                    0.97f,
-                    0.96f,
-                    0.92f,
-                    1f
-                ),
+                new Vector3(0f, 0.0605f, 0f),
+                powderColor,
                 0.05f
             );
 
-            /*
-             * Outer lid ring only. The center is left open so the
-             * holes are visible from above.
-             */
             AddCylinder(
                 root.transform,
                 "LidRing",
                 0.041f,
                 0.011f,
-                new Vector3(
-                    0f,
-                    0.067f,
-                    0f
-                ),
-                new Color(
-                    0.06f,
-                    0.10f,
-                    0.18f,
-                    1f
-                ),
+                new Vector3(0f, 0.067f, 0f),
+                lidColor,
                 0.25f
             );
 
-            /*
-             * Shaker plate that holds the holes.
-             * Slightly inset from the lid ring.
-             */
             AddCylinder(
                 root.transform,
                 "ShakerPlate",
                 0.034f,
                 0.004f,
-                new Vector3(
-                    0f,
-                    0.0705f,
-                    0f
-                ),
-                new Color(
-                    0.08f,
-                    0.13f,
-                    0.22f,
-                    1f
-                ),
+                new Vector3(0f, 0.0705f, 0f),
+                lidColor,
                 0.20f
             );
 
-            /*
-             * Pour holes punched through the shaker plate.
-             * These sit slightly above the plate surface so they
-             * render cleanly from the icon camera angle.
-             */
-            AddCylinder(
-                root.transform,
-                "PourHoleCenter",
-                0.0045f,
-                0.0060f,
-                new Vector3(
-                    0f,
-                    0.0705f,
-                    0f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            Color holeColor =
+                new Color(0.010f, 0.012f, 0.016f, 1f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleNorth",
-                0.0040f,
-                0.0060f,
-                new Vector3(
-                    0f,
-                    0.0705f,
-                    0.014f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleCenter", 0.0045f, 0.0060f,
+                new Vector3(0f, 0.0705f, 0f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleSouth",
-                0.0040f,
-                0.0060f,
-                new Vector3(
-                    0f,
-                    0.0705f,
-                    -0.014f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleNorth", 0.0040f, 0.0060f,
+                new Vector3(0f, 0.0705f, 0.014f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleEast",
-                0.0040f,
-                0.0060f,
-                new Vector3(
-                    0.014f,
-                    0.0705f,
-                    0f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleSouth", 0.0040f, 0.0060f,
+                new Vector3(0f, 0.0705f, -0.014f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleWest",
-                0.0040f,
-                0.0060f,
-                new Vector3(
-                    -0.014f,
-                    0.0705f,
-                    0f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleEast", 0.0040f, 0.0060f,
+                new Vector3(0.014f, 0.0705f, 0f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleNorthEast",
-                0.0035f,
-                0.0060f,
-                new Vector3(
-                    0.010f,
-                    0.0705f,
-                    0.010f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleWest", 0.0040f, 0.0060f,
+                new Vector3(-0.014f, 0.0705f, 0f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleNorthWest",
-                0.0035f,
-                0.0060f,
-                new Vector3(
-                    -0.010f,
-                    0.0705f,
-                    0.010f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleNorthEast", 0.0035f, 0.0060f,
+                new Vector3(0.010f, 0.0705f, 0.010f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleSouthEast",
-                0.0035f,
-                0.0060f,
-                new Vector3(
-                    0.010f,
-                    0.0705f,
-                    -0.010f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleNorthWest", 0.0035f, 0.0060f,
+                new Vector3(-0.010f, 0.0705f, 0.010f), holeColor, 0.05f);
 
-            AddCylinder(
-                root.transform,
-                "PourHoleSouthWest",
-                0.0035f,
-                0.0060f,
-                new Vector3(
-                    -0.010f,
-                    0.0705f,
-                    -0.010f
-                ),
-                new Color(
-                    0.010f,
-                    0.012f,
-                    0.016f,
-                    1f
-                ),
-                0.05f
-            );
+            AddCylinder(root.transform, "PourHoleSouthEast", 0.0035f, 0.0060f,
+                new Vector3(0.010f, 0.0705f, -0.010f), holeColor, 0.05f);
+
+            AddCylinder(root.transform, "PourHoleSouthWest", 0.0035f, 0.0060f,
+                new Vector3(-0.010f, 0.0705f, -0.010f), holeColor, 0.05f);
 
             AddLabelCube(
                 root.transform,
                 "PmkLabel",
-                new Vector3(
-                    0.070f,
-                    0.034f,
-                    0.002f
-                ),
-                new Vector3(
-                    0f,
-                    0.029f,
-                    -0.0440f
-                ),
-                "PMK",
-                "POWDER",
-                new Color(
-                    0.12f,
-                    0.34f,
-                    0.58f,
-                    1f
-                ),
-                Color.white
+                new Vector3(0.070f, 0.034f, 0.002f),
+                new Vector3(0f, 0.029f, -0.0440f),
+                labelLine1,
+                labelLine2,
+                labelColor,
+                labelTextColor
             );
 
             return root;
@@ -1508,6 +1499,8 @@ namespace CustomNPCExample.Products
                         line1,
                         line2
                     );
+
+
             }
 
             RemovePrimitiveCollider(part);
@@ -1620,7 +1613,12 @@ namespace CustomNPCExample.Products
                 textColor
             );
 
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+
             texture.Apply();
+
+
 
             UnityEngine.Object.DontDestroyOnLoad(texture);
 
@@ -1672,6 +1670,9 @@ namespace CustomNPCExample.Products
                     "_Glossiness",
                     0.15f
                 );
+
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
 
             return material;
         }
@@ -1925,6 +1926,42 @@ namespace CustomNPCExample.Products
                         "11110"
                     };
 
+                case 'B':
+                    return new[]
+                    {
+        "11110",
+        "10001",
+        "10001",
+        "11110",
+        "10001",
+        "10001",
+        "11110"
+    };
+
+                case 'G':
+                    return new[]
+                    {
+        "01110",
+        "10001",
+        "10000",
+        "10111",
+        "10001",
+        "10001",
+        "01110"
+    };
+
+                case 'N':
+                    return new[]
+                    {
+        "10001",
+        "11001",
+        "11001",
+        "10101",
+        "10011",
+        "10011",
+        "10001"
+    };
+
                 case 'W':
                     return new[]
                     {
@@ -1961,6 +1998,7 @@ namespace CustomNPCExample.Products
                 "00100"
             };
         }
+
 
         // ============================================================
         // Collider removal without PhysicsModule reference

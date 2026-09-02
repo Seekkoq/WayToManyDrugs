@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace CustomNPCExample.Products
 {
-    public static class MDMAEffectManager
+    public static class BrownieEffectManager
     {
         private static GameObject _controllerObject;
-        private static MDMAScreenEffect _effect;
+        private static BrownieScreenEffect _effect;
 
         public static void Update()
         {
@@ -19,34 +19,32 @@ namespace CustomNPCExample.Products
                 return;
 
             _controllerObject =
-                new GameObject("WVC_MDMA_EffectController");
+                new GameObject("WVC_Brownie_EffectController");
 
-            UnityEngine.Object.DontDestroyOnLoad(
-                _controllerObject
-            );
+            UnityEngine.Object.DontDestroyOnLoad(_controllerObject);
 
             _effect =
-                _controllerObject.AddComponent<MDMAScreenEffect>();
+                _controllerObject.AddComponent<BrownieScreenEffect>();
 
-            MelonLogger.Msg("[MDMA Effect] Effect controller ready.");
+            MelonLogger.Msg("[Brownie Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
         {
             EnsureEffectController();
 
-            MDMAScreenEffect.ShouldStart = true;
+            BrownieScreenEffect.ShouldStart = true;
 
-            MelonLogger.Msg("[MDMA Effect] Trigger requested.");
+            MelonLogger.Msg("[Brownie Effect] Trigger requested.");
         }
 
         public static void StopEffect()
         {
             EnsureEffectController();
 
-            MDMAScreenEffect.ShouldStop = true;
+            BrownieScreenEffect.ShouldStop = true;
 
-            MelonLogger.Msg("[MDMA Effect] Forced stop requested.");
+            MelonLogger.Msg("[Brownie Effect] Forced stop requested.");
         }
     }
 }
