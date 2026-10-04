@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Quests;
 using UnityEngine;
@@ -42,9 +42,9 @@ namespace CustomNPCExample.Quests
                 ConfrontRemyEntry.SetPOIToNPC(RemyFogarty.Instance);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Could not bind Face to Face marker to Remy: " + ex.Message);
+
                 return false;
             }
         }
@@ -59,7 +59,7 @@ namespace CustomNPCExample.Quests
                 }
 
                 Complete();
-                MelonLogger.Msg("[WVC Snitch] Face to Face completed! Remy confrontation resolved.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Face to Face completed! Remy confrontation resolved.");
             }
             catch (Exception ex)
             {

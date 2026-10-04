@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Entities;
 using CustomNPCExample.NPCs;
@@ -68,7 +68,6 @@ namespace CustomNPCExample.Quests
                 if (_dialogue == null)
                     return false;
 
-                // Only build the container once for each dialogue instance.
                 if (!ReferenceEquals(
                         _registeredDialogue,
                         _dialogue))
@@ -77,7 +76,6 @@ namespace CustomNPCExample.Quests
                     _registeredDialogue = _dialogue;
                 }
 
-                // Only hook the callback once per dialogue instance.
                 if (!ReferenceEquals(
                         _callbackDialogue,
                         _dialogue))
@@ -99,19 +97,16 @@ namespace CustomNPCExample.Quests
                 {
                     _armed = true;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Roscoe Loose Lips dialogue armed."
                     );
                 }
 
                 return armed;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed arming Roscoe investigation dialogue: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -125,10 +120,6 @@ namespace CustomNPCExample.Quests
                 builder =>
                 {
                     builder.SetAllowExit(true);
-
-                    // ================================================
-                    // ENTRY
-                    // ================================================
 
                     builder.AddNode(
                         EntryNode,
@@ -152,10 +143,6 @@ namespace CustomNPCExample.Quests
                             );
                         }
                     );
-
-                    // ================================================
-                    // EMPTY DROP
-                    // ================================================
 
                     builder.AddNode(
                         EmptyDropNode,
@@ -183,10 +170,6 @@ namespace CustomNPCExample.Quests
                             );
                         }
                     );
-
-                    // ================================================
-                    // SCHEDULE
-                    // ================================================
 
                     builder.AddNode(
                         ScheduleNode,
@@ -217,10 +200,6 @@ namespace CustomNPCExample.Quests
                         }
                     );
 
-                    // ================================================
-                    // BEHAVIOR
-                    // ================================================
-
                     builder.AddNode(
                         BehaviorNode,
 
@@ -248,10 +227,6 @@ namespace CustomNPCExample.Quests
                             );
                         }
                     );
-
-                    // ================================================
-                    // CONCLUSION
-                    // ================================================
 
                     builder.AddNode(
                         ConclusionNode,
@@ -292,12 +267,10 @@ namespace CustomNPCExample.Quests
             _completed = true;
             _armed = false;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Player finished questioning Roscoe."
             );
 
-            // This changes IsLooseLipsActive to false before normal
-            // supplier dialogue is restored.
             SnitchStoryManager.NotifyRoscoeQuestioned();
 
             RestoreNormalDialogue();
@@ -317,16 +290,13 @@ namespace CustomNPCExample.Quests
                     );
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Roscoe restored to normal supplier dialogue."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed restoring Roscoe dialogue: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -342,9 +312,6 @@ namespace CustomNPCExample.Quests
             _armed = false;
             _completed = false;
             _dialogue = null;
-
-            // Preserve _registeredDialogue and _callbackDialogue to avoid
-            // registering duplicate callbacks on the same dialogue object.
 
             try
             {

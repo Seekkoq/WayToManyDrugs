@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -6,6 +6,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MelonLoader;
 using UnityEngine;
+using HarmonyLib;
+using System.Reflection;
 
 namespace CustomNPCExample.Quests
 {
@@ -80,7 +82,7 @@ namespace CustomNPCExample.Quests
             Pending.Add(pending);
             Save();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Queued phone message from " +
                 sender + "."
             );
@@ -114,10 +116,7 @@ namespace CustomNPCExample.Quests
             {
                 _warningTimer = 0f;
 
-                MelonLogger.Warning(
-                    "[WVC Snitch] Damon phone message is still pending. " +
-                    "Damon or his MSGConversation is not ready."
-                );
+
             }
         }
 
@@ -157,7 +156,7 @@ namespace CustomNPCExample.Quests
             Pending.Remove(pending);
             Save();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Phone message delivered from " +
                 pending.Sender + "."
             );
@@ -578,7 +577,6 @@ namespace CustomNPCExample.Quests
                     }
                     catch
                     {
-                        // Try another supported overload.
                     }
                 }
             }

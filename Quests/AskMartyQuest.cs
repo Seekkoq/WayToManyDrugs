@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Quests;
 using UnityEngine;
@@ -44,11 +44,9 @@ namespace CustomNPCExample.Quests
                 TalkToMartyEntry.SetPOIToNPC(MartyMellows.Instance);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Could not bind Second Opinion marker to Marty: " + ex.Message
-                );
+
                 return false;
             }
         }
@@ -65,7 +63,7 @@ namespace CustomNPCExample.Quests
 
                 Complete();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Second Opinion completed. Marty pointed at his dead drop."
                 );
             }

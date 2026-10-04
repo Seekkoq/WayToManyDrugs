@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using NativeQuest = Il2CppScheduleOne.Quests.Quest;
 
@@ -34,13 +34,13 @@ namespace CustomNPCExample.Quests
                     catch { }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Failed cleaning transient quests: " + ex.Message);
+
             }
 
             if (cancelled > 0)
-                MelonLogger.Msg($"[WVC Snitch] Cancelled {cancelled} transient story quest instance(s).");
+                global::CustomNPCExample.Utils.WvcLog.Msg($"[WVC Snitch] Cancelled {cancelled} transient story quest instance(s).");
 
             return cancelled;
         }

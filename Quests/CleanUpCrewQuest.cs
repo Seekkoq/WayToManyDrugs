@@ -22,7 +22,6 @@ namespace CustomNPCExample.Quests
         public static readonly Vector3 BudsBarCoords =
             new Vector3(-18.5f, -0.76f, -44.8f);
 
-        // Fallback only. SnitchStoryManager will try to resolve the real dead drop position.
         public static readonly Vector3 GreyDocksFallbackCoords =
             new Vector3(-85.4f, 1.2f, -145.8f);
 
@@ -72,7 +71,7 @@ namespace CustomNPCExample.Quests
             }
             catch { }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Clean Up Crew completed: Grey Docks dead drop was empty."
             );
         }

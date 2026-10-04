@@ -1,9 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
+
+using Il2CppScheduleOne.AvatarFramework;
 using Il2CppScheduleOne.AvatarFramework.Equipping;
+using Il2CppScheduleOne.DevUtilities;
+using Il2CppScheduleOne.Equipping;
+using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.Tools;
 using Il2CppScheduleOne.UI.Phone;
 
@@ -12,238 +17,576 @@ namespace CustomNPCExample.QoL
     public static class FlashlightBoost
     {
         private const string Tag = "[Flashlight Boost]";
+        private const float RefreshInterval = 0.25f;
 
-        // ---- Preferences ----------------------------------------------------
-        private static MelonPreferences_Category _cat;
+        private static MelonPreferences_Category _category;
         private static MelonPreferences_Entry<bool> _enabled;
         private static MelonPreferences_Entry<float> _phoneIntensity;
         private static MelonPreferences_Entry<float> _handheldIntensity;
-        private static MelonPreferences_Entry<float> _rangeMult;
-        private static MelonPreferences_Entry<float> _spotAngleMult;
-        private static MelonPreferences_Entry<float> _rescanInterval;
+        private static MelonPreferences_Entry<float> _rangeMultiplier;
+        private static MelonPreferences_Entry<float> _spotAngleMultiplier;
         private static MelonPreferences_Entry<bool> _logDiscoveries;
 
-        // ---- State ----------------------------------------------------------
-        private struct Vanilla
+        private sealed class TrackedLight
         {
-            public float Intensity;
-            public float Range;
-            public float SpotAngle;
+            public Light Light;
+            public OptimizedLight Controller;
+            public bool IsPhone;
+            public string Source;
+
+            public bool HasBaseline;
+            public float BaseIntensity;
+            public float BaseRange;
+            public float BaseSpotAngle;
+
+            public bool LoggedApplication;
         }
 
-        private static readonly Dictionary<int, Vanilla> _vanilla = new Dictionary<int, Vanilla>();
-        private static float _nextScan;
+        private sealed class PendingDiscovery
+        {
+            public IntPtr Owner;
+            public string Source;
+            public Func<int> Discover;
+            public int AttemptsLeft = 4;
+            public int Found;
+        }
+
+        private static readonly List<TrackedLight> Lights =
+            new List<TrackedLight>();
+
+        private static readonly List<PendingDiscovery> Pending =
+            new List<PendingDiscovery>();
+
+        private static readonly HashSet<string> SeenHooks =
+            new HashSet<string>();
+
+        private static readonly HashSet<string> ReportedProblems =
+            new HashSet<string>();
+
         private static bool _initialized;
-        private static bool _scanErrorLogged;
-
-        // Only scan as a fallback if we're missing something
-        private static int _missingScans;
-
-        // =====================================================================
-        //  Entry points
-        // =====================================================================
+        private static float _nextRefresh;
 
         public static void Initialize(HarmonyLib.Harmony harmony)
         {
-            if (_initialized) return;
+            if (_initialized)
+                return;
+
+            if (harmony == null)
+                throw new ArgumentNullException(nameof(harmony));
+
+            _category = MelonPreferences.CreateCategory(
+                "FlashlightBoost",
+                "Flashlight Boost"
+            );
+
+            _enabled = _category.CreateEntry(
+                "Enabled",
+                true
+            );
+
+            _phoneIntensity = _category.CreateEntry(
+                "PhoneIntensityMultiplier",
+                2.5f
+            );
+
+            _handheldIntensity = _category.CreateEntry(
+                "HandheldIntensityMultiplier",
+                2.5f
+            );
+
+            _rangeMultiplier = _category.CreateEntry(
+                "RangeMultiplier",
+                1.5f
+            );
+
+            _spotAngleMultiplier = _category.CreateEntry(
+                "SpotAngleMultiplier",
+                1f
+            );
+
+            _logDiscoveries = _category.CreateEntry(
+                "LogDiscoveredLights",
+                false
+            );
+
             _initialized = true;
 
-            _cat = MelonPreferences.CreateCategory("FlashlightBoost", "Flashlight Boost");
-            _enabled = _cat.CreateEntry("Enabled", true);
-            _phoneIntensity = _cat.CreateEntry("PhoneIntensityMultiplier", 2.5f, description: "Phone flashlight brightness. 1 = vanilla.");
-            _handheldIntensity = _cat.CreateEntry("HandheldIntensityMultiplier", 2.5f, description: "Handheld flashlight item (1st + 3rd person). 1 = vanilla.");
-            _rangeMult = _cat.CreateEntry("RangeMultiplier", 1.5f, description: "How far the beam reaches. 1 = vanilla.");
-            _spotAngleMult = _cat.CreateEntry("SpotAngleMultiplier", 1.0f, description: "Beam width. 1 = vanilla.");
-            // Increased from 0.5 to 3.0 to fix stuttering
-            _rescanInterval = _cat.CreateEntry("RescanIntervalSeconds", 3.0f, description: "Fallback scan interval (higher = less stutter).");
-            _logDiscoveries = _cat.CreateEntry("LogDiscoveredLights", false, description: "Log each flashlight Light the first time it's seen.");
+            PatchDeclared(
+                harmony,
+                typeof(Phone),
+                "ToggleFlashlight",
+                nameof(PhoneTogglePostfix)
+            );
 
-            // Hooks = instant boost when flashlights are equipped/toggled
-            TryPatch(harmony, typeof(Phone), "ToggleFlashlight", nameof(Phone_ToggleFlashlight_Postfix));
-            TryPatch(harmony, typeof(FlashlightAvatarEquippable), "Equip", nameof(AvatarFlashlight_Equip_Postfix));
-            TryPatch(harmony, typeof(Flashlight), "Equip", nameof(Viewmodel_Equip_Postfix));
+            PatchDeclared(
+                harmony,
+                typeof(FlashlightAvatarEquippable),
+                "Equip",
+                nameof(AvatarEquipPostfix),
+                new[] { typeof(Avatar) }
+            );
 
-            MelonLogger.Msg($"{Tag} Ready. Phone x{_phoneIntensity.Value}, handheld x{_handheldIntensity.Value}, range x{_rangeMult.Value}.");
+            PatchDeclared(
+                harmony,
+                typeof(Equippable_Viewmodel),
+                "Equip",
+                nameof(ViewmodelEquipPostfix),
+                new[] { typeof(ItemInstance) }
+            );
+
+            global::CustomNPCExample.Utils.WvcLog.Msg(
+                $"{Tag} Ready. Enabled={_enabled.Value}, " +
+                $"phone x{_phoneIntensity.Value}, " +
+                $"handheld x{_handheldIntensity.Value}, " +
+                $"range x{_rangeMultiplier.Value}."
+            );
         }
 
-        /// <summary>Call from MelonMod.OnUpdate. Does nothing most frames.</summary>
+        public static bool IsBoostEnabled => _enabled != null && _enabled.Value;
+
         public static void OnUpdate()
         {
-            if (!_initialized || !_enabled.Value) return;
+            if (!_initialized)
+                return;
 
-            if (Time.unscaledTime < _nextScan) return;
-            _nextScan = Time.unscaledTime + Mathf.Max(1.0f, _rescanInterval.Value);
+            if (Lights.Count == 0 && Pending.Count == 0)
+                return;
 
-            // Only do the expensive scene scan if we haven't found many lights yet,
-            // or as a very infrequent fallback.
-            _missingScans++;
+            float now = Time.unscaledTime;
 
-            // After we've successfully found lights a few times, be much more conservative with scans
-            // to avoid stuttering. 6 = ~18 seconds between "search everything" passes at 3s interval.
-            if (_missingScans > 6)
+            if (now < _nextRefresh)
+                return;
+
+            _nextRefresh = now + RefreshInterval;
+
+            for (int i = Pending.Count - 1; i >= 0; i--)
             {
-                _missingScans = 0;
+                PendingDiscovery request = Pending[i];
+
+                try
+                {
+                    request.Found = Math.Max(
+                        request.Found,
+                        request.Discover()
+                    );
+                }
+                catch (Exception ex)
+                {
+                    WarnOnce(
+                        "discovery-" + request.Source,
+                        $"{request.Source} discovery failed: {ex.Message}"
+                    );
+
+                    Pending.RemoveAt(i);
+                    continue;
+                }
+
+                request.AttemptsLeft--;
+
+                if (request.AttemptsLeft > 0)
+                    continue;
+
+                if (request.Found == 0)
+                {
+                    WarnOnce(
+                        "empty-" + request.Source,
+                        $"{request.Source} hook ran, but no Unity Light " +
+                        "reference was found. No brightness was changed."
+                    );
+                }
+
+                Pending.RemoveAt(i);
+            }
+
+            for (int i = Lights.Count - 1; i >= 0; i--)
+            {
+                TrackedLight entry = Lights[i];
+
+                try
+                {
+                    if (entry.Light == null)
+                    {
+                        Lights.RemoveAt(i);
+                        continue;
+                    }
+
+                    ApplyTrackedLight(entry);
+                }
+                catch (Exception ex)
+                {
+                    WarnOnce(
+                        "apply-" + entry.Source,
+                        $"{entry.Source} light update failed: {ex.Message}"
+                    );
+
+                    Lights.RemoveAt(i);
+                }
+            }
+        }
+
+        private static void PhoneTogglePostfix(Phone __instance)
+        {
+            if (!_initialized || __instance == null)
+                return;
+
+            QueueDiscovery(
+                __instance.Pointer,
+                "Phone",
+                () => __instance != null
+                    ? DiscoverRoot(
+                        __instance.PhoneFlashlight,
+                        true,
+                        "Phone")
+                    : 0
+            );
+        }
+
+        private static void AvatarEquipPostfix(
+            FlashlightAvatarEquippable __instance)
+        {
+            if (!_initialized || __instance == null)
+                return;
+
+            QueueDiscovery(
+                __instance.Pointer,
+                "Avatar",
+                () => DiscoverAvatar(__instance)
+            );
+        }
+
+        private static void ViewmodelEquipPostfix(
+            Equippable_Viewmodel __instance)
+        {
+            if (!_initialized || __instance == null)
+                return;
+
+            try
+            {
+                Flashlight flashlight =
+                    __instance.TryCast<Flashlight>();
+
+                if (flashlight == null)
+                    return;
+
+                QueueDiscovery(
+                    flashlight.Pointer,
+                    "Handheld",
+                    () => flashlight != null
+                        ? DiscoverRoot(
+                            flashlight.gameObject,
+                            false,
+                            "Handheld")
+                        : 0
+                );
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(
+                    "viewmodel-cast",
+                    "Could not inspect equipped item: " + ex.Message
+                );
+            }
+        }
+
+        private static void QueueDiscovery(
+            IntPtr owner,
+            string source,
+            Func<int> discover)
+        {
+            if (SeenHooks.Add(source))
+            {
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    $"{Tag} {source} hook ran; light discovery queued."
+                );
+            }
+
+            for (int i = 0; i < Pending.Count; i++)
+            {
+                if (Pending[i].Owner != owner)
+                    continue;
+
+                Pending[i].Discover = discover;
+                Pending[i].AttemptsLeft = 4;
                 return;
             }
 
-            ScanAll();
+            Pending.Add(new PendingDiscovery
+            {
+                Owner = owner,
+                Source = source,
+                Discover = discover
+            });
         }
 
-        // =====================================================================
-        //  Harmony postfixes
-        // =====================================================================
-
-        private static void Phone_ToggleFlashlight_Postfix(Phone __instance)
+        private static int DiscoverAvatar(
+            FlashlightAvatarEquippable avatar)
         {
-            if (!_enabled.Value || __instance == null) return;
-            Boost(__instance.PhoneFlashlight, _phoneIntensity.Value, "Phone");
+            if (avatar == null)
+                return 0;
+
+            int found = 0;
+
+            OptimizedLight controller = avatar.Light;
+
+            if (controller != null && controller._Light != null)
+            {
+                TrackLight(
+                    controller._Light,
+                    controller,
+                    false,
+                    "Avatar"
+                );
+
+                found++;
+            }
+
+            return found + DiscoverRoot(
+                avatar.gameObject,
+                false,
+                "Avatar"
+            );
         }
 
-        private static void AvatarFlashlight_Equip_Postfix(FlashlightAvatarEquippable __instance)
+        private static int DiscoverRoot(
+            GameObject root,
+            bool isPhone,
+            string source)
         {
-            if (!_enabled.Value || __instance == null) return;
-            BoostAvatarFlashlight(__instance);
+            if (root == null)
+                return 0;
+
+            int found = 0;
+
+            var controllers =
+                root.GetComponentsInChildren<OptimizedLight>(true);
+
+            for (int i = 0; i < controllers.Length; i++)
+            {
+                OptimizedLight controller = controllers[i];
+
+                if (controller == null || controller._Light == null)
+                    continue;
+
+                TrackLight(
+                    controller._Light,
+                    controller,
+                    isPhone,
+                    source
+                );
+
+                found++;
+            }
+
+            var ordinaryLights =
+                root.GetComponentsInChildren<Light>(true);
+
+            for (int i = 0; i < ordinaryLights.Length; i++)
+            {
+                Light light = ordinaryLights[i];
+
+                if (light == null)
+                    continue;
+
+                TrackLight(light, null, isPhone, source);
+                found++;
+            }
+
+            return found;
         }
 
-        private static void Viewmodel_Equip_Postfix(MonoBehaviour __instance)
+        private static void TrackLight(
+            Light light,
+            OptimizedLight controller,
+            bool isPhone,
+            string source)
         {
-            if (!_enabled.Value || __instance == null) return;
-            if (__instance.TryCast<Flashlight>() == null) return;
-            Boost(__instance.gameObject, _handheldIntensity.Value, "Handheld");
+            if (light == null)
+                return;
+
+            for (int i = 0; i < Lights.Count; i++)
+            {
+                TrackedLight existing = Lights[i];
+
+                if (existing.Light == null ||
+                    existing.Light.Pointer != light.Pointer)
+                {
+                    continue;
+                }
+
+                if (controller != null)
+                    existing.Controller = controller;
+
+                existing.IsPhone |= isPhone;
+                return;
+            }
+
+            Lights.Add(new TrackedLight
+            {
+                Light = light,
+                Controller = controller,
+                IsPhone = isPhone,
+                Source = source
+            });
+
+            if (_logDiscoveries.Value)
+            {
+                string controllerState = controller != null
+                    ? $"controllerEnabled={controller.Enabled}, " +
+                      $"disabledForOptimization={controller.DisabledForOptimization}, " +
+                      $"culled={controller.culled}"
+                    : "no OptimizedLight controller";
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    $"{Tag} Found {source} light '{light.gameObject.name}'. " +
+                    $"Intensity={light.intensity:0.###}, " +
+                    $"range={light.range:0.###}, " +
+                    $"lightEnabled={light.enabled}, " +
+                    $"active={light.gameObject.activeInHierarchy}; " +
+                    controllerState
+                );
+            }
         }
 
-        // =====================================================================
-        //  Discovery (expensive, now only runs rarely)
-        // =====================================================================
+        private static void ApplyTrackedLight(TrackedLight entry)
+        {
+            Light light = entry.Light;
+            OptimizedLight controller = entry.Controller;
 
-        private static void ScanAll()
+            if (controller != null &&
+                (!controller.Enabled ||
+                 controller.DisabledForOptimization ||
+                 controller.culled))
+            {
+                return;
+            }
+
+            if (!light.enabled || !light.gameObject.activeInHierarchy)
+                return;
+
+            float currentIntensity = light.intensity;
+
+            if (float.IsNaN(currentIntensity) ||
+                float.IsInfinity(currentIntensity) ||
+                currentIntensity <= 0f ||
+                light.range <= 0f)
+            {
+                return;
+            }
+
+            if (!entry.HasBaseline)
+            {
+                entry.BaseIntensity = currentIntensity;
+                entry.BaseRange = light.range;
+                entry.BaseSpotAngle = light.spotAngle;
+                entry.HasBaseline = true;
+            }
+
+            bool enabled = _enabled.Value;
+
+            float intensityMultiplier = enabled
+                ? ReadMultiplier(entry.IsPhone
+                    ? _phoneIntensity.Value
+                    : _handheldIntensity.Value)
+                : 1f;
+
+            float rangeMultiplier = enabled
+                ? ReadMultiplier(_rangeMultiplier.Value)
+                : 1f;
+
+            float angleMultiplier = enabled
+                ? ReadMultiplier(_spotAngleMultiplier.Value)
+                : 1f;
+
+            float targetIntensity =
+                entry.BaseIntensity * intensityMultiplier;
+
+            float targetRange =
+                entry.BaseRange * rangeMultiplier;
+
+            float targetAngle = Mathf.Clamp(
+                entry.BaseSpotAngle * angleMultiplier,
+                1f,
+                179f
+            );
+
+            if (Mathf.Abs(light.intensity - targetIntensity) > 0.001f)
+                light.intensity = targetIntensity;
+
+            if (Mathf.Abs(light.range - targetRange) > 0.001f)
+                light.range = targetRange;
+
+            if (light.type == LightType.Spot &&
+                Mathf.Abs(light.spotAngle - targetAngle) > 0.001f)
+            {
+                light.spotAngle = targetAngle;
+            }
+
+            if (_logDiscoveries.Value && !entry.LoggedApplication)
+            {
+                entry.LoggedApplication = true;
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    $"{Tag} Applied to {entry.Source} " +
+                    $"'{light.gameObject.name}': " +
+                    $"intensity {entry.BaseIntensity:0.###} -> " +
+                    $"{light.intensity:0.###}; " +
+                    $"range {entry.BaseRange:0.###} -> {light.range:0.###}."
+                );
+            }
+        }
+
+        private static float ReadMultiplier(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+                return 1f;
+
+            return Mathf.Clamp(value, 0.1f, 20f);
+        }
+
+        private static void PatchDeclared(
+            HarmonyLib.Harmony harmony,
+            Type declaringType,
+            string methodName,
+            string postfixName,
+            Type[] parameters = null)
         {
             try
             {
-                // 1. Phone (local player)
-                Phone phone = UnityEngine.Object.FindObjectOfType<Phone>();
-                if (phone != null)
-                {
-                    Boost(phone.PhoneFlashlight, _phoneIntensity.Value, "Phone");
-                }
+                var original = AccessTools.DeclaredMethod(
+                    declaringType,
+                    methodName,
+                    parameters
+                );
 
-                // 2. Handheld viewmodel
-                Flashlight[] viewmodels = UnityEngine.Object.FindObjectsOfType<Flashlight>();
-                for (int i = 0; i < viewmodels.Length; i++)
-                {
-                    if (viewmodels[i] != null)
-                        Boost(viewmodels[i].gameObject, _handheldIntensity.Value, "Handheld");
-                }
-
-                // 3. Avatar flashlights
-                FlashlightAvatarEquippable[] avatars = UnityEngine.Object.FindObjectsOfType<FlashlightAvatarEquippable>();
-                for (int i = 0; i < avatars.Length; i++)
-                {
-                    if (avatars[i] != null)
-                        BoostAvatarFlashlight(avatars[i]);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (_scanErrorLogged) return;
-                _scanErrorLogged = true;
-                MelonLogger.Warning($"{Tag} Scan failed (will keep trying silently): {ex}");
-            }
-        }
-
-        private static void BoostAvatarFlashlight(FlashlightAvatarEquippable eq)
-        {
-            float mult = _handheldIntensity.Value;
-            Boost(eq.gameObject, mult, "Avatar");
-
-            if (eq.Light != null)
-                Boost(eq.Light.gameObject, mult, "Avatar");
-        }
-
-        // =====================================================================
-        //  The actual boost
-        // =====================================================================
-
-        private static void Boost(GameObject root, float intensityMult, string label)
-        {
-            if (root == null) return;
-
-            Light[] lights = root.GetComponentsInChildren<Light>(true);
-            if (lights == null || lights.Length == 0) return;
-
-            for (int i = 0; i < lights.Length; i++)
-            {
-                Light light = lights[i];
-                if (light == null) continue;
-
-                int id = light.GetInstanceID();
-                if (!_vanilla.TryGetValue(id, out Vanilla v))
-                {
-                    // Don't capture vanilla while it's off (intensity 0)
-                    if (light.intensity <= 0f) continue;
-
-                    v = new Vanilla
-                    {
-                        Intensity = light.intensity,
-                        Range = light.range,
-                        SpotAngle = light.spotAngle
-                    };
-                    _vanilla[id] = v;
-
-                    if (_logDiscoveries.Value)
-                    {
-                        MelonLogger.Msg($"{Tag} {label} light '{light.gameObject.name}': vanilla intensity {v.Intensity:0.##}");
-                    }
-
-                    // We just found a new light, reset the "missing" counter
-                    _missingScans = 0;
-                }
-
-                Apply(light,
-                      v.Intensity * intensityMult,
-                      v.Range * _rangeMult.Value,
-                      v.SpotAngle * _spotAngleMult.Value);
-            }
-        }
-
-        private static void Apply(Light light, float intensity, float range, float spotAngle)
-        {
-            if (Math.Abs(light.intensity - intensity) > 0.001f)
-                light.intensity = intensity;
-
-            if (Math.Abs(light.range - range) > 0.001f)
-                light.range = range;
-
-            if (light.type == LightType.Spot)
-            {
-                spotAngle = Mathf.Clamp(spotAngle, 1f, 179f);
-                if (Math.Abs(light.spotAngle - spotAngle) > 0.001f)
-                    light.spotAngle = spotAngle;
-            }
-        }
-
-        // =====================================================================
-        //  Helpers
-        // =====================================================================
-
-        private static void TryPatch(HarmonyLib.Harmony harmony, Type type, string method, string postfix)
-        {
-            try
-            {
-                System.Reflection.MethodInfo original = AccessTools.Method(type, method);
                 if (original == null)
                 {
-                    MelonLogger.Warning($"{Tag} {type.Name}.{method} not found – infrequent scan will cover it.");
+
+
                     return;
                 }
 
-                harmony.Patch(original, postfix: new HarmonyMethod(typeof(FlashlightBoost), postfix));
-                MelonLogger.Msg($"{Tag} Hooked {original.DeclaringType?.Name}.{method}");
+                harmony.Patch(
+                    original,
+                    postfix: new HarmonyMethod(
+                        typeof(FlashlightBoost),
+                        postfixName
+                    )
+                );
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    $"{Tag} Hooked {declaringType.Name}.{methodName}."
+                );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning($"{Tag} Could not hook {type.Name}.{method} – infrequent scan will cover it. ({ex.Message})");
+
             }
+        }
+
+        private static void WarnOnce(string key, string message)
+        {
+            if (ReportedProblems.Add(key))
+                { }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Quests;
 using UnityEngine;
@@ -26,7 +26,6 @@ namespace CustomNPCExample.Quests
             private set;
         }
 
-        // Fallback until the NPC marker can bind.
         public static readonly Vector3 RoscoeFallbackPosition =
             new Vector3(-72f, -0.76f, -58f);
 
@@ -56,12 +55,9 @@ namespace CustomNPCExample.Quests
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Could not bind Loose Lips marker to Roscoe: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -85,7 +81,7 @@ namespace CustomNPCExample.Quests
 
                 Complete();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Loose Lips completed. " +
                     "Roscoe's clues point toward Remy."
                 );

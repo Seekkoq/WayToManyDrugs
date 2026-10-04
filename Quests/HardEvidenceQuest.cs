@@ -64,7 +64,7 @@ namespace CustomNPCExample.Quests
                 }
 
                 Complete();
-                MelonLogger.Msg("[WVC Snitch] Hard Evidence completed: Cart recovered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Hard Evidence completed: Cart recovered.");
             }
             catch (Exception ex)
             {

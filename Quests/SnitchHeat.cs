@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -34,24 +34,16 @@ namespace CustomNPCExample.Quests
         public static bool IsActive => _active;
         public static bool IsPostQuest => _postQuest;
 
-        // Compatibility stubs for old debug calls.
         public static void RunSinglePatrolTest() { }
         public static void DumpPoliceSpawnApi() { }
 
-        // ------------------------------------------------------------
-        // Lifecycle
-        // ------------------------------------------------------------
-
         public static void Begin()
         {
-            // Never restart burn heat after the Snitch quest completed.
-            // This prevents delayed dead-drop setup coroutines from reverting
-            // the post-quest state.
             if (_postQuest ||
                 SnitchSaveManager.IsCompleted ||
                 SnitchStorySave.Stage != SnitchStorySave.STAGE_NONE)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Begin() ignored: post-quest/story state is active."
                 );
                 return;
@@ -64,7 +56,7 @@ namespace CustomNPCExample.Quests
 
             ApplyHardcorePoliceStats();
 
-            MelonLogger.Msg("[WVC Snitch] Burn-route heat active.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Burn-route heat active.");
         }
 
         public static void TransitionToPostQuestLockdown()
@@ -79,13 +71,13 @@ namespace CustomNPCExample.Quests
 
             if (_lockdownComplete)
             {
-                MelonLogger.Msg("[WVC Snitch] Post-quest lockdown already complete.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Post-quest lockdown already complete.");
                 return;
             }
 
             if (_lockdownStarted)
             {
-                MelonLogger.Msg("[WVC Snitch] Post-quest lockdown already running.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Post-quest lockdown already running.");
                 return;
             }
 
@@ -110,12 +102,11 @@ namespace CustomNPCExample.Quests
             _reportTimer = 0f;
             _lastPursuitCallTime = -999f;
 
-            MelonLogger.Msg("[WVC Snitch] Heat ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Heat ended.");
         }
 
         public static void Update()
         {
-            // HARD GUARD: prevents infinite recursion from killing the game.
             if (_insideUpdate)
             {
                 if (!_recursionWarningLogged)
@@ -157,8 +148,6 @@ namespace CustomNPCExample.Quests
                 PrintPatrolCount(_postQuest ? "LOCKDOWN" : "TICK");
             }
 
-            // Only force pursuit during active burn-route stage.
-            // Post-quest should not repeatedly force pursuit.
             if (!_postQuest && _tickTimer >= TickInterval)
             {
                 _tickTimer = 0f;
@@ -166,13 +155,9 @@ namespace CustomNPCExample.Quests
             }
         }
 
-        // ------------------------------------------------------------
-        // Lockdown
-        // ------------------------------------------------------------
-
         private static IEnumerator LockdownRoutine(int generation)
         {
-            MelonLogger.Msg("[WVC Snitch] === POST-QUEST LOCKDOWN QUEUED ===");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] === POST-QUEST LOCKDOWN QUEUED ===");
 
             float deadline = Time.realtimeSinceStartup + 45f;
 
@@ -221,7 +206,7 @@ namespace CustomNPCExample.Quests
             _lockdownStarted = false;
             _lockdownComplete = true;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] === LOCKDOWN COMPLETE === squads=" +
                 squads + " vehicles=" + vehicles
             );
@@ -256,14 +241,12 @@ namespace CustomNPCExample.Quests
                     catch { }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Vehicle patrols failed: " + ex.Message
-                );
+
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Vehicle patrols started: " + started
             );
 
@@ -306,8 +289,6 @@ namespace CustomNPCExample.Quests
                             .CompareTo(Vector3.Distance(b.Position, playerPos))
                 );
 
-                // Do not mutate PoliceStation.OfficerPool here.
-                // That caused crashes when cops detected/arrested.
                 int use = Mathf.Min(3, sorted.Count);
 
                 for (int i = 0; i < use; i++)
@@ -322,23 +303,17 @@ namespace CustomNPCExample.Quests
                     catch { }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Foot squads failed: " + ex.Message
-                );
+
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Foot squads started: " + started
             );
 
             return started;
         }
-
-        // ------------------------------------------------------------
-        // Police stats
-        // ------------------------------------------------------------
 
         public static void ApplyHardcorePoliceStats()
         {
@@ -347,7 +322,6 @@ namespace CustomNPCExample.Quests
 
             try
             {
-                // Strong but not insane values.
                 PoliceOfficer.INVESTIGATION_MAX_DISTANCE = 100f;
                 PoliceOfficer.INVESTIGATION_MIN_VISIBILITY = 0.05f;
                 PoliceOfficer.INVESTIGATION_CHECK_INTERVAL = 0.25f;
@@ -384,21 +358,15 @@ namespace CustomNPCExample.Quests
             {
                 LawController.SetIntensityLevel(10);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] City law intensity set to 10."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Law intensity failed: " + ex.Message
-                );
+
             }
         }
-
-        // ------------------------------------------------------------
-        // Burn-route pursuit
-        // ------------------------------------------------------------
 
         private static void ApplyHeat()
         {
@@ -411,7 +379,6 @@ namespace CustomNPCExample.Quests
             if (_postQuest)
                 return;
 
-            // Throttle dispatch. Do not spam native law transitions.
             if (Time.realtimeSinceStartup - _lastPursuitCallTime < 12f)
                 return;
 
@@ -434,12 +401,9 @@ namespace CustomNPCExample.Quests
                     calledPolice = true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Heat CallPolice failed: " +
-                    ex.Message
-                );
+
             }
 
             try
@@ -472,15 +436,12 @@ namespace CustomNPCExample.Quests
                         );
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Heat patrol spawn failed: " +
-                    ex.Message
-                );
+
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Heat dispatch applied. " +
                 "CallPolice=" +
                 calledPolice +
@@ -599,10 +560,6 @@ namespace CustomNPCExample.Quests
             return false;
         }
 
-        // ------------------------------------------------------------
-        // Diagnostics
-        // ------------------------------------------------------------
-
         public static void PrintPatrolCount(string tag = "")
         {
             int pool = 0;
@@ -663,7 +620,7 @@ namespace CustomNPCExample.Quests
                     ? ""
                     : " " + tag;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch Cops" + suffix + "] pool=" + pool +
                 " active=" + active +
                 " patrolling=" + patrolling +

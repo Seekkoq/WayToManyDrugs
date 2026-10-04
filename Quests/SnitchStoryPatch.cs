@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using HarmonyLib;
 using MelonLoader;
 using Il2CppScheduleOne.Persistence;
@@ -13,7 +13,6 @@ namespace CustomNPCExample.Quests
         {
             _saveDepth++;
 
-            // If one Save overload calls another, only clean once.
             if (_saveDepth != 1)
                 return;
 
@@ -22,12 +21,9 @@ namespace CustomNPCExample.Quests
                 SnitchStoryManager
                     .HideTransientQuestsForSave();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Pre-save quest cleanup failed: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -41,7 +37,6 @@ namespace CustomNPCExample.Quests
 
             _saveDepth--;
 
-            // Rebuild only after the outermost save completes.
             if (_saveDepth != 0)
                 return;
 
@@ -50,12 +45,9 @@ namespace CustomNPCExample.Quests
                 SnitchStoryManager
                     .RebuildAfterGameSave();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Post-save quest rebuild failed: " +
-                    ex.Message
-                );
+
             }
         }
     }

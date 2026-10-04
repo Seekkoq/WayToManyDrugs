@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using Il2CppScheduleOne.Quests;
 using MelonLoader;
@@ -13,15 +13,6 @@ namespace CustomNPCExample.Quests
     {
         private const string SnitchQuestTitle =
             "The Snitch";
-
-        // Debug:
-        // F9  = Start The Snitch without needing FTJ detection.
-        // F10 = Print every currently visible native quest + state.
-        public static KeyCode ForceStartSnitchKey =
-            KeyCode.F9;
-
-        public static KeyCode DumpQuestStatesKey =
-            KeyCode.F10;
 
         private static bool _startedThisSession;
         private static bool _dialogueArmed;
@@ -38,8 +29,6 @@ namespace CustomNPCExample.Quests
 
         public static void Update()
         {
-            HandleDebugKeys();
-
             SnitchPhoneDelivery.Update();
 
             if (!_bootReported)
@@ -50,7 +39,7 @@ namespace CustomNPCExample.Quests
                 {
                     _bootReported = true;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Game loaded - restoring quests."
                     );
 
@@ -60,9 +49,6 @@ namespace CustomNPCExample.Quests
                     if (SnitchSaveManager.IsTalkActive)
                         SendDamonTextMessage();
 
-                    // Important:
-                    // Check after the game has had time to restore
-                    // completed native quest data from the save.
                     if (!SnitchSaveManager.IsCompleted &&
                         HasRequiredRank())
                     {
@@ -72,6 +58,7 @@ namespace CustomNPCExample.Quests
             }
 
             SnitchHeat.Update();
+
             SnitchStoryManager.Update();
 
             if (SnitchSaveManager.IsCompleted)
@@ -120,24 +107,9 @@ namespace CustomNPCExample.Quests
                 TryStartQuest();
         }
 
-        private static void HandleDebugKeys()
-        {
-            if (Input.GetKeyDown(ForceStartSnitchKey))
-            {
-                MelonLogger.Msg(
-                    "[WVC Snitch] DEBUG: Force-starting " +
-                    "The Snitch."
-                );
-
-                ForceStartSnitch();
-                return;
-       
-            }
-        }
-
         private static void HardReset()
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DEBUG] FULL HARD RESET TO STAGE 0."
             );
 
@@ -229,7 +201,7 @@ namespace CustomNPCExample.Quests
             if (SnitchSaveManager.IsCompleted)
                 return;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] All seven routes burned."
             );
 
@@ -296,14 +268,13 @@ namespace CustomNPCExample.Quests
 
                 _activeQuest = quest;
 
-                // Do not manually call CreateInternal().
                 quest.Begin();
 
                 RestoreActiveQuestRuntime();
 
                 _startedThisSession = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] The Snitch started."
                 );
 
@@ -320,22 +291,16 @@ namespace CustomNPCExample.Quests
             }
         }
 
-        // Used by F9, or you can call this from another debug command.
-        // This does not change or fake vanilla quest completion.
-        // It simply starts The Snitch for legacy saves.
         public static void ForceStartSnitch()
         {
             if (SnitchSaveManager.IsCompleted)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Cannot force-start: " +
-                    "The Snitch is already completed."
-                );
+
 
                 return;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] DEBUG: Bypassing rank requirement."
             );
 
@@ -343,8 +308,6 @@ namespace CustomNPCExample.Quests
 
             TryStartQuest();
         }
-
-
 
         private static bool TryBindExistingQuest()
         {
@@ -361,7 +324,7 @@ namespace CustomNPCExample.Quests
                 _activeQuest = existing;
                 RestoreActiveQuestRuntime();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Existing The Snitch quest restored."
                 );
 
@@ -463,7 +426,7 @@ namespace CustomNPCExample.Quests
                     _activeQuest.BurnRouteEntry
                 );
             }
-        }   
+        }
 
         private static string GetQuestTitle(object quest)
         {
@@ -504,13 +467,9 @@ namespace CustomNPCExample.Quests
 
         public static void DumpNativeQuestStates()
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "=========== WVC QUEST/RANK DUMP ==========="
             );
-
-            // ------------------------------------------------------------
-            // Player rank
-            // ------------------------------------------------------------
 
             string rankName;
             int rankLevel;
@@ -533,7 +492,7 @@ namespace CustomNPCExample.Quests
             }
             catch { }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Rank found=" +
                 rankFound +
                 " | rankName='" +
@@ -544,10 +503,6 @@ namespace CustomNPCExample.Quests
                 requiredRankMet
             );
 
-            // ------------------------------------------------------------
-            // S1API quest lookup
-            // ------------------------------------------------------------
-
             try
             {
                 var snitchQuest =
@@ -555,24 +510,17 @@ namespace CustomNPCExample.Quests
                         SnitchQuestTitle
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] The Snitch quest=" +
                     (snitchQuest != null
                         ? "FOUND"
                         : "NOT FOUND")
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Could not read The Snitch quest: " +
-                    ex.Message
-                );
-            }
 
-            // ------------------------------------------------------------
-            // Native quest list
-            // ------------------------------------------------------------
+            }
 
             try
             {
@@ -581,13 +529,11 @@ namespace CustomNPCExample.Quests
 
                 if (quests == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Snitch] NativeQuest.Quests is null."
-                    );
+
                 }
                 else
                 {
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Native quest count=" +
                         quests.Count
                     );
@@ -609,7 +555,7 @@ namespace CustomNPCExample.Quests
                         bool completed =
                             IsQuestCompleted(quest);
 
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "[" +
                             i +
                             "] title='" +
@@ -630,11 +576,7 @@ namespace CustomNPCExample.Quests
                 );
             }
 
-            // ------------------------------------------------------------
-            // Runtime state
-            // ------------------------------------------------------------
-
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] RequiredRankDetected=" +
                 _requiredRankDetected +
                 " | SnitchStarted=" +
@@ -645,7 +587,7 @@ namespace CustomNPCExample.Quests
                 SnitchSaveManager.Stage
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "==========================================="
             );
         }
@@ -731,10 +673,6 @@ namespace CustomNPCExample.Quests
             }
         }
 
-        // ------------------------------------------------------------
-        // Enforcer 2 rank prerequisite detection
-        // ------------------------------------------------------------
-
         private static bool HasRequiredRank()
         {
             if (_requiredRankDetected)
@@ -777,7 +715,7 @@ namespace CustomNPCExample.Quests
                 {
                     _rankDetectionLogged = true;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Required rank detected: '" +
                         rankName +
                         "' level=" +
@@ -788,16 +726,13 @@ namespace CustomNPCExample.Quests
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (!_rankDetectionLogged)
                 {
                     _rankDetectionLogged = true;
 
-                    MelonLogger.Warning(
-                        "[WVC Snitch] Rank detection failed: " +
-                        ex.Message
-                    );
+
                 }
 
                 return false;
@@ -824,12 +759,9 @@ namespace CustomNPCExample.Quests
             if (!isEnforcer)
                 return false;
 
-            // LevelManager may expose:
-            // Rank = Enforcer, Tier = 2
             if (rankLevel >= 2)
                 return true;
 
-            // Or it may expose the entire rank as text.
             return normalized.Contains("enforcer2") ||
                    normalized.Contains("enforcerii");
         }
@@ -905,8 +837,6 @@ namespace CustomNPCExample.Quests
                             return true;
                         }
 
-                        // Fallback for builds where LevelManager exposes
-                        // rank data under different member names.
                         if (TryReadRankFromObject(
                                 levelManager,
                                 ref rankName,
@@ -917,15 +847,11 @@ namespace CustomNPCExample.Quests
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Could not read LevelManager: " +
-                    ex.Message
-                );
+
             }
 
-            // Fallback to Player.Local.
             object player = null;
 
             try
@@ -1047,8 +973,6 @@ namespace CustomNPCExample.Quests
 
             bool found = false;
 
-            // These can be strings, enums, rank objects, or ScriptableObjects
-            // depending on the Schedule I build.
             string[] rankMembers =
             {
         "Rank",
@@ -1089,7 +1013,6 @@ namespace CustomNPCExample.Quests
                     rankName = text;
                 }
 
-                // A rank might itself be an object containing Name/Level.
                 TryReadNestedRank(
                     value,
                     ref rankName,
@@ -1213,10 +1136,6 @@ namespace CustomNPCExample.Quests
                 catch { }
             }
         }
-
-        // ------------------------------------------------------------
-        // Reflection helpers
-        // ------------------------------------------------------------
 
         private static object GetMemberValue(
             object target,
@@ -1380,7 +1299,6 @@ namespace CustomNPCExample.Quests
 
             return null;
         }
-
 
         private static void SendDamonTextMessage()
         {

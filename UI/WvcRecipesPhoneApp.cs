@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -33,10 +33,6 @@ namespace CustomNPCExample.UI
         protected override Sprite IconSprite => GetIconSprite();
         protected override S1PhoneApp.EOrientation Orientation => S1PhoneApp.EOrientation.Horizontal;
 
-        // ============================================================
-        // Register
-        // ============================================================
-
         public static void Initialize()
         {
             if (_registered)
@@ -47,7 +43,7 @@ namespace CustomNPCExample.UI
             if (TryRegisterPhoneApp(_instance))
             {
                 _registered = true;
-                MelonLogger.Msg(LogPrefix + " Registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg(LogPrefix + " Registered.");
             }
             else
             {
@@ -55,11 +51,6 @@ namespace CustomNPCExample.UI
             }
         }
 
-        /*
-         * S1API's Registerable method name can vary by build.
-         * This tries the normal public lifecycle names first,
-         * then falls back to PhoneApp.OnCreated().
-         */
         private static bool TryRegisterPhoneApp(WvcRecipesPhoneApp app)
         {
             if (app == null)
@@ -96,29 +87,15 @@ namespace CustomNPCExample.UI
                     method.Invoke(app, null);
                     return true;
                 }
-                catch (TargetInvocationException ex)
+                catch (TargetInvocationException)
                 {
-                    MelonLogger.Warning(
-                        LogPrefix +
-                        " " +
-                        methodName +
-                        "() failed: " +
-                        (ex.InnerException != null
-                            ? ex.InnerException.Message
-                            : ex.Message)
-                    );
+
 
                     return false;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        LogPrefix +
-                        " " +
-                        methodName +
-                        "() failed: " +
-                        ex.Message
-                    );
+
 
                     return false;
                 }
@@ -139,16 +116,11 @@ namespace CustomNPCExample.UI
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    LogPrefix +
-                    " OnCreated fallback failed: " +
-                    ex.Message
-                );
+
             }
 
-            // Last fallback: call PhoneAppRegistry.Register(app) reflectively.
             try
             {
                 Type registryType =
@@ -184,21 +156,13 @@ namespace CustomNPCExample.UI
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    LogPrefix +
-                    " PhoneAppRegistry fallback failed: " +
-                    ex.Message
-                );
+
             }
 
             return false;
         }
-
-        // ============================================================
-        // UI
-        // ============================================================
 
         protected override void OnCreatedUI(GameObject container)
         {
@@ -228,7 +192,6 @@ namespace CustomNPCExample.UI
             if (root == null)
                 root = container.AddComponent<RectTransform>();
 
-            // Background
             GameObject bg =
                 CreatePanel(
                     "Background",
@@ -238,7 +201,6 @@ namespace CustomNPCExample.UI
 
             Stretch(bg.GetComponent<RectTransform>());
 
-            // Title
             Text title =
                 CreateText(
                     "Title",
@@ -259,7 +221,6 @@ namespace CustomNPCExample.UI
 
             title.fontStyle = FontStyle.Bold;
 
-            // Subtitle
             Text subtitle =
                 CreateText(
                     "Subtitle",
@@ -288,13 +249,11 @@ namespace CustomNPCExample.UI
                 AddRecipeDropdown(recipes[i], i);
             }
 
-            // Open first recipe by default.
             if (_rows.Count > 0)
                 SetRowExpanded(0, true);
 
             RefreshLayout();
 
-            // Footer warning / edit reminder.
             Text footer =
                 CreateText(
                     "Footer",
@@ -633,10 +592,6 @@ namespace CustomNPCExample.UI
             }
         }
 
-        // ============================================================
-        // Recipe data
-        // ============================================================
-
         private static RecipeEntry[] BuildRecipes()
         {
             return new RecipeEntry[]
@@ -753,20 +708,22 @@ namespace CustomNPCExample.UI
                     "$75 base price",
                     new string[]
                     {
-                        "Brownie ingredients",
-                        "Unbaked Brownie Mix",
+                        "Baker's Cocoa x3",
+                        "Infused Butter x1",
+                        "Leavening Mix x1",
                         "Packaging: baggie / jar / brick"
                     },
                     new string[]
                     {
-                        "Craft Unbaked Brownie Mix in the Chemistry station. wait",
-                        "Bake it in the Lab Oven.",
+                        "Select Unbaked Brownie Mix at the chemistry station.",
+                        "Insert the ingredients and press BEGIN.",
+                        "The mix cooks in about 4 minutes.",
+                        "Bake the Unbaked Brownie Mix in the Lab Oven.",
                         "Package finished brownies as baggies, jars, or bricks."
                     },
                     new string[]
                     {
                         "Console aliases: brownie, edible",
-                        "Place the ingredients in the chemistry station and wait 4 seconds. it will output automatiically"
                     }
                 ),
 
@@ -791,6 +748,59 @@ namespace CustomNPCExample.UI
                     new string[]
                     {
                         "Console aliases: cookie, thccookie",
+                    }
+                ),
+
+                new RecipeEntry(
+                    "Salvia",
+                    new Color(0.35f, 0.78f, 0.45f, 1f),
+                    "Sal Viah / Soil Pot",
+                    "$70 base price",
+                    new string[]
+                    {
+                        "Salvia Seed buy from Sal Viah",
+                        "Soil & Pot (for cultivation)",
+                        "Packaging: baggie / jar / brick"
+                    },
+                    new string[]
+                    {
+                        "Order Salvia Seed from Sal Viah",
+                        "Place soil into pot along with the seed, place the soil in first",
+                        "Harvested Salvia can be packaged in baggies, jars, or pressed into bricks.",
+                        "Can also be blended in mixers for custom mixtures."
+                    },
+                    new string[]
+                    {
+                        "Console aliases: salvia, salviaseed, salviacutting",
+                        "Supplier: Sal Viah (Park Gazebo drop)."
+                    }
+                ),
+
+                new RecipeEntry(
+                    "Xanax",
+                    new Color(0.92f, 0.93f, 0.90f),
+                    "Brick Press",
+                    "$45 base price",
+                    new string[]
+                    {
+                        "Xanax Powder - order from Dr. Scrivens (Pillville, Westville)",
+                        "Brick Press - buy the machine, then clear the last batch out of it",
+                        "Packaging: baggie or jar (a press will not brick a bar)"
+                    },
+                    new string[]
+                    {
+                        "Pour Xanax Powder into the press - it fits the mould slot, the raw slot " +
+                        "or the equipment tray.",
+                        "Press BEGIN: ten units of powder come out as ten bars.",
+                        "One press takes up to ten units, so twenty powder takes two runs; " +
+                        "everything left over stays in the machine.",
+                        "Take the bars from the output, then load the next batch."
+                    },
+                    new string[]
+                    {
+                        "Console aliases: xanax",
+                        "Supplier: Dr. Eleanor Scrivens (stash behind the medical practice).",
+                        "Calming, sedating and foggy - habit forming."
                     }
                 )
             };
@@ -860,10 +870,6 @@ namespace CustomNPCExample.UI
 
             return sb.ToString();
         }
-
-        // ============================================================
-        // UI helpers
-        // ============================================================
 
         private GameObject CreatePanel(
             string name,
@@ -1011,10 +1017,6 @@ namespace CustomNPCExample.UI
                 .Replace("-", "_");
         }
 
-        // ============================================================
-        // Icon
-        // ============================================================
-
         private static Sprite GetIconSprite()
         {
             if (_iconSprite != null)
@@ -1051,7 +1053,6 @@ namespace CustomNPCExample.UI
                     tex.SetPixel(x, y, c);
             }
 
-            // Book/page
             FillRect(tex, 54, 54, 148, 148, new Color(0.94f, 0.88f, 0.68f, 1f));
             FillRect(tex, 64, 66, 128, 124, new Color(0.18f, 0.10f, 0.22f, 1f));
             FillRect(tex, 70, 78, 116, 12, new Color(1.00f, 0.72f, 0.22f, 1f));
@@ -1059,7 +1060,6 @@ namespace CustomNPCExample.UI
             FillRect(tex, 70, 130, 104, 10, new Color(0.78f, 0.62f, 0.95f, 1f));
             FillRect(tex, 70, 154, 74, 10, new Color(0.78f, 0.62f, 0.95f, 1f));
 
-            // Small pill/cookie dots
             FillCircle(tex, 178, 82, 9, new Color(1f, 0.24f, 0.58f, 1f));
             FillCircle(tex, 174, 164, 8, new Color(0.95f, 0.18f, 0.12f, 1f));
             FillCircle(tex, 154, 182, 7, new Color(0.90f, 0.62f, 0.24f, 1f));
@@ -1142,10 +1142,6 @@ namespace CustomNPCExample.UI
                 }
             }
         }
-
-        // ============================================================
-        // Data classes
-        // ============================================================
 
         private sealed class RecipeRow
         {

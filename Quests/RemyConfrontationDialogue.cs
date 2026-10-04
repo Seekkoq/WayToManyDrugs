@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Entities;
 using CustomNPCExample.NPCs;
@@ -88,7 +88,7 @@ namespace CustomNPCExample.Quests
                 {
                     _armed = true;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Remy confrontation dialogue armed. " +
                         "Extort is the only ending."
                     );
@@ -96,12 +96,9 @@ namespace CustomNPCExample.Quests
 
                 return armed;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed arming Remy confrontation: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -192,7 +189,7 @@ namespace CustomNPCExample.Quests
             _completed = true;
             _armed = false;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Player chose to extort Remy."
             );
 
@@ -214,16 +211,13 @@ namespace CustomNPCExample.Quests
                     );
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Remy restored to normal dialogue."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed restoring Remy dialogue: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -239,11 +233,6 @@ namespace CustomNPCExample.Quests
             _armed = false;
             _completed = false;
             _dialogue = null;
-
-            // Do not null _registeredDialogue or _callbackDialogue.
-            // Their callbacks remain registered on the old dialogue object.
-            // A new dialogue instance will fail ReferenceEquals and register
-            // itself normally.
 
             try
             {

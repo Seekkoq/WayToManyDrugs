@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Entities;
 using CustomNPCExample.NPCs;
@@ -26,9 +26,6 @@ namespace CustomNPCExample.Quests
 
         public static bool IsArmed => _armed;
 
-        /// <summary>
-        /// Swaps Damon to snitch-arc dialogue.
-        /// </summary>
         public static bool ArmSnitchDialogue()
         {
             if (_armed)
@@ -104,14 +101,14 @@ namespace CustomNPCExample.Quests
                 if (ok)
                 {
                     _armed = true;
-                    MelonLogger.Msg("[WVC Snitch] Damon snitch-arc dialogue armed.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Damon snitch-arc dialogue armed.");
                 }
 
                 return ok;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Dialogue arm failed: " + ex.Message);
+
                 return false;
             }
         }
@@ -121,13 +118,10 @@ namespace CustomNPCExample.Quests
             if (!_armed)
                 return;
 
-            MelonLogger.Msg("[WVC Snitch] Player finished snitch conversation with Damon.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Player finished snitch conversation with Damon.");
             SnitchQuestManager.NotifyTalkedToDamon();
         }
 
-        /// <summary>
-        /// Restores Damon's normal supplier dialogue.
-        /// </summary>
         public static void RestoreNormalDialogue()
         {
             if (!_armed)
@@ -138,26 +132,22 @@ namespace CustomNPCExample.Quests
                 _dialogue?.StopOverride();
                 _armed = false;
 
-                MelonLogger.Msg("[WVC Snitch] Damon restored to normal supplier dialogue.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Damon restored to normal supplier dialogue.");
 
-                // Re-arm his supplier intro if sample not yet claimed
                 if (DamonTrey.Instance?.Dialogue != null)
                 {
-                    // Assuming DamonDialogue is your existing supplier dialogue class
-                    // If your class name differs, change this line
                     try
                     {
                         DamonTreyDialogue.TryRegisterAndArm(DamonTrey.Instance.Dialogue);
                     }
                     catch
                     {
-                        // Supplier dialogue may already be claimed/disabled — that's fine
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Restore dialogue failed: " + ex.Message);
+
             }
         }
     }

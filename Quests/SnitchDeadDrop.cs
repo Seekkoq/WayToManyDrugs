@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -56,7 +56,6 @@ namespace CustomNPCExample.Quests
             public string Name;
             public bool Cleared;
 
-            // Only populated while initially planting.
             public object MdmaSlot;
             public object DmtSlot;
         }
@@ -136,11 +135,7 @@ namespace CustomNPCExample.Quests
 
             if (savedDrops.Count != RequiredDrops)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Saved route contained " +
-                    savedDrops.Count +
-                    " drops instead of seven. Creating a new route."
-                );
+
 
                 SetupBurnRoute(quest, entry);
                 return;
@@ -209,7 +204,7 @@ namespace CustomNPCExample.Quests
 
                     int cleared = GetClearedCount();
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Resumed burn route: " +
                         cleared + "/" + RequiredDrops +
                         " cleared."
@@ -336,7 +331,7 @@ namespace CustomNPCExample.Quests
                         DmtSlot = dmtSlot
                     });
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Compromised drop #" +
                         ActiveDrops.Count + ": " +
                         typeName
@@ -582,7 +577,6 @@ namespace CustomNPCExample.Quests
 
             _scanTimer = 0f;
 
-            // No longer runs every frame.
             SuppressTrackedDeadDropQuests();
 
             bool changed = false;
@@ -624,7 +618,7 @@ namespace CustomNPCExample.Quests
             {
                 BindPoiToNextDrop();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Progress: " +
                     clearedCount + "/" +
                     RequiredDrops
@@ -718,7 +712,7 @@ namespace CustomNPCExample.Quests
             }
             catch { }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] DEBUG: 7/7 drops completed."
             );
 

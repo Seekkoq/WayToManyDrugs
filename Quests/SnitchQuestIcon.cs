@@ -19,9 +19,9 @@ namespace CustomNPCExample.Quests
             tex.filterMode = FilterMode.Bilinear;
 
             Color transparent = new Color(0, 0, 0, 0);
-            Color outerRing = new Color(0.10f, 0.25f, 0.50f, 1f); // Deep blue
-            Color innerFill = new Color(0.20f, 0.55f, 0.95f, 1f); // Bright blue
-            Color center = new Color(0.95f, 0.98f, 1.00f, 1f); // White dot
+            Color outerRing = new Color(0.10f, 0.25f, 0.50f, 1f);
+            Color innerFill = new Color(0.20f, 0.55f, 0.95f, 1f);
+            Color center = new Color(0.95f, 0.98f, 1.00f, 1f);
 
             float radius = size * 0.5f;
             Vector2 mid = new Vector2(radius, radius);
@@ -62,7 +62,7 @@ namespace CustomNPCExample.Quests
 
             _icon.name = "WVC_SnitchQuest_Icon";
 
-            MelonLogger.Msg("[WVC Snitch] Round quest icon generated.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Round quest icon generated.");
             return _icon;
         }
     }

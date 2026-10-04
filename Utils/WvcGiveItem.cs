@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 
@@ -16,7 +16,7 @@ namespace CustomNPCExample.Utils
 
             if (_submitMethod == null)
             {
-                MelonLogger.Warning("[WvcGive] SubmitCommand not resolved.");
+
                 return false;
             }
 
@@ -25,12 +25,12 @@ namespace CustomNPCExample.Utils
             try
             {
                 _submitMethod.Invoke(null, new object[] { cmd });
-                MelonLogger.Msg("[WvcGive] Executed: " + cmd);
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WvcGive] Executed: " + cmd);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WvcGive] Invoke failed: " + ex.Message);
+
                 return false;
             }
         }
@@ -48,7 +48,6 @@ namespace CustomNPCExample.Utils
                     if (consoleType == null)
                         continue;
 
-                    // Use the overload that takes a single System.String
                     _submitMethod = consoleType.GetMethod(
                         "SubmitCommand",
                         BindingFlags.Public | BindingFlags.Static,
@@ -59,16 +58,13 @@ namespace CustomNPCExample.Utils
 
                     if (_submitMethod != null)
                     {
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "[WvcGive] Resolved: SubmitCommand(string)"
                         );
                     }
                     else
                     {
-                        MelonLogger.Warning(
-                            "[WvcGive] SubmitCommand(string) not found on " +
-                            consoleType.FullName
-                        );
+
                     }
 
                     break;

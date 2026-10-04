@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Entities;
 using CustomNPCExample.NPCs;
@@ -70,16 +70,14 @@ namespace CustomNPCExample.Quests
                 if (armed)
                 {
                     _armed = true;
-                    MelonLogger.Msg("[WVC Snitch] Marty Second Opinion dialogue armed.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Marty Second Opinion dialogue armed.");
                 }
 
                 return armed;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed arming Marty investigation dialogue: " + ex.Message
-                );
+
                 return false;
             }
         }
@@ -191,7 +189,7 @@ namespace CustomNPCExample.Quests
             _completed = true;
             _armed = false;
 
-            MelonLogger.Msg("[WVC Snitch] Player finished questioning Marty.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Player finished questioning Marty.");
 
             SnitchStoryManager.NotifyMartyQuestioned();
             RestoreNormalDialogue();
@@ -211,15 +209,13 @@ namespace CustomNPCExample.Quests
                     );
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Marty restored to normal supplier dialogue."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Failed restoring Marty dialogue: " + ex.Message
-                );
+
             }
         }
 
@@ -236,9 +232,6 @@ namespace CustomNPCExample.Quests
             _completed = false;
             _dialogue = null;
 
-            // Preserve _registeredDialogue and _callbackDialogue to avoid
-            // registering duplicate callbacks on the same dialogue object.
-
             try
             {
                 if (MartyMellows.Instance?.Dialogue != null)
@@ -249,6 +242,6 @@ namespace CustomNPCExample.Quests
                 }
             }
             catch { }
-        }       
+        }
     }
 }

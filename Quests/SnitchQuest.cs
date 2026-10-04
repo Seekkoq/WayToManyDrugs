@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Quests;
 using UnityEngine;
@@ -16,7 +16,6 @@ namespace CustomNPCExample.Quests
 
         protected override bool AutoBegin => false;
 
-        // Use our new round icon
         protected override Sprite QuestIcon => SnitchQuestIcon.Get();
 
         public QuestEntry TalkToDamonEntry { get; private set; }
@@ -49,9 +48,9 @@ namespace CustomNPCExample.Quests
                     TalkToDamonEntry.SetPOIToNPC(DamonTrey.Instance);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Could not bind POI to Damon: " + ex.Message);
+
             }
         }
 
@@ -74,13 +73,13 @@ namespace CustomNPCExample.Quests
                     TalkToDamonEntry.State != S1API.Quests.Constants.QuestState.Completed)
                 {
                     TalkToDamonEntry.Complete();
-                    MelonLogger.Msg("[WVC Snitch] Step 1 complete: Talked to Damon.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Step 1 complete: Talked to Damon.");
                 }
 
                 if (BurnRouteEntry != null)
                 {
                     BurnRouteEntry.Begin();
-                    MelonLogger.Msg("[WVC Snitch] Step 2 started: Burn the Routes.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Step 2 started: Burn the Routes.");
 
                     SnitchDeadDrop.SetupBurnRoute(this, BurnRouteEntry);
                 }

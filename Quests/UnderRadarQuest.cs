@@ -25,7 +25,7 @@ namespace CustomNPCExample.Quests
                 "Go home and sleep until morning"
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Under the Radar quest created."
             );
         }
@@ -43,7 +43,7 @@ namespace CustomNPCExample.Quests
 
                 Complete();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Snitch] Under the Radar completed."
                 );
             }

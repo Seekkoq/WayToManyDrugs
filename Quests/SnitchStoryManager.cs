@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Reflection;
 using MelonLoader;
@@ -35,7 +35,6 @@ namespace CustomNPCExample.Quests
 
         private static int _confrontDelayGeneration;
 
-        // Confront Remy state
         private static ConfrontRemyQuest _confrontRemyQuest;
         private static bool _confrontRemyStarted;
         private static bool _remyConfronted;
@@ -84,10 +83,6 @@ namespace CustomNPCExample.Quests
         public static bool IsConfrontRemyActive =>
     SnitchStorySave.Stage == SnitchStorySave.STAGE_CONFRONT_REMY && !_remyConfronted;
 
-        // ------------------------------------------------------------
-        // Main Update
-        // ------------------------------------------------------------
-
         public static void Update()
         {
             UpdateSleepDetection();
@@ -97,10 +92,6 @@ namespace CustomNPCExample.Quests
             UpdateEvidenceCollection();
             UpdateRemyConfrontation();
         }
-
-        // ------------------------------------------------------------
-        // Save/Load
-        // ------------------------------------------------------------
 
         public static void RestoreAfterGameLoad()
         {
@@ -112,7 +103,7 @@ namespace CustomNPCExample.Quests
             SnitchStoryQuestCleaner.CancelAllLoadedStoryQuests();
             RebuildVisibleQuestForCurrentStage();
 
-            MelonLogger.Msg("[WVC Snitch] Post-Snitch quest UI restored for stage " + SnitchStorySave.Stage + ".");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Post-Snitch quest UI restored for stage " + SnitchStorySave.Stage + ".");
         }
 
         public static void HideTransientQuestsForSave()
@@ -124,7 +115,7 @@ namespace CustomNPCExample.Quests
             CleanupLocalReferences();
             SnitchStoryQuestCleaner.CancelAllLoadedStoryQuests();
 
-            MelonLogger.Msg("[WVC Snitch] Transient story quests hidden before save.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Transient story quests hidden before save.");
         }
 
         public static void RebuildAfterGameSave()
@@ -133,7 +124,7 @@ namespace CustomNPCExample.Quests
             _saveCleanupActive = false;
             RebuildVisibleQuestForCurrentStage();
 
-            MelonLogger.Msg("[WVC Snitch] Transient story quest rebuilt after save.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Transient story quest rebuilt after save.");
         }
 
         public static void RepairVisibleQuest()
@@ -144,7 +135,7 @@ namespace CustomNPCExample.Quests
             _saveCleanupActive = false;
             RebuildVisibleQuestForCurrentStage();
 
-            MelonLogger.Msg("[WVC Snitch] Visible story quest repaired.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible story quest repaired.");
         }
 
         public static void RebuildVisibleQuestForCurrentStage()
@@ -189,10 +180,6 @@ namespace CustomNPCExample.Quests
                     return;
             }
         }
-
-        // ------------------------------------------------------------
-        // Stage Transitions
-        // ------------------------------------------------------------
 
         public static void StartUnderRadarQuest()
         {
@@ -243,10 +230,6 @@ namespace CustomNPCExample.Quests
             RebuildVisibleQuestForCurrentStage();
         }
 
-        // ------------------------------------------------------------
-        // Under the Radar
-        // ------------------------------------------------------------
-
         private static void EnsureUnderRadarQuest()
         {
             try
@@ -265,7 +248,7 @@ namespace CustomNPCExample.Quests
                 _lastDay = -1;
 
                 TryHookSleepEvents();
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Under the Radar.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Under the Radar.");
             }
             catch (Exception ex)
             {
@@ -282,11 +265,11 @@ namespace CustomNPCExample.Quests
                 if (time == null) return;
                 time.onSleepEnd += new Action(OnNativeSleepEnd);
                 _sleepHooked = true;
-                MelonLogger.Msg("[WVC Snitch] Hooked TimeManager.onSleepEnd.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Hooked TimeManager.onSleepEnd.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Snitch] Could not hook sleep event: " + ex.Message);
+
             }
         }
 
@@ -298,7 +281,7 @@ namespace CustomNPCExample.Quests
 
         public static void DebugCompleteSleep()
         {
-            MelonLogger.Msg("[WVC Snitch DEBUG] Forcing sleep objective complete.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch DEBUG] Forcing sleep objective complete.");
             CompleteUnderRadarFromSleep();
         }
 
@@ -313,7 +296,7 @@ namespace CustomNPCExample.Quests
             try { _underRadarQuest?.CompleteSleepStep(); } catch { }
             _underRadarQuest = null;
 
-            MelonLogger.Msg("[WVC Snitch] Player woke up. Starting Clean Up Crew.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Player woke up. Starting Clean Up Crew.");
             StartCleanUpCrewQuest();
         }
 
@@ -361,10 +344,6 @@ namespace CustomNPCExample.Quests
             catch { }
         }
 
-        // ------------------------------------------------------------
-        // Clean Up Crew
-        // ------------------------------------------------------------
-
         private static void EnsureCleanUpCrewQuest()
         {
             try
@@ -384,7 +363,7 @@ namespace CustomNPCExample.Quests
                 _cleanUpQuest.SetInspectPosition(_greyDocksPosition);
                 _cleanUpQuest.BeginInspectStep();
 
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Clean Up Crew.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Clean Up Crew.");
             }
             catch (Exception ex)
             {
@@ -427,10 +406,6 @@ namespace CustomNPCExample.Quests
 
         public static void NotifyEmptyDropFound() { TriggerEmptyDropFound(); }
 
-        // ------------------------------------------------------------
-        // Loose Lips
-        // ------------------------------------------------------------
-
         private static void EnsureLooseLipsQuest()
         {
             try
@@ -451,7 +426,7 @@ namespace CustomNPCExample.Quests
                 _looseLipsQuest.TryBindRoscoePOI();
                 _roscoeDialogueArmed = RoscoeInvestigationDialogue.ArmInvestigationDialogue();
 
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Loose Lips.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Loose Lips.");
             }
             catch (Exception ex)
             {
@@ -487,10 +462,6 @@ namespace CustomNPCExample.Quests
             StartAskMartyQuest();
         }
 
-        // ------------------------------------------------------------
-        // Ask Marty
-        // ------------------------------------------------------------
-
         private static void EnsureAskMartyQuest()
         {
             try
@@ -511,7 +482,7 @@ namespace CustomNPCExample.Quests
                 _askMartyQuest.TryBindMartyPOI();
                 _martyDialogueArmed = MartyInvestigationDialogue.ArmInvestigationDialogue();
 
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Second Opinion.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Second Opinion.");
             }
             catch (Exception ex)
             {
@@ -543,13 +514,9 @@ namespace CustomNPCExample.Quests
             try { _askMartyQuest?.CompleteMartyQuestioning(); } catch { }
             _askMartyQuest = null;
 
-            MelonLogger.Msg("[WVC Snitch] Marty questioned. Starting Hard Evidence.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Marty questioned. Starting Hard Evidence.");
             StartHardEvidenceQuest();
         }
-
-        // ------------------------------------------------------------
-        // Hard Evidence
-        // ------------------------------------------------------------
 
         private static void EnsureHardEvidenceQuest()
         {
@@ -573,7 +540,7 @@ namespace CustomNPCExample.Quests
 
                 StartEvidencePlanting();
 
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Hard Evidence.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Hard Evidence.");
             }
             catch (Exception ex)
             {
@@ -621,7 +588,7 @@ namespace CustomNPCExample.Quests
                         _evidencePlanting = false;
                     }
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Snitch] Evidence cart planted in " +
                         "the Slop Shop dead drop."
                     );
@@ -635,10 +602,7 @@ namespace CustomNPCExample.Quests
             if (generation == _evidencePlantGeneration)
                 _evidencePlanting = false;
 
-            MelonLogger.Warning(
-                "[WVC Snitch] Failed to plant evidence cart " +
-                "after 40 attempts."
-            );
+
         }
 
         private static bool TryPlantCartInSlopShopDrop()
@@ -773,8 +737,6 @@ namespace CustomNPCExample.Quests
 
             _hardEvidenceQuest = null;
 
-            // Save the absolute completion time so reloading does not
-            // restart the entire ten-second delay.
             SnitchStorySave.ConfrontReadyUtcTicks =
                 DateTime.UtcNow.AddSeconds(10).Ticks;
 
@@ -790,7 +752,7 @@ namespace CustomNPCExample.Quests
                 "word to anybody. I need to make a call."
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Evidence collected. " +
                 "Waiting for Damon's call."
             );
@@ -891,7 +853,7 @@ namespace CustomNPCExample.Quests
                 }
                 if (_confrontRemyQuest == null)
                 {
-                    MelonLogger.Warning("[WVC Snitch] Could not create Face to Face.");
+
                     return;
                 }
 
@@ -903,7 +865,7 @@ namespace CustomNPCExample.Quests
                 _confrontRemyQuest.TryBindRemyPOI();
                 _remyDialogueArmed = RemyConfrontationDialogue.ArmConfrontationDialogue();
 
-                MelonLogger.Msg("[WVC Snitch] Visible quest active: Face to Face. Confront Remy.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Visible quest active: Face to Face. Confront Remy.");
             }
             catch (Exception ex)
             {
@@ -926,7 +888,7 @@ namespace CustomNPCExample.Quests
             {
                 _remyDialogueArmed = RemyConfrontationDialogue.ArmConfrontationDialogue();
                 if (_remyDialogueArmed)
-                    MelonLogger.Msg("[WVC Snitch] Remy confrontation interaction is ready.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Remy confrontation interaction is ready.");
             }
         }
 
@@ -940,7 +902,6 @@ namespace CustomNPCExample.Quests
                 return;
             }
 
-            // This story version only supports extortion.
             if (choiceOutcome != 3)
                 choiceOutcome = 3;
 
@@ -972,7 +933,7 @@ namespace CustomNPCExample.Quests
                 "Sting chance is back to 8%."
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch] Remy extorted. " +
                 "Story arc completed."
             );
@@ -1049,12 +1010,9 @@ namespace CustomNPCExample.Quests
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Snitch] Reward delivery failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
 
             return false;
@@ -1063,7 +1021,7 @@ namespace CustomNPCExample.Quests
         public static void DebugCompleteRemyConfrontation(
             int ignoredChoice)
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Snitch DEBUG] Forcing extort-only Remy outcome."
             );
 
@@ -1076,14 +1034,9 @@ namespace CustomNPCExample.Quests
             NotifyRemyConfronted(3);
         }
 
-
-        // ------------------------------------------------------------
-        // Debug Helpers
-        // ------------------------------------------------------------
-
         public static void DebugForceStage(int stage)
         {
-            MelonLogger.Msg("[WVC Snitch DEBUG] Forcing story stage to " + stage);
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch DEBUG] Forcing story stage to " + stage);
             MoveToStage(stage);
         }
 
@@ -1094,22 +1047,18 @@ namespace CustomNPCExample.Quests
 
         public static void DebugPrintState()
         {
-            MelonLogger.Msg("==================================================");
-            MelonLogger.Msg("[WVC Snitch DEBUG] Story State");
-            MelonLogger.Msg("  Snitch completed: " + SnitchSaveManager.IsCompleted);
-            MelonLogger.Msg("  Story stage: " + SnitchStorySave.Stage);
-            MelonLogger.Msg("  Sleep watching: " + _sleepWatching);
-            MelonLogger.Msg("  Docks inspected: " + _docksInspected);
-            MelonLogger.Msg("  Roscoe questioned: " + _roscoeQuestioned);
-            MelonLogger.Msg("  Marty questioned: " + _martyQuestioned);
-            MelonLogger.Msg("  Evidence planted: " + _evidencePlanted);
-            MelonLogger.Msg("  Evidence collected: " + _evidenceCollected);
-            MelonLogger.Msg("==================================================");
+            global::CustomNPCExample.Utils.WvcLog.Msg("==================================================");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch DEBUG] Story State");
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Snitch completed: " + SnitchSaveManager.IsCompleted);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Story stage: " + SnitchStorySave.Stage);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Sleep watching: " + _sleepWatching);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Docks inspected: " + _docksInspected);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Roscoe questioned: " + _roscoeQuestioned);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Marty questioned: " + _martyQuestioned);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Evidence planted: " + _evidencePlanted);
+            global::CustomNPCExample.Utils.WvcLog.Msg("  Evidence collected: " + _evidenceCollected);
+            global::CustomNPCExample.Utils.WvcLog.Msg("==================================================");
         }
-
-        // ------------------------------------------------------------
-        // Cleanup
-        // ------------------------------------------------------------
 
         private static void StopDialogueOverrideForCleanup()
         {
@@ -1205,10 +1154,6 @@ namespace CustomNPCExample.Quests
 
             SnitchStorySave.Reset();
         }
-
-        // ------------------------------------------------------------
-        // Reflection Helpers
-        // ------------------------------------------------------------
 
         private static Vector3 ResolveDeadDropPosition<T>(Vector3 fallback) where T : class
         {

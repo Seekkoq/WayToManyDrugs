@@ -12,7 +12,7 @@ namespace CustomNPCExample.UI
             "WAYTOMANYDRUGS";
 
         public const string ModVersion =
-            "V3.5.0";
+            "V3.7.0";
 
         private const float DetectionInterval = 2f;
 
@@ -48,15 +48,10 @@ namespace CustomNPCExample.UI
         private static float _timer;
         private static bool _worldLoaded;
 
-        // ------------------------------------------------------------
-        // Runtime
-        // ------------------------------------------------------------
+        private static MainMenuRig _cachedRig;
 
         public static void Update()
         {
-            if (_worldLoaded)
-                return;
-
             _timer += Time.unscaledDeltaTime;
 
             if (_timer < DetectionInterval)
@@ -69,8 +64,13 @@ namespace CustomNPCExample.UI
 
             if (menuVisible)
             {
-                if (!_created)
+                _worldLoaded = false;
+
+                if (!_created || _root == null)
+                {
+                    _created = false;
                     CreateWatermark();
+                }
 
                 if (_root != null && !_root.activeSelf)
                     _root.SetActive(true);
@@ -79,10 +79,6 @@ namespace CustomNPCExample.UI
             {
                 if (_root != null && _root.activeSelf)
                     _root.SetActive(false);
-
-                // Once we are out of the menu, stop polling.
-                if (_created)
-                    _worldLoaded = true;
             }
         }
 
@@ -107,30 +103,33 @@ namespace CustomNPCExample.UI
             _texture = null;
         }
 
-        // ------------------------------------------------------------
-        // Detection
-        // ------------------------------------------------------------
-
         private static bool IsMainMenuVisible()
         {
             try
             {
-                MainMenuRig rig =
-                    UnityEngine.Object.FindObjectOfType<MainMenuRig>();
+                UnityEngine.SceneManagement.Scene scene =
+                    UnityEngine.SceneManagement.SceneManager.GetActiveScene();
 
-                return rig != null &&
-                       rig.gameObject != null &&
-                       rig.gameObject.activeInHierarchy;
+                if (scene.name == "Main")
+                    return false;
+
+                MainMenuRig cached = _cachedRig;
+
+                if (cached == null)
+                {
+                    cached = _cachedRig =
+                        UnityEngine.Object.FindObjectOfType<MainMenuRig>();
+                }
+
+                return cached != null &&
+                       cached.gameObject != null &&
+                       cached.gameObject.activeInHierarchy;
             }
             catch
             {
                 return false;
             }
         }
-
-        // ------------------------------------------------------------
-        // Creation
-        // ------------------------------------------------------------
 
         private static void CreateWatermark()
         {
@@ -255,10 +254,6 @@ namespace CustomNPCExample.UI
             return texture;
         }
 
-        // ------------------------------------------------------------
-        // Card
-        // ------------------------------------------------------------
-
         private static void DrawRoundedCard(Texture2D texture)
         {
             const int radius = 10;
@@ -330,10 +325,6 @@ namespace CustomNPCExample.UI
             return dx * dx + dy * dy <= radius * radius;
         }
 
-        // ------------------------------------------------------------
-        // Weed leaf
-        // ------------------------------------------------------------
-
         private static void DrawLeaf(
             Texture2D texture,
             int left,
@@ -397,10 +388,6 @@ namespace CustomNPCExample.UI
                 }
             }
         }
-
-        // ------------------------------------------------------------
-        // Bitmap text
-        // ------------------------------------------------------------
 
         private static void DrawText(
             Texture2D texture,
