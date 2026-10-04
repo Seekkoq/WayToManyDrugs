@@ -61,7 +61,7 @@ namespace CustomNPCExample.Products
 
             _visual = root;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cart] Embedded OBJ loaded: " +
                 result.Mesh.vertexCount + " verts, " +
                 result.MaterialNames.Count + " material groups."
@@ -85,12 +85,12 @@ namespace CustomNPCExample.Products
                     MelonLogger.Error("[WVC Cart] No embedded resource ending in 'cart.obj' found.");
                     foreach (string name in assembly.GetManifestResourceNames())
                     {
-                        MelonLogger.Msg("[WVC Resource] " + name);
+                        global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Resource] " + name);
                     }
                     return data_dummy();
                 }
 
-                MelonLogger.Msg("[WVC Cart] Using resource: " + resolved);
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] Using resource: " + resolved);
 
                 using (Stream stream = assembly.GetManifestResourceStream(resolved))
                 {
@@ -132,10 +132,6 @@ namespace CustomNPCExample.Products
             return null;
         }
 
-        // ============================================================
-        // Material Management (White Body/Tip, Ultra-Clear Glass, Liquid Oil)
-        // ============================================================
-
         private static readonly Dictionary<string, Material> MaterialCache =
             new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
 
@@ -162,7 +158,6 @@ namespace CustomNPCExample.Products
 
             string lower = materialName.ToLowerInvariant();
 
-            // Check strings first, then configure settings
             bool isGlass = lower.Contains("glass");
             bool isOil = lower.Contains("oil") || lower.Contains("liquid");
 
@@ -171,19 +166,16 @@ namespace CustomNPCExample.Products
 
             if (isGlass)
             {
-                // Force fully clear
                 color = new Color(0.9f, 0.95f, 1.0f, 0.05f);
                 smoothness = 0.95f;
             }
             else if (isOil)
             {
-                // Amber Liquid
                 color = new Color(1.0f, 0.6f, 0.1f, 0.8f);
                 smoothness = 0.8f;
             }
             else
             {
-                // White Body/Tip
                 color = Color.white;
                 smoothness = 0.3f;
             }
@@ -231,10 +223,6 @@ namespace CustomNPCExample.Products
 
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         }
-
-        // ============================================================
-        // OBJ Parsing with Automatic Oil Inset
-        // ============================================================
 
         private static ObjResult ParseObj(string[] lines)
         {
@@ -325,7 +313,6 @@ namespace CustomNPCExample.Products
             if (outPos.Count == 0 || groups.Count == 0)
                 throw new InvalidOperationException("Cart OBJ has no usable geometry.");
 
-            // RECENTER MESH AROUND ORIGIN
             Bounds bounds = new Bounds(outPos[0], Vector3.zero);
             for (int i = 1; i < outPos.Count; i++)
                 bounds.Encapsulate(outPos[i]);
@@ -334,7 +321,6 @@ namespace CustomNPCExample.Products
             for (int i = 0; i < outPos.Count; i++)
                 outPos[i] -= center;
 
-            // AUTOMATICALLY SHRINK THE OIL MESH ON X/Z TO FIT INSIDE GLASS
             if (oilVertexIndices.Count > 0)
             {
                 int firstOil = GetFirstOilVertex(oilVertexIndices);
@@ -343,7 +329,7 @@ namespace CustomNPCExample.Products
                     oilBounds.Encapsulate(outPos[idx]);
 
                 Vector3 oilCenter = oilBounds.center;
-                const float OilScale = 0.90f; // Shrinks oil to 90% radius
+                const float OilScale = 0.90f;
 
                 foreach (int idx in oilVertexIndices)
                 {
@@ -353,7 +339,7 @@ namespace CustomNPCExample.Products
                     outPos[idx] = pt;
                 }
 
-                MelonLogger.Msg("[WVC Cart] Inset oil mesh. Vertices=" + oilVertexIndices.Count);
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] Inset oil mesh. Vertices=" + oilVertexIndices.Count);
             }
 
             Mesh mesh = new Mesh();
@@ -384,7 +370,7 @@ namespace CustomNPCExample.Products
 
             mesh.RecalculateBounds();
 
-            MelonLogger.Msg("[WVC Cart] OBJ groups: " + string.Join(", ", groupNames.ToArray()));
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] OBJ groups: " + string.Join(", ", groupNames.ToArray()));
 
             return new ObjResult
             {

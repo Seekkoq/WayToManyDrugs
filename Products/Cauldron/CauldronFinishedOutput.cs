@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -15,10 +15,6 @@ using NativeStorableDefinition =
 
 namespace CustomNPCExample.Products.Cauldrons
 {
-    /// <summary>
-    /// Tracks WVC cauldron recipes and replaces the native Raw Cocaine
-    /// Base output after native cooking and network updates finish.
-    /// </summary>
     public static class CauldronFinishedOutput
     {
         private static readonly Dictionary<int, string> PendingOutputs =
@@ -58,7 +54,7 @@ namespace CustomNPCExample.Products.Cauldrons
             PendingOutputs[cauldronId] = outputItemId;
             PendingQualities[cauldronId] = quality;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Pending finished output: " +
                 outputItemId +
                 " quality=" +
@@ -154,25 +150,19 @@ namespace CustomNPCExample.Products.Cauldrons
                 {
                     qualityInstance.SetQuality(quality);
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Cauldron] Output quality stamped: " +
                         quality
                     );
                 }
                 else
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Output is not a QualityItemInstance; " +
-                        "quality not applied."
-                    );
+
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] SetQuality failed: " +
-                    ex.Message
-                );
+
             }
 
             return instance != null;
@@ -193,7 +183,7 @@ namespace CustomNPCExample.Products.Cauldrons
             if (!ScheduledReplacements.Add(cauldronId))
                 return;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Scheduled delayed output replacement."
             );
 
@@ -209,16 +199,11 @@ namespace CustomNPCExample.Products.Cauldrons
             Cauldron cauldron,
             int cauldronId)
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Replacement coroutine started for " +
                 cauldronId
             );
 
-            /*
-             * Native FinishCookOperation and its observer/RPC paths
-             * may write Raw Cocaine Base after the direct finish call.
-             * Wait before replacing so we run after those writes.
-             */
             yield return null;
             yield return null;
             yield return new WaitForSeconds(0.15f);
@@ -251,10 +236,7 @@ namespace CustomNPCExample.Products.Cauldrons
                     pendingQuality,
                     out customOutput))
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Could not create output: " +
-                    outputItemId
-                );
+
 
                 PendingOutputs.Remove(cauldronId);
                 PendingQualities.Remove(cauldronId);
@@ -264,10 +246,6 @@ namespace CustomNPCExample.Products.Cauldrons
 
             bool replaced = false;
 
-            /*
-             * Retry for roughly 1.5 seconds. Depending on timing,
-             * native output can arrive after the first finish callback.
-             */
             for (int attempt = 0; attempt < 30; attempt++)
             {
                 if (TryReplaceOutput(
@@ -288,7 +266,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (replaced)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Replaced native output with: " +
                     outputItemId +
                     " x" +
@@ -299,10 +277,7 @@ namespace CustomNPCExample.Products.Cauldrons
             }
             else
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Delayed output replacement failed: " +
-                    outputItemId
-                );
+
             }
         }
 
@@ -323,9 +298,6 @@ namespace CustomNPCExample.Products.Cauldrons
                 ItemSlot outputSlot =
                     cauldron.OutputSlot;
 
-                /*
-                 * Wait until native cooking has actually written output.
-                 */
                 if (outputSlot.ItemInstance == null)
                     return false;
 
@@ -341,14 +313,11 @@ namespace CustomNPCExample.Products.Cauldrons
                     return true;
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Native output before replacement: " +
                     beforeId
                 );
 
-                /*
-                 * _internal=true bypasses normal slot locking/filtering.
-                 */
                 outputSlot.SetStoredItem(
                     customOutput,
                     true
@@ -360,13 +329,12 @@ namespace CustomNPCExample.Products.Cauldrons
                 }
                 catch
                 {
-                    // Local replacement can still succeed.
                 }
 
                 string placedId =
                     outputSlot.ItemInstance?.Definition?.ID;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Output after replacement attempt: " +
                     (placedId ?? "null")
                 );
@@ -377,12 +345,9 @@ namespace CustomNPCExample.Products.Cauldrons
                     StringComparison.OrdinalIgnoreCase
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Output replace attempt failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -402,10 +367,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (wrapper == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Definition missing: " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -421,10 +383,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Output is not storable: " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -434,12 +393,9 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 return instance != null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Instance creation failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }

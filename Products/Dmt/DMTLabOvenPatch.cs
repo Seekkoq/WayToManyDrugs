@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -40,10 +40,8 @@ namespace CustomNPCExample.Products
 
         private const string OperationIngredientId = "cocainebase";
 
-        // Inventory yield
         private const int DmtOutputQuantity = 15;
 
-        // Visual tray shards only. 15 crashes LabOven.Shatter.
         private const int DmtVisualShardQuantity = 1;
 
         public static void ApplyPatch()
@@ -58,7 +56,7 @@ namespace CustomNPCExample.Products
 
                 _applied = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Oven] Patches applied."
                 );
             }
@@ -242,7 +240,7 @@ namespace CustomNPCExample.Products
 
             PendingQualities[oven.GetInstanceID()] = quality;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DMT Oven] Pending quality=" + quality
             );
         }
@@ -320,11 +318,9 @@ namespace CustomNPCExample.Products
                     AutoStartCrystallization(__instance, ovenId)
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Oven] Use postfix failed: " + ex.Message
-                );
+
             }
         }
 
@@ -365,7 +361,7 @@ namespace CustomNPCExample.Products
                         DMT.ProductId
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Oven] Starting crystallization. Quality=" +
                     quality
                 );
@@ -375,11 +371,9 @@ namespace CustomNPCExample.Products
 
                 started = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Oven] Auto-start failed: " + ex.Message
-                );
+
             }
             finally
             {
@@ -422,11 +416,9 @@ namespace CustomNPCExample.Products
                 try { oven.IngredientSlot.ReplicateStoredInstance(); }
                 catch { }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Oven] Consume failed: " + ex.Message
-                );
+
             }
         }
 
@@ -572,9 +564,7 @@ namespace CustomNPCExample.Products
                 if (!TryCreateDmt(DmtOutputQuantity, quality, out dmt) ||
                     dmt == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Oven] Could not create DMT output."
-                    );
+
 
                     return true;
                 }
@@ -582,7 +572,7 @@ namespace CustomNPCExample.Products
                 __0 = dmt;
                 PendingQualities.Remove(ovenId);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Oven] Output DMT x" +
                     DmtOutputQuantity +
                     " quality=" + quality
@@ -590,11 +580,9 @@ namespace CustomNPCExample.Products
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Oven] Output swap failed: " + ex.Message
-                );
+
 
                 return true;
             }
@@ -638,19 +626,14 @@ namespace CustomNPCExample.Products
 
                 if (!ApplyQuality(instance, quality))
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Oven] Created DMT but quality apply failed. " +
-                        "Instance type=" + instance.GetType().FullName
-                    );
+
                 }
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Oven] TryCreateDmt failed: " + ex.Message
-                );
+
 
                 return false;
             }
@@ -671,10 +654,6 @@ namespace CustomNPCExample.Products
                 if (qualityItem == null)
                     return false;
 
-                /*
-                 * Native QualityItemInstance.SetQuality(EQuality, bool)
-                 * is the same path the game uses for product stacks.
-                 */
                 try
                 {
                     qualityItem.SetQuality(quality);

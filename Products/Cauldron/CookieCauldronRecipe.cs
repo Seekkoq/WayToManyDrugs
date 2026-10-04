@@ -5,10 +5,6 @@ using MelonLoader;
 
 namespace CustomNPCExample.Products.Cauldrons
 {
-    /// <summary>
-    /// 2 Cannabis Flour + 3 Butterscotch Chips
-    /// -> 1x Unbaked Cookie Dough
-    /// </summary>
     public static class CookieCauldronRecipe
     {
         public struct State
@@ -73,7 +69,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
         public static void Consume(Cauldron cauldron, State state)
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Consuming " +
                 CauldronRecipeAmounts.CannabisFlourRequired +
                 " Cannabis Flour + " +

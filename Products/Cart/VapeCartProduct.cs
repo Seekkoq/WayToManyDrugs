@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Console;
 using S1API.Items;
@@ -87,7 +87,6 @@ namespace CustomNPCExample.Products
 
                 var validPackaging = new S1PackagingDefinition[] { baggie, jar, brick };
 
-                // STANDARD
                 _defStandard = CustomProductItemCreator
                     .CreateBuilder(ProductId, _productKind)
                     .WithName("Vape Cart")
@@ -96,10 +95,8 @@ namespace CustomNPCExample.Products
                     .WithLegalStatus((S1LegalStatus)1)
                     .WithBaseAddictiveness(0.25f)
 
-                    // Clone donor FIRST.
                     .WithRepresentationsFrom(template)
 
-                    // Set our quality AFTER donor data.
                     .WithDefaultQuality(ResolveApiQuality("Standard"))
 
                     .WithValidPackaging(validPackaging)
@@ -107,7 +104,6 @@ namespace CustomNPCExample.Products
                     .WithNativeMixerMap((ProductMixingMap)0)
                     .Build();
 
-                // PREMIUM
                 _defPremium = CustomProductItemCreator
                     .CreateBuilder(ProductId_Premium, _productKind)
                     .WithName("Premium Vape Cart")
@@ -124,7 +120,6 @@ namespace CustomNPCExample.Products
                     .WithNativeMixerMap((ProductMixingMap)0)
                     .Build();
 
-                // HEAVENLY
                 _defHeavenly = CustomProductItemCreator
                     .CreateBuilder(ProductId_Heavenly, _productKind)
                     .WithName("Heavenly Vape Cart")
@@ -142,7 +137,7 @@ namespace CustomNPCExample.Products
                     .Build();
 
                 _built = true;
-                MelonLogger.Msg("[WVC Cart] All 3 cart quality definitions built.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] All 3 cart quality definitions built.");
                 return true;
             }
             catch (Exception ex)
@@ -180,33 +175,18 @@ namespace CustomNPCExample.Products
                 return false;
             }
 
-            // ------------------------------------------------------------
-            // Phase 1: discovery.
-            //
-            // ProductManager doesn't exist at the main menu, so returning
-            // false here is expected. TryRegister() must be called again
-            // after the save/game world loads.
-            // ------------------------------------------------------------
             try
             {
                 _defStandard.Discover(false);
                 _defPremium.Discover(false);
                 _defHeavenly.Discover(false);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
 
                 return false;
             }
 
-
-            // ------------------------------------------------------------
-            // Phase 2: native quality defaults.
-            // ------------------------------------------------------------
-
-            // ------------------------------------------------------------
-            // Phase 3: visual/UI configuration.
-            // ------------------------------------------------------------
             try
             {
                 if (!_heldApplied)
@@ -278,10 +258,9 @@ namespace CustomNPCExample.Products
                     "heavenlycart",
                     ProductId_Heavenly);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
-
 
             return true;
         }
@@ -296,11 +275,9 @@ namespace CustomNPCExample.Products
                     alias,
                     productId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    $"[WVC Cart] Alias '{alias}' failed: " +
-                    ex.Message);
+
             }
         }
 
@@ -337,7 +314,7 @@ namespace CustomNPCExample.Products
                     .WithProductManagerVisibility(true)
                     .Build();
 
-                MelonLogger.Msg("[WVC Cart] Products app category registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] Products app category registered.");
                 return true;
             }
             catch (Exception ex)
@@ -373,9 +350,6 @@ namespace CustomNPCExample.Products
             return _looseSource;
         }
 
-        // ============================================================
-        // Presentation (Loose drop scale = 0.014f fits into packager!)
-        // ============================================================
         private static void EnsurePresentationRegistered()
         {
             if (_presentationProfile != null) return;
@@ -384,7 +358,7 @@ namespace CustomNPCExample.Products
                 new ProductPresentationTransform(
                     Vector3.zero,
                     new Vector3(0f, 0f, 90f),
-                    Vector3.one * 0.014f        // Scaled to fit packaging machine
+                    Vector3.one * 0.014f
                 );
 
             _presentationProfile = new ProductPresentationProfileBuilder()
@@ -396,9 +370,6 @@ namespace CustomNPCExample.Products
                 "westvilleconnection", _productKind, _presentationProfile);
         }
 
-        // ============================================================
-        // Packaging Placements (Baggie scale = 0.009f)
-        // ============================================================
         private static void EnsurePackagingRegistered()
         {
             if (_baggieProfile == null)

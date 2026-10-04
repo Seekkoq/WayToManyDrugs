@@ -10,9 +10,6 @@ namespace CustomNPCExample.Products
 {
     public static class BrownieObjVisual
     {
-        // ── Change this to match your embedded resource name. ──
-        // If your .csproj embeds "Assets/brownie.obj" under root namespace "wvc",
-        // the manifest name will be "wvc.brownie.obj".
         private const string PreferredResourceName =
             "wvc.brownie.obj";
 
@@ -58,13 +55,11 @@ namespace CustomNPCExample.Products
             root.transform.localScale =
                 Vector3.one;
 
-            // Do NOT use root.SetActive(false) here.
-            // The generated icon system may clone the visual while active.
             UnityEngine.Object.DontDestroyOnLoad(root);
 
             _visual = root;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Brownie] Embedded OBJ loaded: " +
                 mesh.vertexCount + " verts, " +
                 (mesh.triangles.Length / 3) + " tris."
@@ -95,13 +90,13 @@ namespace CustomNPCExample.Products
                     foreach (string name in
                         assembly.GetManifestResourceNames())
                     {
-                        MelonLogger.Msg("[WVC Resource] " + name);
+                        global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Resource] " + name);
                     }
 
                     return null;
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie] Using resource: " + resolved
                 );
 
@@ -190,7 +185,6 @@ namespace CustomNPCExample.Products
                 name = "WVC_Brownie_Obj_Material"
             };
 
-            // ── Chocolate brown ──
             Color color =
                 new Color(0.36f, 0.20f, 0.09f, 1f);
 
@@ -304,14 +298,12 @@ namespace CustomNPCExample.Products
             for (int i = 0; i < outPos.Count; i++)
                 outPos[i] -= offset;
 
-            // ── Tweak this to fit your brownie model. ──
-            // Start around 0.3–0.5 and adjust in-game.
             const float ModelScale = 0.12f;
 
             for (int i = 0; i < outPos.Count; i++)
                 outPos[i] *= ModelScale;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Brownie] OBJ recentered. Old center=" +
                 offset +
                 ", size=" +
@@ -338,7 +330,7 @@ namespace CustomNPCExample.Products
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
     "[WVC Brownie] FINAL mesh bounds center=" +
     mesh.bounds.center +
     ", size=" +

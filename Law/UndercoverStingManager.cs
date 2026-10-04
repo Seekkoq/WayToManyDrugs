@@ -86,7 +86,7 @@ namespace CustomNPCExample.Law
             {
                 _lastLoggedHeat = isHighHeat;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sting State] Sting chance -> " +
                     $"{chance * 100f:F0}% | Reason: {reason}"
                 );
@@ -111,7 +111,7 @@ namespace CustomNPCExample.Law
 
             bool isSting = roll <= chance;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 $"[WVC Sting Roll] Customer: {customer.NPC.FullName} | " +
                 $"Heat: {(isHighHeat ? "HIGH [40%]" : "NORMAL [8%]")} | " +
                 $"Roll: {roll:F3} vs Threshold: {chance:F2} -> " +
@@ -123,7 +123,7 @@ namespace CustomNPCExample.Law
 
             _flagged.Add(key);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 $"[WVC Sting] *** UNDERCOVER FLAG SET *** Contract from {customer.NPC.FullName} will trigger a bust on handover! Reason: {reason}"
             );
         }
@@ -152,7 +152,7 @@ namespace CustomNPCExample.Law
 
             _flagged.Add(key);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Sting] Forced sting flag on " +
                 customer.NPC.FullName
             );
@@ -161,7 +161,7 @@ namespace CustomNPCExample.Law
         public static void ClearAll()
         {
             _flagged.Clear();
-            MelonLogger.Msg("[WVC Sting] Cleared all sting flags.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Sting] Cleared all sting flags.");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using MelonLoader;
@@ -12,12 +12,10 @@ namespace CustomNPCExample.Law
 {
     public static class UndercoverPoliceReveal
     {
-        // Normal ambush count
         private const int PatrolRoutesNormal = 1;
         private const int OfficersPerPatrolNormal = 2;
         private const int DispatchCallsNormal = 1;
 
-        // High heat ambush count
         private const int PatrolRoutesHigh = 4;
         private const int OfficersPerPatrolHigh = 4;
         private const int DispatchCallsHigh = 3;
@@ -70,9 +68,7 @@ namespace CustomNPCExample.Law
 
             if (target == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Undercover] Native local player was null. Sting aborted."
-                );
+
 
                 yield break;
             }
@@ -96,22 +92,22 @@ namespace CustomNPCExample.Law
                     ? DispatchCallsHigh
                     : DispatchCallsNormal;
 
-            MelonLogger.Msg("--------------------------------------------------");
-            MelonLogger.Msg("[WVC Undercover] === BUST AMBUSH TRIGGERED ===");
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg("--------------------------------------------------");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Undercover] === BUST AMBUSH TRIGGERED ===");
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Undercover] Heat Mode: " +
                 (highHeat ? "HIGH HEAT" : "NORMAL") +
                 " (" +
                 heatStatus +
                 ")"
             );
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Undercover] Spawn Routes: " +
                 routesToUse +
                 " | Officers Per Route: " +
                 officersPerRoute
             );
-            MelonLogger.Msg("--------------------------------------------------");
+            global::CustomNPCExample.Utils.WvcLog.Msg("--------------------------------------------------");
 
             int patrolsSpawned =
                 TrySpawnManyPatrols(
@@ -120,7 +116,7 @@ namespace CustomNPCExample.Law
                     officersPerRoute
                 );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Undercover] Spawned " +
                 patrolsSpawned +
                 " reinforcement patrol squads."
@@ -131,7 +127,7 @@ namespace CustomNPCExample.Law
             int calls =
                 CallPoliceSafely(dispatchCalls);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Undercover] === BUST AMBUSH COMPLETE === " +
                 "DispatchCalls=" +
                 calls +
@@ -153,9 +149,7 @@ namespace CustomNPCExample.Law
 
             if (player == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Undercover] Could not call police: S1API Player.Local was null."
-                );
+
 
                 return 0;
             }
@@ -169,12 +163,9 @@ namespace CustomNPCExample.Law
                     LawManager.CallPolice(player);
                     called++;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Undercover] CallPolice failed: " +
-                        ex.Message
-                    );
+
                 }
             }
 
@@ -246,21 +237,15 @@ namespace CustomNPCExample.Law
                         if (patrol != null)
                             started++;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning(
-                            "[WVC Undercover] Patrol spawn failed: " +
-                            ex.Message
-                        );
+
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Undercover] TrySpawnManyPatrols failed: " +
-                    ex.Message
-                );
+
             }
 
             return started;

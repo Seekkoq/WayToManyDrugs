@@ -39,7 +39,7 @@ namespace CustomNPCExample.Law
                         )
                     );
 
-                    MelonLogger.Msg("[WVC Sting] Patched OfferContract.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Sting] Patched OfferContract.");
                 }
                 else
                 {
@@ -61,7 +61,7 @@ namespace CustomNPCExample.Law
                         )
                     );
 
-                    MelonLogger.Msg("[WVC Sting] Patched ProcessHandover.");
+                    global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Sting] Patched ProcessHandover.");
                 }
                 else
                 {
@@ -69,7 +69,7 @@ namespace CustomNPCExample.Law
                 }
 
                 _patched = true;
-                MelonLogger.Msg("[WVC Sting] Sting system active.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Sting] Sting system active.");
             }
             catch (Exception ex)
             {

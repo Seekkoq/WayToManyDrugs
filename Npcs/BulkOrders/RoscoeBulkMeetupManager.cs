@@ -14,31 +14,23 @@ namespace CustomNPCExample.NPCs
 {
     public static class RoscoeBulkMeetupManager
     {
-        // ------------------------------------------------------------
-        // Configuration
-        // ------------------------------------------------------------
 
-        public const float RoscoeDeadDropItemLimit = 12f;
+        /// <summary>
+        /// Ceiling the phone puts on one dead drop order: forty powder and the press to press it
+        /// with. See the sibling bulk managers for why the base game's own number is not used.
+        /// </summary>
+        public const float RoscoeDeadDropItemLimit = 2000f;
         public const float BulkPurchaseMinimum = 500f;
 
         public static KeyCode RequestMeetupKey = KeyCode.F7;
-        public static KeyCode DumpStateKey = KeyCode.F8;
 
         private const string BulkIntroTextSentKey =
             "WVC_Roscoe_BulkMeetup_TextSent_v1";
 
         private const float MeetingEndGraceSeconds = 3f;
 
-        // ------------------------------------------------------------
-        // Meeting state
-        // ------------------------------------------------------------
-
         private static bool _meetingActive;
         private static float _meetingEndGrace;
-
-        // ------------------------------------------------------------
-        // Runtime state
-        // ------------------------------------------------------------
 
         private static HarmonyLib.Harmony _harmony;
         private static bool _patched;
@@ -64,10 +56,6 @@ namespace CustomNPCExample.NPCs
 
         public static float LifetimeBulkSpend =>
             _lifetimeBulkSpend;
-
-        // ------------------------------------------------------------
-        // Initialization
-        // ------------------------------------------------------------
 
         public static void ApplyPatch()
         {
@@ -98,7 +86,7 @@ namespace CustomNPCExample.NPCs
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Patched Supplier.GetDeadDropLimit."
                     );
                 }
@@ -123,7 +111,7 @@ namespace CustomNPCExample.NPCs
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Patched Supplier.MeetupOrderCompleted."
                     );
                 }
@@ -144,7 +132,7 @@ namespace CustomNPCExample.NPCs
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Patched Supplier.IsMeetupValid."
                     );
                 }
@@ -165,7 +153,7 @@ namespace CustomNPCExample.NPCs
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Patched Supplier.GetAppropriateLocation."
                     );
                 }
@@ -186,14 +174,14 @@ namespace CustomNPCExample.NPCs
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Patched Supplier.EnableDeliveries to block Roscoe deliveries."
                     );
                 }
 
                 _patched = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Bulk] Roscoe bulk-meetup patches applied."
                 );
             }
@@ -206,28 +194,11 @@ namespace CustomNPCExample.NPCs
             }
         }
 
-        // ------------------------------------------------------------
-        // Update
-        // ------------------------------------------------------------
-
         public static void Update()
         {
             if (Input.GetKeyDown(RequestMeetupKey))
             {
                 RequestBulkMeetup();
-                return;
-            }
-
-            if (Input.GetKeyDown(DumpStateKey))
-            {
-                DumpRoscoeState();
-               
-                return;
-            }
-
-            if (Input.GetKeyDown(KeyCode.F2))
-            {
-                ProbeRoscoeShop();
                 return;
             }
 
@@ -291,22 +262,15 @@ namespace CustomNPCExample.NPCs
                     "MDMA supplies"
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Bulk] Roscoe shop description set to MDMA supplies."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Could not set shop description: " +
-                    ex.Message
-                );
+
             }
         }
-
-        // ------------------------------------------------------------
-        // Meeting lifecycle
-        // ------------------------------------------------------------
 
         private static void UpdateMeetingState()
         {
@@ -339,39 +303,30 @@ namespace CustomNPCExample.NPCs
                         RoscoeBellweather
                             .SuspendIdleScheduleForBulkMeeting();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning(
-                            "[WVC Bulk] Could not suspend schedule: " +
-                            ex.Message
-                        );
+
                     }
 
                     try
                     {
                         RoscoeDialogue.SuppressForMeeting();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning(
-                            "[WVC Bulk] Could not suppress dialogue: " +
-                            ex.Message
-                        );
+
                     }
 
                     try
                     {
                         TeleportRoscoeToMeetupLocation(_roscoeSupplier);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning(
-                            "[WVC Bulk] Teleport to meetup location failed: " +
-                            ex.Message
-                        );
+
                     }
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Roscoe entered native meeting. " +
                         "Idle schedule suspended and warped to meetup location."
                     );
@@ -396,35 +351,25 @@ namespace CustomNPCExample.NPCs
                 RoscoeBellweather
                     .ResumeIdleScheduleAfterBulkMeeting();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Could not resume schedule: " +
-                    ex.Message
-                );
+
             }
 
             try
             {
                 RoscoeDialogue.RestoreAfterMeeting();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Could not restore dialogue: " +
-                    ex.Message
-                );
+
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Bulk] Roscoe meeting ended. " +
                 "Idle schedule resumed."
             );
         }
-
-        // ------------------------------------------------------------
-        // Registration & Run-Once Shop Cosmetics
-        // ------------------------------------------------------------
 
         public static bool TryRegister(
             RoscoeBellweather roscoe)
@@ -449,8 +394,6 @@ namespace CustomNPCExample.NPCs
                                 true
                             );
                 }
-
-
 
                 if (supplier == null &&
                     roscoe.gameObject.transform.root != null)
@@ -477,7 +420,7 @@ namespace CustomNPCExample.NPCs
 
                 if (changed)
                 {
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Bound native Supplier to " +
                         "Roscoe Bellweather. Status=" +
                         SafeStatus(supplier)
@@ -501,18 +444,13 @@ namespace CustomNPCExample.NPCs
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Could not bind Roscoe: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
         }
-
-
 
         public static void TeleportRoscoeToMeetupLocation(NativeSupplier supplier)
         {
@@ -554,22 +492,21 @@ namespace CustomNPCExample.NPCs
 
                     bool warped = RoscoeBellweather.TryWarp(targetPos, targetRot);
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Teleported Roscoe to meetup location: " +
                         location.gameObject.name + " at " + targetPos + " (warped=" + warped + ")"
                     );
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Bulk] Failed to teleport Roscoe to meetup: " + ex.Message);
+
             }
         }
 
         private static IEnumerator SetupRoscoeShopAfterLoad(
             NativeSupplier supplier)
         {
-            // Wait for the save/shop systems to finish restoring.
             yield return new WaitForSeconds(3f);
 
             if (supplier == null)
@@ -613,8 +550,6 @@ namespace CustomNPCExample.NPCs
             }
         }
 
-
-
         private static void ApplyRoscoeShopCosmetics(
             NativeSupplier supplier)
         {
@@ -629,7 +564,6 @@ namespace CustomNPCExample.NPCs
                 if (shop == null)
                     return;
 
-                // Shop category
                 SetMemberValue(shop, "ShopCategory", "MDMA supplies");
                 SetMemberValue(shop, "Category", "MDMA supplies");
                 SetMemberValue(shop, "shopCategory", "MDMA supplies");
@@ -645,7 +579,7 @@ namespace CustomNPCExample.NPCs
                             _roscoePortrait
                         );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Roscoe shop cosmetics applied. " +
                         "SpritesReplaced=" +
                         replaced
@@ -654,12 +588,9 @@ namespace CustomNPCExample.NPCs
 
                 _shopCosmeticsApplied = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Shop cosmetics failed: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -776,50 +707,40 @@ namespace CustomNPCExample.NPCs
                     }
                 }
 
-                // Background
                 Circle(texture, 48, 48, 46, new Color(0.10f, 0.11f, 0.13f, 1f));
 
-                // Overalls
                 RoundedRect(texture, 22, 14, 52, 34, 10,
                     new Color(0.20f, 0.31f, 0.46f, 1f));
 
-                // Neck
                 Rect(texture, 42, 40, 12, 12,
                     new Color(0.74f, 0.55f, 0.44f, 1f));
 
-                // Face
                 Circle(texture, 48, 58, 24,
                     new Color(0.78f, 0.60f, 0.49f, 1f));
 
-                // Grey hair
                 Circle(texture, 29, 72, 11,
                     new Color(0.62f, 0.61f, 0.58f, 1f));
 
                 Circle(texture, 67, 72, 11,
                     new Color(0.62f, 0.61f, 0.58f, 1f));
 
-                // Red beanie
                 RoundedRect(texture, 25, 71, 46, 18, 9,
                     new Color(0.55f, 0.18f, 0.12f, 1f));
 
                 Rect(texture, 23, 70, 50, 5,
                     new Color(0.34f, 0.10f, 0.07f, 1f));
 
-                // Eyes
                 Circle(texture, 39, 60, 3, Color.white);
                 Circle(texture, 57, 60, 3, Color.white);
                 Circle(texture, 39, 60, 1, new Color(0.10f, 0.10f, 0.10f, 1f));
                 Circle(texture, 57, 60, 1, new Color(0.10f, 0.10f, 0.10f, 1f));
 
-                // Brows
                 Rect(texture, 34, 66, 10, 2, new Color(0.22f, 0.17f, 0.13f, 1f));
                 Rect(texture, 52, 66, 10, 2, new Color(0.22f, 0.17f, 0.13f, 1f));
 
-                // Nose and mouth
                 Rect(texture, 47, 53, 3, 6, new Color(0.63f, 0.44f, 0.35f, 1f));
                 Rect(texture, 42, 47, 13, 2, new Color(0.36f, 0.18f, 0.16f, 1f));
 
-                // Straps
                 Rect(texture, 28, 21, 8, 20, new Color(0.10f, 0.16f, 0.26f, 1f));
                 Rect(texture, 60, 21, 8, 20, new Color(0.10f, 0.16f, 0.26f, 1f));
 
@@ -838,12 +759,9 @@ namespace CustomNPCExample.NPCs
 
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Portrait creation failed: " +
-                    ex.Message
-                );
+
 
                 return null;
             }
@@ -961,10 +879,6 @@ namespace CustomNPCExample.NPCs
             }
         }
 
-        // ------------------------------------------------------------
-        // Meetup requests
-        // ------------------------------------------------------------
-
         public static bool RequestBulkMeetup()
         {
             if (!IsRegistered())
@@ -972,10 +886,7 @@ namespace CustomNPCExample.NPCs
                 if (!TryRegister(
                         RoscoeBellweather.Instance))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Bulk] Roscoe's native Supplier " +
-                        "is not ready."
-                    );
+
 
                     return false;
                 }
@@ -983,9 +894,7 @@ namespace CustomNPCExample.NPCs
 
             if (_requestPending)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] A meetup request is already pending."
-                );
+
 
                 return false;
             }
@@ -1001,7 +910,7 @@ namespace CustomNPCExample.NPCs
                 if (supplier.Status ==
                     NativeSupplier.ESupplierStatus.Meeting)
                 {
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Roscoe is already at a meetup."
                     );
 
@@ -1011,30 +920,20 @@ namespace CustomNPCExample.NPCs
                 if (supplier.Status !=
                     NativeSupplier.ESupplierStatus.Idle)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Bulk] Roscoe is busy. Status=" +
-                        supplier.Status
-                    );
+
 
                     return false;
                 }
 
                 supplier.MeetupRequested();
 
-                // Suspend Roscoe's idle schedule immediately so the schedule's
-                // StayInBuilding(budsBar) doesn't fight the native meetup navigation.
-                // (The meeting active flag will be set by UpdateMeetingState once
-                //  Status == Meeting, which avoids the double-suspend.)
                 try
                 {
                     RoscoeBellweather.SuspendIdleScheduleForBulkMeeting();
                 }
-                catch (Exception suspendEx)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Bulk] Could not pre-suspend schedule: " +
-                        suspendEx.Message
-                    );
+
                 }
 
                 _requestPending = true;
@@ -1043,7 +942,7 @@ namespace CustomNPCExample.NPCs
                     VerifyMeetupRequest(supplier)
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Bulk] Native meetup request sent to Roscoe."
                 );
 
@@ -1100,7 +999,7 @@ namespace CustomNPCExample.NPCs
                 {
                     _requestPending = false;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Roscoe accepted the meetup. " +
                         "Meet him at the marked location."
                     );
@@ -1112,10 +1011,7 @@ namespace CustomNPCExample.NPCs
                 {
                     _requestPending = false;
 
-                    MelonLogger.Warning(
-                        "[WVC Bulk] Roscoe is preparing a dead drop " +
-                        "and cannot meet right now."
-                    );
+
 
                     yield break;
                 }
@@ -1125,14 +1021,8 @@ namespace CustomNPCExample.NPCs
 
             _requestPending = false;
 
-            MelonLogger.Warning(
-                "[WVC Bulk] The meetup did not start."
-            );
-        }
 
-        // ------------------------------------------------------------
-        // Meetup unlocking and text
-        // ------------------------------------------------------------
+        }
 
         public static bool ForceUnlockBulkMeetupsAndText()
         {
@@ -1141,10 +1031,7 @@ namespace CustomNPCExample.NPCs
                 if (!TryRegister(
                         RoscoeBellweather.Instance))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Bulk] DEBUG unlock failed: " +
-                        "Supplier is not ready."
-                    );
+
 
                     return false;
                 }
@@ -1159,7 +1046,7 @@ namespace CustomNPCExample.NPCs
 
             QueueBulkIntroText(true);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Bulk] DEBUG: Roscoe bulk meetups unlocked."
             );
 
@@ -1215,7 +1102,7 @@ namespace CustomNPCExample.NPCs
 
                     _introTextRoutineRunning = false;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Roscoe bulk-meetup intro text sent."
                     );
 
@@ -1227,9 +1114,7 @@ namespace CustomNPCExample.NPCs
 
             _introTextRoutineRunning = false;
 
-            MelonLogger.Warning(
-                "[WVC Bulk] Could not send Roscoe bulk-meetup text."
-            );
+
         }
 
         private static bool TrySendBulkIntroText()
@@ -1249,10 +1134,6 @@ namespace CustomNPCExample.NPCs
                 return false;
             }
         }
-
-        // ------------------------------------------------------------
-        // Harmony patches
-        // ------------------------------------------------------------
 
         private static bool EnableDeliveriesPrefix(
             NativeSupplier __instance)
@@ -1310,7 +1191,7 @@ namespace CustomNPCExample.NPCs
                 {
                     __result = locations[0];
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Bulk] Assigned fallback meetup " +
                         "location to Roscoe."
                     );
@@ -1348,7 +1229,7 @@ namespace CustomNPCExample.NPCs
 
             if (amount < BulkPurchaseMinimum)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Bulk] Meetup purchase $" +
                     amount.ToString("0.00") +
                     " is below the bulk minimum."
@@ -1360,7 +1241,7 @@ namespace CustomNPCExample.NPCs
             _completedBulkMeetups++;
             _lifetimeBulkSpend += amount;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Bulk] Bulk purchase complete. Spend=$" +
                 amount.ToString("0.00") +
                 " | BulkMeetups=" +
@@ -1369,10 +1250,6 @@ namespace CustomNPCExample.NPCs
                 _lifetimeBulkSpend.ToString("0.00")
             );
         }
-
-        // ------------------------------------------------------------
-        // Custom Portrait Generation
-        // ------------------------------------------------------------
 
         private static Sprite CreateProceduralRoscoePortrait()
         {
@@ -1386,7 +1263,6 @@ namespace CustomNPCExample.NPCs
                 texture.filterMode = FilterMode.Bilinear;
                 texture.wrapMode = TextureWrapMode.Clamp;
 
-                // Clear the base
                 for (int y = 0; y < size; y++)
                 {
                     for (int x = 0; x < size; x++)
@@ -1395,48 +1271,36 @@ namespace CustomNPCExample.NPCs
                     }
                 }
 
-                // BG Circle
                 DrawCircleOnTexture(texture, 48, 48, 46, new Color(0.45f, 0.08f, 0.12f, 1f));
                 DrawCircleOnTexture(texture, 48, 48, 42, new Color(0.12f, 0.13f, 0.16f, 1f));
 
-                // Blue shirt / overalls
                 DrawRoundedRectOnTexture(texture, 22, 15, 52, 34, 10, new Color(0.18f, 0.32f, 0.50f, 1f));
 
-                // Neck
                 FillRectOnTexture(texture, 42, 40, 12, 12, new Color(0.76f, 0.57f, 0.46f, 1f));
 
-                // Face circle
                 DrawCircleOnTexture(texture, 48, 58, 24, new Color(0.78f, 0.60f, 0.49f, 1f));
 
-                // Ear shading
                 DrawCircleOnTexture(texture, 25, 58, 5, new Color(0.68f, 0.48f, 0.38f, 1f));
                 DrawCircleOnTexture(texture, 71, 58, 5, new Color(0.68f, 0.48f, 0.38f, 1f));
 
-                // Grey hair sides
                 DrawCircleOnTexture(texture, 29, 73, 11, new Color(0.62f, 0.61f, 0.58f, 1f));
                 DrawCircleOnTexture(texture, 67, 73, 11, new Color(0.62f, 0.61f, 0.58f, 1f));
 
-                // Red beanie hat
                 DrawRoundedRectOnTexture(texture, 25, 72, 46, 18, 9, new Color(0.55f, 0.12f, 0.09f, 1f));
                 FillRectOnTexture(texture, 23, 71, 50, 5, new Color(0.34f, 0.07f, 0.05f, 1f));
 
-                // Eyes (Whites + Pupils)
                 DrawCircleOnTexture(texture, 39, 60, 3, Color.white);
                 DrawCircleOnTexture(texture, 57, 60, 3, Color.white);
                 DrawCircleOnTexture(texture, 39, 60, 1, new Color(0.12f, 0.12f, 0.12f, 1f));
                 DrawCircleOnTexture(texture, 57, 60, 1, new Color(0.12f, 0.12f, 0.12f, 1f));
 
-                // Dark Brown eyebrows
                 FillRectOnTexture(texture, 34, 66, 10, 2, new Color(0.20f, 0.15f, 0.12f, 1f));
                 FillRectOnTexture(texture, 52, 66, 10, 2, new Color(0.20f, 0.15f, 0.12f, 1f));
 
-                // Nose shadow
                 FillRectOnTexture(texture, 47, 53, 3, 6, new Color(0.63f, 0.43f, 0.34f, 1f));
 
-                // Mouth
                 FillRectOnTexture(texture, 42, 47, 13, 2, new Color(0.35f, 0.16f, 0.15f, 1f));
 
-                // Overalls straps
                 FillRectOnTexture(texture, 28, 22, 8, 20, new Color(0.08f, 0.15f, 0.25f, 1f));
                 FillRectOnTexture(texture, 60, 22, 8, 20, new Color(0.08f, 0.15f, 0.25f, 1f));
 
@@ -1447,9 +1311,9 @@ namespace CustomNPCExample.NPCs
                 sprite.hideFlags = HideFlags.HideAndDontSave;
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Bulk] Portrait drawing failed: " + ex.Message);
+
                 return null;
             }
         }
@@ -1499,38 +1363,32 @@ namespace CustomNPCExample.NPCs
             t.SetPixel(x, y, color);
         }
 
-        // ------------------------------------------------------------
-        // Diagnostics
-        // ------------------------------------------------------------
-
         public static void DumpRoscoeState()
         {
             NativeSupplier supplier =
                 _roscoeSupplier ?? FindRoscoeSupplier();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "========== WVC ROSCOE SUPPLIER DUMP =========="
             );
 
             if (supplier == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Bulk] Roscoe native Supplier not found."
-                );
 
-                MelonLogger.Msg(
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "============================================="
                 );
 
                 return;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "Status=" +
                 SafeStatus(supplier)
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "DeliveriesEnabled=" +
                 SafeMember(supplier, "DeliveriesEnabled") +
                 " | Debt=" +
@@ -1540,7 +1398,7 @@ namespace CustomNPCExample.NPCs
             object shop =
                 GetMemberValue(supplier, "Shop");
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "Shop=" +
                 (shop != null
                     ? shop.GetType().Name
@@ -1550,7 +1408,7 @@ namespace CustomNPCExample.NPCs
             object stash =
                 GetMemberValue(supplier, "Stash");
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "Stash=" +
                 (stash != null
                     ? stash.GetType().Name
@@ -1560,14 +1418,14 @@ namespace CustomNPCExample.NPCs
             object meetingAction =
                 GetMemberValue(supplier, "_meetingAction");
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "MeetingAction=" +
                 (meetingAction != null
                     ? meetingAction.GetType().Name
                     : "null")
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "CurrentLocation=" +
                 SafeLocationName(supplier)
             );
@@ -1580,14 +1438,14 @@ namespace CustomNPCExample.NPCs
                         RoscoeBellweather.HomePosition
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "DistanceFromHome=" +
                     distance.ToString("0.00")
                 );
             }
             catch { }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "MeetingActive=" +
                 _meetingActive +
                 " | DialogueSuppressed=" +
@@ -1596,21 +1454,17 @@ namespace CustomNPCExample.NPCs
                 RoscoeDialogue.SampleClaimed
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "BulkMeetups=" +
                 _completedBulkMeetups +
                 " | LifetimeSpend=$" +
                 _lifetimeBulkSpend.ToString("0.00")
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "============================================="
             );
         }
-
-        // ------------------------------------------------------------
-        // Helpers
-        // ------------------------------------------------------------
 
         private static NativeSupplier FindRoscoeSupplier()
         {
@@ -1867,12 +1721,12 @@ namespace CustomNPCExample.NPCs
             NativeSupplier supplier =
                 _roscoeSupplier ?? FindRoscoeSupplier();
 
-            MelonLogger.Msg("========== ROSCOE SHOP PROBE ==========");
+            global::CustomNPCExample.Utils.WvcLog.Msg("========== ROSCOE SHOP PROBE ==========");
 
             if (supplier == null)
             {
-                MelonLogger.Warning("Roscoe supplier not found.");
-                MelonLogger.Msg("=======================================");
+
+                global::CustomNPCExample.Utils.WvcLog.Msg("=======================================");
                 return;
             }
 
@@ -1881,12 +1735,12 @@ namespace CustomNPCExample.NPCs
 
             if (shop == null)
             {
-                MelonLogger.Warning("Supplier.Shop is null.");
-                MelonLogger.Msg("=======================================");
+
+                global::CustomNPCExample.Utils.WvcLog.Msg("=======================================");
                 return;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "Shop type = " + shop.GetType().FullName
             );
 
@@ -1896,7 +1750,7 @@ namespace CustomNPCExample.NPCs
             if (shopComponent != null &&
                 shopComponent.gameObject != null)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "Shop GameObject = " +
                     shopComponent.gameObject.name
                 );
@@ -1904,7 +1758,7 @@ namespace CustomNPCExample.NPCs
                 Transform parent =
                     shopComponent.transform.parent;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "Shop parent = " +
                     (parent != null ? parent.name : "null")
                 );
@@ -1932,12 +1786,11 @@ namespace CustomNPCExample.NPCs
                 if (value == null)
                     continue;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     nameFields[i] + " = " + value
                 );
             }
 
-            // List every Sprite-typed member.
             Type type = shop.GetType();
             int spriteCount = 0;
 
@@ -1968,7 +1821,7 @@ namespace CustomNPCExample.NPCs
                         }
                         catch { }
 
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "SPRITE FIELD " +
                             type.Name + "." + fields[i].Name +
                             " = " +
@@ -2006,7 +1859,7 @@ namespace CustomNPCExample.NPCs
                         }
                         catch { }
 
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "SPRITE PROP " +
                             type.Name + "." + props[i].Name +
                             " = " +
@@ -2020,8 +1873,8 @@ namespace CustomNPCExample.NPCs
                 type = type.BaseType;
             }
 
-            MelonLogger.Msg("Total sprite members = " + spriteCount);
-            MelonLogger.Msg("=======================================");
+            global::CustomNPCExample.Utils.WvcLog.Msg("Total sprite members = " + spriteCount);
+            global::CustomNPCExample.Utils.WvcLog.Msg("=======================================");
         }
 
         private static bool SetMemberValue(

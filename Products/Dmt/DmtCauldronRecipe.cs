@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.ObjectScripts;
 using MelonLoader;
@@ -93,20 +93,14 @@ namespace CustomNPCExample.Products.Cauldrons
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] DmtCauldronRecipe.Read failed: " +
-                    ex.Message
-                );
+
             }
 
             return state;
         }
 
-        /// <summary>
-        /// Consumes DMT inputs. Gasoline is consumed by the caller.
-        /// </summary>
         public static bool Consume(
             Cauldron cauldron,
             State state,
@@ -144,12 +138,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (!barkOk || !baseOk || !solventOk)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] DMT consume failed. " +
-                    "bark=" + barkOk +
-                    ", base=" + baseOk +
-                    ", solvent=" + solventOk
-                );
+
 
                 return false;
             }
@@ -169,10 +158,7 @@ namespace CustomNPCExample.Products.Cauldrons
                 {
                     premium = false;
 
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Crystalizer missing at consume. " +
-                        "Producing standard crude extract."
-                    );
+
                 }
             }
 
@@ -191,7 +177,7 @@ namespace CustomNPCExample.Products.Cauldrons
                 quality = EQuality.Standard;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Consumed DMT inputs. " +
                 "bark=" + CauldronRecipeAmounts.DmtBarkRequired +
                 ", base=" + CauldronRecipeAmounts.DmtCausticBaseRequired +

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.ObjectScripts;
 using MelonLoader;
@@ -69,7 +69,6 @@ namespace CustomNPCExample.Products.Cauldrons
                     if (grade == PmkGradeKind.None)
                         continue;
 
-                    // First grade in the pot wins. No mixing grades.
                     if (state.PmkGrade == PmkGradeKind.None)
                     {
                         state.PmkGrade = grade;
@@ -84,12 +83,9 @@ namespace CustomNPCExample.Products.Cauldrons
                         state.PmkItem = slot.ItemInstance;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] MollyCauldronRecipe.Read failed: " +
-                    ex.Message
-                );
+
             }
 
             return state;
@@ -117,7 +113,7 @@ namespace CustomNPCExample.Products.Cauldrons
                 CauldronRecipeAmounts.PmkRequired
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Consumed MDMA ingredients. PMK grade: " +
                 state.PmkGrade
             );
@@ -145,11 +141,11 @@ namespace CustomNPCExample.Products.Cauldrons
             switch (grade)
             {
                 case PmkGradeKind.LabGrade:
-                    return (EQuality)4; // Heavenly
+                    return (EQuality)4;
                 case PmkGradeKind.Refined:
-                    return (EQuality)3; // Premium
+                    return (EQuality)3;
                 default:
-                    return (EQuality)2; // Standard
+                    return (EQuality)2;
             }
         }
     }

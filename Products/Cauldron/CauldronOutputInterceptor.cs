@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.ObjectScripts;
@@ -36,18 +36,13 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 string incomingId = __0?.Definition?.ID ?? "null";
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Output write detected: " + incomingId
                 );
 
                 int batchSize =
                     CauldronRecipeAmounts.GetOutputBatchSize(outputItemId);
 
-                /*
-                 * Quality priority:
-                 * 1) The grade we stored at RemoveIngredients time.
-                 * 2) The native cocaine instance quality (via TryCast).
-                 */
                 EQuality cookQuality;
 
                 if (!CauldronFinishedOutput.TryGetPendingQuality(
@@ -79,10 +74,7 @@ namespace CustomNPCExample.Products.Cauldrons
                         out ItemInstance replacement) ||
                     replacement == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Could not create replacement: " +
-                        outputItemId
-                    );
+
                     return true;
                 }
 
@@ -90,7 +82,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 CauldronFinishedOutput.ClearPending(cauldron);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Redirecting output to: " +
                     outputItemId +
                     " x" + batchSize +
@@ -99,11 +91,9 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Output interceptor failed: " + ex.Message
-                );
+
                 return true;
             }
         }

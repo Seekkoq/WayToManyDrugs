@@ -26,7 +26,7 @@ namespace CustomNPCExample.Products
             _effect =
                 _controllerObject.AddComponent<VapeCartScreenEffect>();
 
-            MelonLogger.Msg("[Cart Effect] Effect controller ready.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cart Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
@@ -35,7 +35,7 @@ namespace CustomNPCExample.Products
 
             VapeCartScreenEffect.ShouldStart = true;
 
-            MelonLogger.Msg("[Cart Effect] Trigger requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cart Effect] Trigger requested.");
         }
 
         public static void StopEffect()
@@ -44,7 +44,7 @@ namespace CustomNPCExample.Products
 
             VapeCartScreenEffect.ShouldStop = true;
 
-            MelonLogger.Msg("[Cart Effect] Forced stop requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cart Effect] Forced stop requested.");
         }
     }
 }

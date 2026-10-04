@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Law;
 using UnityEngine;
@@ -11,8 +11,6 @@ namespace CustomNPCExample.Law
     {
         private static float _lastBustTime = -999f;
 
-        // Keep false. Direct Arresting wanted level can trigger unstable
-        // native pursuit transitions on some builds.
         public static bool UseDirectWantedLevel = false;
 
         public static void Trigger(string sourceName = null)
@@ -32,9 +30,7 @@ namespace CustomNPCExample.Law
 
             if (player == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Undercover] Bust aborted: S1API Player.Local was null."
-                );
+
 
                 return;
             }
@@ -46,12 +42,9 @@ namespace CustomNPCExample.Law
                 LawManager.CallPolice(player);
                 called = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Undercover] CallPolice failed: " +
-                    ex.Message
-                );
+
             }
 
             if (UseDirectWantedLevel)
@@ -63,16 +56,13 @@ namespace CustomNPCExample.Law
                         PursuitLevel.Arresting
                     );
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Undercover] Direct wanted level failed: " +
-                        ex.Message
-                    );
+
                 }
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Undercover] Bust triggered" +
                 (
                     string.IsNullOrEmpty(sourceName)

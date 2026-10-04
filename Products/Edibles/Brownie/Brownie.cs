@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -42,6 +42,13 @@ namespace CustomNPCExample.Products
         private static bool _metadataFailureLogged;
         private static int _iconEnforceAttempts;
         private const int MaxIconEnforceAttempts = 180;
+
+        /// <summary>
+        /// How many settle attempts the rendered icon is given before the drawn fallback is used instead.
+        /// The routine that calls <see cref="EnforceIcon"/> runs twice a second, so this is about six
+        /// seconds of patience.
+        /// </summary>
+        private const int FallbackGraceAttempts = 12;
 
         public static bool TryRegister()
         {
@@ -101,10 +108,35 @@ namespace CustomNPCExample.Products
             }
         }
 
+        /// <summary>True when the game has already put a rendered icon on the definition.</summary>
+        private static bool HasRenderedIcon()
+        {
+            try
+            {
+                return _definition != null && _definition.Icon != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Fills in an icon for the frames before the game has rendered one.
+        ///
+        /// The icon a product shows is the one the presentation profile renders from its model, and that
+        /// arrives a moment after the definition is built. Until it does there is a gap, and the drawn
+        /// sprite below fills it - but only if the gap is still there after a few seconds, because a
+        /// drawing written over the rendered icon is what made the brownie the one product in the mod
+        /// with a hand-drawn picture in the inventory.
+        /// </summary>
         public static void EnforceIcon()
         {
             if (_definition == null || _iconEnforceAttempts >= MaxIconEnforceAttempts) return;
             _iconEnforceAttempts++;
+
+            if (HasRenderedIcon() || _iconEnforceAttempts < FallbackGraceAttempts)
+                return;
 
             Sprite icon = GetOrCreateBrownieIcon();
             if (icon == null) return;
@@ -116,7 +148,6 @@ namespace CustomNPCExample.Products
                 ?? GetMember(_definition, "NativeDefinition")
                 ?? GetMember(_definition, "Definition");
 
-            // FIX: fully qualified type name
             Il2CppScheduleOne.ItemFramework.ItemDefinition rawDef = rawObject as Il2CppScheduleOne.ItemFramework.ItemDefinition;
 
             if (rawDef != null)
@@ -138,7 +169,7 @@ namespace CustomNPCExample.Products
 
             if (_iconEnforceAttempts <= 3 || (_iconEnforceAttempts == 1))
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie] Icon enforce " + _iconEnforceAttempts +
                     ": wrapper=" + wrapperOk +
                     ", raw=" + rawOk +
@@ -254,7 +285,7 @@ namespace CustomNPCExample.Products
             tex.Apply(false, true);
             _staticIcon = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
             _staticIcon.name = "WVC_Brownie_Static";
-            MelonLogger.Msg("[WVC Brownie] Static icon created.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Brownie] Static icon created.");
             return _staticIcon;
         }
 
@@ -266,7 +297,7 @@ namespace CustomNPCExample.Products
                 ConsoleItemAliases.Register("brownie", ProductId);
                 ConsoleItemAliases.Register("edible", ProductId);
                 _discovered = true;
-                MelonLogger.Msg("[Westville Connection] Brownie registered and discovered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] Brownie registered and discovered.");
                 return true;
             }
             catch (InvalidOperationException) { return false; }
@@ -283,8 +314,12 @@ namespace CustomNPCExample.Products
             if (_definition == null || _productKind == null) return false;
             try
             {
-                EnforceIcon(); // apply before reading back
-                Sprite icon = GetOrCreateBrownieIcon();
+                EnforceIcon();
+
+                // The rendered icon when the game has given the definition one, and the drawn fallback
+                // only when it has not: the products app shows the same picture as the inventory does.
+                Sprite icon = HasRenderedIcon() ? _definition.Icon : GetOrCreateBrownieIcon();
+
                 _metadata = new ProductKindMetadataBuilder(_productKind)
                     .WithDisplayName("Brownie")
                     .WithColor(new Color(0.36f, 0.20f, 0.09f))
@@ -293,7 +328,7 @@ namespace CustomNPCExample.Products
                     .WithSearchAliases(new string[] { "brownie", "edible" })
                     .WithProductManagerVisibility(true)
                     .Build();
-                MelonLogger.Msg("[Westville Connection] Brownie Products app category registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] Brownie Products app category registered.");
                 return true;
             }
             catch (Exception ex)
@@ -329,6 +364,52 @@ namespace CustomNPCExample.Products
             return _lowPolySource;
         }
 
+        private static bool _iconRepairDone;
+        private static float _iconRepairTimer;
+
+        public static void UpdateIconRepair()
+        {
+            if (_iconRepairDone || _definition == null)
+                return;
+
+            GameObject visual = GetOrCreateVisualSource();
+            if (visual == null)
+                return;
+
+            _iconRepairTimer += Time.deltaTime;
+
+            if (_iconRepairTimer < 90f)
+                return;
+
+            _iconRepairDone = true;
+
+            try
+            {
+                Sprite clean = DMTIngredients.RenderModelIcon(
+                    visual, "WVC_Brownie_Product_Icon_Clean");
+
+                if (clean == null)
+                    return;
+
+                bool applied =
+                    global::CustomNPCExample.Utils.WvcIcon.Apply(ProductId, clean);
+
+                if (applied)
+                {
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
+                        "[WVC Brownie] Clean product icon applied over generated icon.");
+                }
+                else
+                {
+
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+
         private static void EnsurePresentationRegistered()
         {
             if (_presentationProfile != null) return;
@@ -336,11 +417,15 @@ namespace CustomNPCExample.Products
             var loose = new ProductPresentationTransform(Vector3.zero, new Vector3(0f, 0f, 0f), Vector3.one * 0.013f);
             var held = new ProductPresentationTransform(Vector3.zero, new Vector3(0f, 0f, 0f), Vector3.one * 0.06f);
 
-            // NO .WithGeneratedIconFromLooseVisual here
             _presentationProfile = new ProductPresentationProfileBuilder()
                 .WithLooseVisual(() => GetOrCreateVisualSource(), loose)
                 .WithHeldVisual(() => GetOrCreateVisualSource(), held)
                 .WithFunctionalProductConvexMeshColliders()
+
+                // The icon the game renders from the loose model, which is how every other product in
+                // the mod gets its picture - and the reason the brownie no longer shows a drawing in
+                // the inventory while the rest of them show the real thing.
+                .WithGeneratedIconFromLooseVisual(512, true, 0.78f)
                 .Build();
 
             ProductPresentationProfileRegistry.RegisterForProduct("westvilleconnection", ProductId, _presentationProfile);

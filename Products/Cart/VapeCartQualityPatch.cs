@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Reflection;
 using HarmonyLib;
@@ -16,10 +16,6 @@ namespace CustomNPCExample.Products
         private static bool _refreshStarted;
         private static bool _enumLogged;
 
-        // ============================================================
-        // PATCH INSTALLATION
-        // ============================================================
-
         public static void ApplyPatch()
         {
             if (_applied)
@@ -36,27 +32,21 @@ namespace CustomNPCExample.Products
                         nameof(QualityItemDefinition.GetDefaultInstance),
                         new Type[] { typeof(int) });
 
-
                 harmony.Patch(
                     getDefaultInstance,
                     postfix: new HarmonyMethod(
                         typeof(VapeCartQualityPatch),
                         nameof(GetDefaultInstancePostfix)));
 
-
                 _applied = true;
 
                 LogNativeQualityEnum();
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
-
-        // ============================================================
-        // INSTANCE PATCHES
-        // ============================================================
 
         private static void GetDefaultInstancePostfix(
             QualityItemDefinition __instance,
@@ -81,7 +71,7 @@ namespace CustomNPCExample.Products
                     itemId,
                     "GetDefaultInstance");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -103,7 +93,7 @@ namespace CustomNPCExample.Products
                     itemId,
                     "constructor");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -135,10 +125,6 @@ namespace CustomNPCExample.Products
             instance.SetQuality(desiredQuality);
 
         }
-
-        // ============================================================
-        // DEFINITION DEFAULTS
-        // ============================================================
 
         public static void ApplyCartDefinitionDefaults()
         {
@@ -173,8 +159,7 @@ namespace CustomNPCExample.Products
 
                 if (raw == null)
                 {
-                    MelonLogger.Warning(
-                        $"[WVC Cart Quality] Raw definition unavailable: {itemId}");
+
                     return;
                 }
 
@@ -196,20 +181,10 @@ namespace CustomNPCExample.Products
                     quality;
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
-
-        // ============================================================
-        // DEFINITION REFRESH
-        // ============================================================
-
-
-
-        // ============================================================
-        // DIAGNOSTICS
-        // ============================================================
 
         private static void DumpOne(
             string itemId,
@@ -222,8 +197,7 @@ namespace CustomNPCExample.Products
 
                 if (raw == null)
                 {
-                    MelonLogger.Warning(
-                        $"[WVC Cart Dump] {itemId}: raw definition NULL");
+
 
                     return;
                 }
@@ -252,7 +226,7 @@ namespace CustomNPCExample.Products
                         ? q.DefaultQuality.ToString()
                         : "n/a";
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     $"[WVC Cart Dump] {itemId} " +
                     $"| nativeID='{nativeId ?? "NULL"}' " +
                     $"| type={nativeType} " +
@@ -260,17 +234,11 @@ namespace CustomNPCExample.Products
                     $"| DefaultQuality={defaultQuality} " +
                     $"| expected={expected}");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    $"[WVC Cart Dump] {itemId} failed: " +
-                    ex.Message);
+
             }
         }
-
-        // ============================================================
-        // CART -> QUALITY MAPPING
-        // ============================================================
 
         private static bool TryGetCartQuality(
             string itemId,
@@ -286,9 +254,6 @@ namespace CustomNPCExample.Products
                     .Replace('\\', '/')
                     .Trim()
                     .ToLowerInvariant();
-
-            // Most specific first so "vape_cart_heavenly"
-            // cannot fall into generic vape_cart.
 
             if (id.Equals(
                     VapeCartProduct.ProductId_Heavenly,
@@ -341,17 +306,11 @@ namespace CustomNPCExample.Products
             {
                 quality = default;
 
-                MelonLogger.Warning(
-                    $"[WVC Cart Quality] EQuality has no value " +
-                    $"named '{name}'.");
+
 
                 return false;
             }
         }
-
-        // ============================================================
-        // DEFINITION ID
-        // ============================================================
 
         private static string GetDefinitionId(
             ItemDefinition definition)
@@ -434,10 +393,6 @@ namespace CustomNPCExample.Products
             return null;
         }
 
-        // ============================================================
-        // ENUM DIAGNOSTIC
-        // ============================================================
-
         private static void LogNativeQualityEnum()
         {
             if (_enumLogged)
@@ -452,16 +407,14 @@ namespace CustomNPCExample.Products
 
                 foreach (object value in values)
                 {
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         $"[WVC Cart Quality] EQuality.{value} = " +
                         Convert.ToInt32(value));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cart Quality] Could not dump EQuality: " +
-                    ex.Message);
+
             }
         }
     }

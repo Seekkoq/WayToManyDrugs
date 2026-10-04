@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.ObjectScripts;
@@ -31,10 +31,6 @@ namespace CustomNPCExample.Products.Chemistry
                 LeavenCount >= LeavenRequired;
         }
 
-        /*
-         * ChemistryStation exposes InputSlots (List<ItemSlot>)
-         * and IngredientSlots (ItemSlot[]). It does NOT have ItemSlots.
-         */
         public static List<ItemSlot> GetInputSlots(
             ChemistryStation station)
         {
@@ -77,12 +73,9 @@ namespace CustomNPCExample.Products.Chemistry
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Chemistry] GetInputSlots failed: " +
-                    ex.Message
-                );
+
             }
 
             return result;
@@ -125,12 +118,9 @@ namespace CustomNPCExample.Products.Chemistry
                         state.LeavenCount += slot.Quantity;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Chemistry] Recipe read failed: " +
-                    ex.Message
-                );
+
             }
 
             return state;
@@ -159,7 +149,7 @@ namespace CustomNPCExample.Products.Chemistry
                 LeavenRequired
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Chemistry] Consumed " +
                 CocoaRequired + " Cocoa, " +
                 ButterRequired + " Butter, " +
@@ -207,12 +197,9 @@ namespace CustomNPCExample.Products.Chemistry
                     remaining -= take;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Chemistry] Consume failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 

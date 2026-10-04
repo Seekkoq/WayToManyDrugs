@@ -42,7 +42,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 _applied = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Patches applied."
                 );
             }
@@ -93,7 +93,7 @@ namespace CustomNPCExample.Products.Cauldrons
                             StringComparison.OrdinalIgnoreCase
                         ) >= 0)
                     {
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "[WVC Cauldron] Method: " +
                             type.Name +
                             "." +
@@ -235,19 +235,15 @@ namespace CustomNPCExample.Products.Cauldrons
                             )
                         );
 
-                        MelonLogger.Msg(
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
                             "[WVC Cauldron] Patched " +
                             "ItemSlot.SetStoredItem: " +
                             method
                         );
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning(
-                            "[WVC Cauldron] SetStoredItem patch " +
-                            "failed: " +
-                            ex.Message
-                        );
+
                     }
                 }
             }
@@ -310,7 +306,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             PatchedMethods.Add(method);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Patched finish method: " +
                 method.Name
             );
@@ -363,10 +359,6 @@ namespace CustomNPCExample.Products.Cauldrons
             return obj?.TryCast<Cauldron>();
         }
 
-        // ============================================================
-        // State
-        // ============================================================
-
         public static bool GetState_Prefix(
             Cauldron __instance,
             ref Cauldron.EState __result)
@@ -385,10 +377,6 @@ namespace CustomNPCExample.Products.Cauldrons
                     return false;
                 }
 
-                /*
-                 * DMT is checked first so its own required amounts
-                 * are used for the start button, not another recipe's.
-                 */
                 DmtCauldronRecipe.State dmt =
                     DmtCauldronRecipe.Read(__instance);
 
@@ -494,12 +482,9 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] GetState failed: " +
-                    ex.Message
-                );
+
 
                 return true;
             }
@@ -511,10 +496,6 @@ namespace CustomNPCExample.Products.Cauldrons
             return cauldron?.OutputSlot != null &&
                    cauldron.OutputSlot.ItemInstance == null;
         }
-
-        // ============================================================
-        // Start requirement
-        // ============================================================
 
         public static bool HasIngredients_Prefix(
             object __instance,
@@ -576,10 +557,6 @@ namespace CustomNPCExample.Products.Cauldrons
 
             return true;
         }
-
-        // ============================================================
-        // Displayed / validated main inputs
-        // ============================================================
 
         public static bool GetMainInputs_Prefix(
             object __instance,
@@ -672,10 +649,6 @@ namespace CustomNPCExample.Products.Cauldrons
             return true;
         }
 
-        // ============================================================
-        // Consumption
-        // ============================================================
-
         public static bool RemoveIngredients_Prefix(
             object __instance,
             ref EQuality __result)
@@ -689,8 +662,6 @@ namespace CustomNPCExample.Products.Cauldrons
             if (cauldron == null)
                 return true;
 
-            // ---------------- DMT ----------------
-
             DmtCauldronRecipe.State dmt =
                 DmtCauldronRecipe.Read(cauldron);
 
@@ -701,16 +672,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (!dmt.IsComplete || !hasGasoline)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] DMT incomplete. available/required " +
-                        "bark=" + dmt.BarkCount + "/" +
-                        CauldronRecipeAmounts.DmtBarkRequired +
-                        ", base=" + dmt.BaseCount + "/" +
-                        CauldronRecipeAmounts.DmtCausticBaseRequired +
-                        ", solvent=" + dmt.SolventCount + "/" +
-                        CauldronRecipeAmounts.DmtLabSolventRequired +
-                        ", gasoline=" + hasGasoline
-                    );
+
 
                     __result = EQuality.Trash;
                     return false;
@@ -741,8 +703,6 @@ namespace CustomNPCExample.Products.Cauldrons
                 return false;
             }
 
-            // ---------------- Gummies ----------------
-
             GummyCauldronRecipe.State gummy =
                 GummyCauldronRecipe.Read(cauldron);
 
@@ -766,8 +726,6 @@ namespace CustomNPCExample.Products.Cauldrons
                 __result = EQuality.Standard;
                 return false;
             }
-
-            // ---------------- MDMA ----------------
 
             MollyCauldronRecipe.State mdma =
                 MollyCauldronRecipe.Read(cauldron);
@@ -797,7 +755,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 __result = cookQuality;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] MDMA cook quality: " +
                     cookQuality +
                     " grade=" +
@@ -809,7 +767,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (mdma.HasAny)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] MDMA ingredients: " +
                     "safrole=" + mdma.SafroleCount + "/" +
                     CauldronRecipeAmounts.SafroleRequired +
@@ -819,8 +777,6 @@ namespace CustomNPCExample.Products.Cauldrons
                     ", complete=" + mdma.IsComplete
                 );
             }
-
-            // ---------------- Cookies ----------------
 
             CookieCauldronRecipe.State cookie =
                 CookieCauldronRecipe.Read(cauldron);
@@ -844,13 +800,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (cookie.HasAny)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Cookie incomplete. available/required " +
-                    "flour=" + cookie.FlourCount + "/" +
-                    CauldronRecipeAmounts.CannabisFlourRequired +
-                    ", chips=" + cookie.ChipsCount + "/" +
-                    CauldronRecipeAmounts.ButterscotchChipsRequired
-                );
+
 
                 __result = EQuality.Trash;
                 return false;
@@ -858,10 +808,6 @@ namespace CustomNPCExample.Products.Cauldrons
 
             return true;
         }
-
-        // ============================================================
-        // Debug
-        // ============================================================
 
         public static void ButtonClicked_Prefix(
             object __instance)
@@ -880,7 +826,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (dmt.HasAny)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] DMT available/required: " +
                     "bark=" + dmt.BarkCount + "/" +
                     CauldronRecipeAmounts.DmtBarkRequired +
@@ -903,7 +849,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (gummy.HasAny)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Gummy ingredients: " +
                     "oil=" + gummy.OilCount + "/" +
                     CauldronRecipeAmounts.ThcOilRequired +
@@ -922,7 +868,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (mdma.HasAny)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] MDMA ingredients: " +
                     "safrole=" + mdma.SafroleCount + "/" +
                     CauldronRecipeAmounts.SafroleRequired +
@@ -939,7 +885,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
             if (cookie.HasAny)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Cookie ingredients: " +
                     "flour=" + cookie.FlourCount + "/" +
                     CauldronRecipeAmounts.CannabisFlourRequired +
@@ -949,10 +895,6 @@ namespace CustomNPCExample.Products.Cauldrons
                 );
             }
         }
-
-        // ============================================================
-        // Finish
-        // ============================================================
 
         public static void FinishCook_Prefix(
             object __instance)
@@ -970,7 +912,7 @@ namespace CustomNPCExample.Products.Cauldrons
                     cauldron,
                     out string outputItemId))
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Finish prefix: " +
                     "no pending custom output."
                 );
@@ -978,13 +920,6 @@ namespace CustomNPCExample.Products.Cauldrons
                 return;
             }
 
-            /*
-             * Crude extracts are ingredient-cloned items, so they are not
-             * QualityItemDefinitions and cannot be assigned to
-             * CocaineBaseDefinition. Swap to the DMT product as a proxy
-             * so the native cook does not emit cocaine base, then the
-             * output interceptor replaces it with the real extract.
-             */
             string swapTargetId =
                 DmtCauldronRecipe.IsDmtOutput(outputItemId)
                     ? DMT.ProductId
@@ -996,7 +931,7 @@ namespace CustomNPCExample.Products.Cauldrons
                     swapTargetId
                 );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Finish prefix. output=" +
                 outputItemId +
                 ", swapTarget=" +
@@ -1012,7 +947,7 @@ namespace CustomNPCExample.Products.Cauldrons
             Cauldron cauldron =
                 AsCauldron(__instance);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] FinishCook postfix. cauldron=" +
                 (cauldron != null)
             );
@@ -1041,7 +976,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
         public static void DumpCauldronState()
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Dump simplified."
             );
         }

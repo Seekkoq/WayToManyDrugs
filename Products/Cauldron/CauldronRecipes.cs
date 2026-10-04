@@ -10,10 +10,6 @@ using CustomNPCExample.Products;
 
 namespace CustomNPCExample.Products.Cauldrons
 {
-    /// <summary>
-    /// Shared cauldron data: ingredient IDs, slot allow-list,
-    /// and the output-definition swap used by every recipe.
-    /// </summary>
     public static class CauldronRecipes
     {
         public const string SafroleId =
@@ -35,9 +31,6 @@ namespace CustomNPCExample.Products.Cauldrons
 
         public static string GummyMixId => UnbakedGummyMix.ItemId;
 
-        /// <summary>
-        /// Items allowed into cauldron slots by our filter override.
-        /// </summary>
         public static string CrudeDmtExtractId =>
     DMTIntermediates.CrudeExtractId;
 
@@ -54,7 +47,6 @@ namespace CustomNPCExample.Products.Cauldrons
         CookieIngredients.ButterscotchChipsId,
         CookieIngredients.CannabisFlourId,
 
-        // DMT extraction
         DMTIngredients.DreamrootId,
         DMTIngredients.CausticBaseId,
         DMTIngredients.LabSolventId,
@@ -166,19 +158,16 @@ namespace CustomNPCExample.Products.Cauldrons
                     );
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Consumed gasoline. Remaining=" +
                     remaining
                 );
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Failed to consume gasoline: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -211,10 +200,6 @@ namespace CustomNPCExample.Products.Cauldrons
             catch { }
         }
 
-        /// <summary>
-        /// Temporarily replaces the cauldron's output definition so it
-        /// produces our item instead of cocaine base.
-        /// </summary>
         public static bool SwapOutputTo(
     Cauldron cauldron,
     string itemId)
@@ -240,18 +225,11 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (wrapper == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Missing definition: " +
-                        itemId
-                    );
+
 
                     return false;
                 }
 
-                /*
-                 * Some custom products expose S1ItemDefinition,
-                 * others expose S1ProductDefinition. Try both.
-                 */
                 object raw =
                     GetMember(
                         wrapper,
@@ -265,12 +243,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (raw == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Could not unwrap native definition for " +
-                        itemId +
-                        ". Wrapper type=" +
-                        wrapper.GetType().FullName
-                    );
+
 
                     return false;
                 }
@@ -298,15 +271,6 @@ namespace CustomNPCExample.Products.Cauldrons
                     }
                 }
 
-                /*
-                 * This is the important fallback. Your old MDMA cauldron
-                 * patch did this manually:
-                 *
-                 * new QualityItemDefinition(rawDefinition.Pointer)
-                 *
-                 * Some custom product wrappers will not TryCast cleanly,
-                 * but their pointer is still a valid QualityItemDefinition.
-                 */
                 if (quality == null)
                 {
                     ItemDefinition itemDefinition =
@@ -351,12 +315,7 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 if (quality == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cauldron] Output is not a QualityItemDefinition: " +
-                        itemId +
-                        ", native type=" +
-                        raw.GetType().FullName
-                    );
+
 
                     return false;
                 }
@@ -367,7 +326,7 @@ namespace CustomNPCExample.Products.Cauldrons
                 cauldron.CocaineBaseDefinition =
                     quality;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cauldron] Output swapped to " +
                     itemId +
                     " using native type " +
@@ -376,14 +335,9 @@ namespace CustomNPCExample.Products.Cauldrons
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cauldron] Swap failed for " +
-                    itemId +
-                    ": " +
-                    ex
-                );
+
 
                 return false;
             }
@@ -406,12 +360,10 @@ namespace CustomNPCExample.Products.Cauldrons
             cauldron.CocaineBaseDefinition = original;
             SwappedDefinitions.Remove(id);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Output definition restored."
             );
         }
-
-
 
         public static bool ConsumeByItemId(
     Cauldron cauldron,

@@ -26,6 +26,13 @@ namespace CustomNPCExample.Products.Cauldrons
                 if (!CauldronRecipes.IsAllowedIngredient(item))
                     return true;
 
+                // The slot may only take the ingredient it already holds. Without this the game
+                // believes a *different* ingredient fits, stores it over the stack that was there
+                // and the old items are simply gone - which is what shift-clicking a second
+                // ingredient into an occupied slot used to do.
+                if (!SlotHoldsSameIngredient(__instance, item))
+                    return true;
+
                 __result = true;
                 return false;
             }
@@ -55,6 +62,14 @@ namespace CustomNPCExample.Products.Cauldrons
                 if (!CauldronRecipes.IsAllowedIngredient(item))
                     return true;
 
+                if (!SlotHoldsSameIngredient(__instance, item))
+                {
+                    // Report no room for a foreign ingredient: that is what stops a shift-click
+                    // from overwriting the stack already in the slot.
+                    __result = 0;
+                    return false;
+                }
+
                 __result =
                     Math.Max(
                         0,
@@ -69,6 +84,37 @@ namespace CustomNPCExample.Products.Cauldrons
             }
         }
 
+        /// <summary>
+        /// True when the slot is empty or already holds the very same definition.
+        /// </summary>
+        private static bool SlotHoldsSameIngredient(
+            ItemSlot slot,
+            ItemInstance item)
+        {
+            try
+            {
+                ItemInstance stored = slot?.ItemInstance;
+
+                if (stored == null)
+                    return true;
+
+                if (item == null || item.Definition == null || stored.Definition == null)
+                    return false;
+
+                string storedId = stored.Definition.ID;
+                string incomingId = item.Definition.ID;
+
+                if (string.IsNullOrEmpty(storedId) || string.IsNullOrEmpty(incomingId))
+                    return false;
+
+                return string.Equals(storedId, incomingId, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static bool IsCustomCauldronSlot(
             ItemSlot slot)
         {
@@ -80,7 +126,6 @@ namespace CustomNPCExample.Products.Cauldrons
                     return false;
                 }
 
-                // FIX: Cast to Il2CppObjectBase first to allow TryCast to Cauldron
                 Il2CppObjectBase ownerBase =
                     slot.SlotOwner as Il2CppObjectBase;
 

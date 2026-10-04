@@ -1,14 +1,9 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Products;
 
 namespace CustomNPCExample.Products
 {
-    /// <summary>
-    /// Registers DMT's mixing profile.
-    /// Map 0 keeps DMT separate from MDMA (map 2) and
-    /// Gummies (map 1) so the mixing station cannot confuse them.
-    /// </summary>
     public static class DMTMixing
     {
         private static ProductMixingProfile _profile;
@@ -22,9 +17,7 @@ namespace CustomNPCExample.Products
 
             if (productKind == null)
             {
-                MelonLogger.Warning(
-                    "[DMT Mixing] Product kind was null. Mixing not registered."
-                );
+
                 return;
             }
 
@@ -40,7 +33,7 @@ namespace CustomNPCExample.Products
                     .WithOutputFactory(CreateMixedOutput)
                     .Build();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[DMT Mixing] DMT mixing profile registered with color mixing."
                 );
             }
@@ -56,7 +49,7 @@ namespace CustomNPCExample.Products
             ProductMixingOutput input
         )
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[DMT Mixing] Output factory called. Name=" +
                 input.MixName +
                 ", SourcePrice=" +

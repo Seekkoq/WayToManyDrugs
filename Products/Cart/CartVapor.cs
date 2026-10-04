@@ -8,22 +8,18 @@ namespace CustomNPCExample.Products
     {
         private static bool _playing;
 
-        // Materials & Textures
         private static Material _vaporMaterial;
         private static Texture2D _smokeTexture;
 
         private static Material _ringMaterial;
         private static Texture2D _ringTexture;
 
-        // ============================================================
-        // MOUTH POSITION & SMOKE TUNING
-        // ============================================================
         private const float MouthForward = 0.22f;
         private const float MouthDown = -0.12f;
         private const float MouthRight = 0.00f;
 
         private const float CloudOpacity = 0.40f;
-        private const float RingOpacity = 0.85f;  // Brighter for the solid O
+        private const float RingOpacity = 0.85f;
 
         public static void PlayVapor()
         {
@@ -47,17 +43,14 @@ namespace CustomNPCExample.Products
             Vector3 exhaleUp = camT.up;
             Vector3 exhaleRight = camT.right;
 
-            // 1. Blow a few initial cloudy puffs
             for (int i = 0; i < 5; i++)
             {
                 SpawnSmokePuff(camT, exhaleDir, exhaleUp, exhaleRight, 0.04f, 0.25f);
                 yield return new WaitForSeconds(0.04f);
             }
 
-            // 2. SHOOT THE SOLID O-RING
             SpawnSolidRing(camT, exhaleDir, exhaleUp, exhaleRight);
 
-            // 3. Blow trailing smoke through the middle of the ring
             for (int i = 0; i < 8; i++)
             {
                 SpawnSmokePuff(camT, exhaleDir, exhaleUp, exhaleRight, 0.03f, 0.15f);
@@ -67,10 +60,6 @@ namespace CustomNPCExample.Products
             yield return new WaitForSeconds(1.8f);
             _playing = false;
         }
-
-        // ============================================================
-        // THE SOLID "O" RING
-        // ============================================================
 
         private static void SpawnSolidRing(Transform camT, Vector3 forward, Vector3 up, Vector3 right)
         {
@@ -83,7 +72,6 @@ namespace CustomNPCExample.Products
             ring.transform.position = mouthOrigin;
             ring.transform.rotation = Quaternion.LookRotation(forward, up);
 
-            // Starts small at the lips
             ring.transform.localScale = Vector3.one * 0.03f;
 
             MeshRenderer renderer = ring.GetComponent<MeshRenderer>();
@@ -110,9 +98,7 @@ namespace CustomNPCExample.Products
             float lifetime = 2.2f;
             float elapsed = 0f;
 
-            // How far the ring travels forward
             float maxDistance = 1.2f;
-            // How big the ring gets
             float finalSize = 0.55f;
 
             while (elapsed < lifetime)
@@ -122,26 +108,22 @@ namespace CustomNPCExample.Products
                 elapsed += Time.deltaTime;
                 float progress = Mathf.Clamp01(elapsed / lifetime);
 
-                // Smooth deceleration curve for forward movement
                 float moveProgress = Mathf.Pow(progress, 0.45f);
                 t.position = startPos + (travelDir * (moveProgress * maxDistance));
 
-                // Expansion curve (rings grow as they slow down)
                 float currentSize = Mathf.Lerp(0.03f, finalSize, Mathf.Pow(progress, 0.6f));
                 t.localScale = Vector3.one * currentSize;
 
-                // Always billboard to face the player so the O doesn't vanish if they turn
                 if (Camera.main != null)
                 {
                     t.rotation = Quaternion.LookRotation(Camera.main.transform.forward, Camera.main.transform.up);
                 }
 
-                // Alpha fade out
                 if (mat != null)
                 {
                     float alpha;
-                    if (progress < 0.1f) alpha = Mathf.Lerp(0f, RingOpacity, progress / 0.1f); // fade in fast
-                    else alpha = Mathf.Lerp(RingOpacity, 0f, (progress - 0.1f) / 0.9f);        // fade out slow
+                    if (progress < 0.1f) alpha = Mathf.Lerp(0f, RingOpacity, progress / 0.1f);
+                    else alpha = Mathf.Lerp(RingOpacity, 0f, (progress - 0.1f) / 0.9f);
 
                     Color c = new Color(0.98f, 0.99f, 1f, alpha);
                     if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
@@ -153,10 +135,6 @@ namespace CustomNPCExample.Products
 
             if (ring != null) UnityEngine.Object.Destroy(ring);
         }
-
-        // ============================================================
-        // NORMAL TRAILING SMOKE PUFFS
-        // ============================================================
 
         private static void SpawnSmokePuff(Transform camT, Vector3 forward, Vector3 up, Vector3 right, float startSize, float endSize)
         {
@@ -190,7 +168,6 @@ namespace CustomNPCExample.Products
             Transform t = puff.transform;
             Material mat = puff.GetComponent<MeshRenderer>().sharedMaterial;
 
-            // Shoots faster to "catch up" to and go through the ring
             Vector3 forwardVelocity = shootForward * Random.Range(0.6f, 0.85f);
             Vector3 upwardVelocity = driftUp * Random.Range(0.02f, 0.08f);
             Vector3 sideVelocity = spreadRight * Random.Range(-0.04f, 0.04f);
@@ -235,10 +212,6 @@ namespace CustomNPCExample.Products
 
             if (puff != null) UnityEngine.Object.Destroy(puff);
         }
-
-        // ============================================================
-        // PROCEDURAL TEXTURES & MATERIALS
-        // ============================================================
 
         private static Material GetVaporMaterial()
         {
@@ -316,7 +289,7 @@ namespace CustomNPCExample.Products
         {
             if (_ringTexture != null) return _ringTexture;
 
-            int size = 256; // Higher resolution for crisp O-ring
+            int size = 256;
             _ringTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
             {
                 name = "WVC_SolidRing_Tex",
@@ -328,9 +301,7 @@ namespace CustomNPCExample.Products
             Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
             float maxRadius = size * 0.48f;
 
-            // Where the thickest part of the ring sits (0.0 to 1.0)
             float ringCenter = 0.70f;
-            // How thick the ring is
             float ringThickness = 0.18f;
 
             for (int y = 0; y < size; y++)
@@ -339,13 +310,10 @@ namespace CustomNPCExample.Products
                 {
                     float dist = Vector2.Distance(new Vector2(x, y), center) / maxRadius;
 
-                    // Calculate how far we are from the center of the "O" line
                     float diff = Mathf.Abs(dist - ringCenter);
 
-                    // Creates a gradient that peaks at ringCenter and fades to 0 at the thickness edges
                     float alpha = Mathf.Clamp01(1f - (diff / ringThickness));
 
-                    // Curve it so the inside/outside edges are soft but the core is solid
                     alpha = Mathf.Pow(alpha, 1.2f);
 
                     pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);

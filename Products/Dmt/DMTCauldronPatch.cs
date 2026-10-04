@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using CustomNPCExample.Products.Cauldrons;
@@ -84,7 +84,7 @@ namespace CustomNPCExample.Products
                 PatchOutputSlot();
 
                 _applied = true;
-                MelonLogger.Msg("[WVC DMT Cauldron] Patch applied.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC DMT Cauldron] Patch applied.");
             }
             catch (Exception ex)
             {
@@ -136,7 +136,7 @@ namespace CustomNPCExample.Products
                         )
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC DMT Cauldron] Patched " + method.Name
                     );
                 }
@@ -170,7 +170,7 @@ namespace CustomNPCExample.Products
                     )
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Cauldron] Patched ItemSlot.SetStoredItem postfix."
                 );
             }
@@ -189,7 +189,7 @@ namespace CustomNPCExample.Products
                 }
             );
 
-            MelonLogger.Msg("[WVC DMT Cauldron] Patched " + method.Name);
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC DMT Cauldron] Patched " + method.Name);
         }
 
         public static bool PrefixHasIngredients(
@@ -248,10 +248,6 @@ namespace CustomNPCExample.Products
             secondaryItemQuantity =
                 BasePerBatch;
 
-            /*
-             * Lab solvent and gasoline are validated separately.
-             * The cauldron only exposes two main input references here.
-             */
             return false;
         }
 
@@ -279,13 +275,7 @@ namespace CustomNPCExample.Products
             if (!recipe.IsComplete ||
                 !hasGasoline)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Incomplete recipe. Required: " +
-                    BarkPerBatch + " bark, " +
-                    BasePerBatch + " caustic base, " +
-                    SolventPerBatch + " lab solvent" +
-                    (RequireGasoline ? ", and gasoline." : ".")
-                );
+
 
                 __result =
                     NativeEQuality.Trash;
@@ -305,9 +295,7 @@ namespace CustomNPCExample.Products
 
             if (!gasolineConsumed)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Gasoline consumption failed."
-                );
+
 
                 __result =
                     NativeEQuality.Trash;
@@ -339,13 +327,7 @@ namespace CustomNPCExample.Products
                 !baseConsumed ||
                 !solventConsumed)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Input consumption failed. " +
-                    "Bark=" + barkConsumed +
-                    ", Base=" + baseConsumed +
-                    ", Solvent=" + solventConsumed +
-                    ", Gasoline=" + gasolineConsumed
-                );
+
 
                 __result =
                     NativeEQuality.Trash;
@@ -369,10 +351,7 @@ namespace CustomNPCExample.Products
                 {
                     premium = false;
 
-                    MelonLogger.Warning(
-                        "[WVC DMT Cauldron] Crystalizer could not be consumed. " +
-                        "Falling back to standard crude extract."
-                    );
+
                 }
             }
 
@@ -388,9 +367,7 @@ namespace CustomNPCExample.Products
 
             if (!swapped)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Could not install quality proxy."
-                );
+
             }
 
             TrackPendingOutput(
@@ -407,7 +384,7 @@ namespace CustomNPCExample.Products
                     ? (NativeEQuality)3
                     : (NativeEQuality)2;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DMT Cauldron] Extraction started. " +
                 "Output=" + outputItemId +
                 ", quality=" + __result +
@@ -431,9 +408,7 @@ namespace CustomNPCExample.Products
             if (swapped)
                 return true;
 
-            MelonLogger.Warning(
-                "[WVC DMT Cauldron] Swap to DMT failed. Trying MDMA proxy."
-            );
+
 
             try
             {
@@ -476,12 +451,9 @@ namespace CustomNPCExample.Products
                         );
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Cauldron] Finish replacement failed: " +
-                        ex.Message
-                    );
+
                 }
             }
 
@@ -516,12 +488,9 @@ namespace CustomNPCExample.Products
                     false
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Output replacement failed: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -570,10 +539,7 @@ namespace CustomNPCExample.Products
                     out NativeItemInstance extract) ||
                 extract == null)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Could not create output: " +
-                    outputItemId
-                );
+
 
                 return;
             }
@@ -591,7 +557,7 @@ namespace CustomNPCExample.Products
             if (pointer != IntPtr.Zero)
                 PendingExtractOutputs.Remove(pointer);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DMT Cauldron] Replaced output with " +
                 outputItemId +
                 " x1"
@@ -617,7 +583,7 @@ namespace CustomNPCExample.Products
 
                 PendingExtractOutputs[output.Pointer] = outputItemId;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Cauldron] Tracking output: " + outputItemId
                 );
             }
@@ -643,9 +609,7 @@ namespace CustomNPCExample.Products
 
                 if (wrapper == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Cauldron] Wrapper not found: " + itemId
-                    );
+
 
                     return false;
                 }
@@ -656,10 +620,7 @@ namespace CustomNPCExample.Products
 
                 if (raw == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Cauldron] Could not unwrap " + itemId +
-                        ". Wrapper type=" + wrapper.GetType().FullName
-                    );
+
 
                     return false;
                 }
@@ -684,10 +645,7 @@ namespace CustomNPCExample.Products
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Cauldron] Not storable: " + itemId +
-                        ", native type=" + raw.GetType().FullName
-                    );
+
 
                     return false;
                 }
@@ -695,11 +653,9 @@ namespace CustomNPCExample.Products
                 instance = definition.GetDefaultInstance(quantity);
                 return instance != null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] CreateExtract failed: " + ex.Message
-                );
+
 
                 return false;
             }
@@ -787,13 +743,6 @@ namespace CustomNPCExample.Products
                     }
                 }
 
-                /*
-                 * If gasoline is required, do NOT count lab solvent from the
-                 * liquid slot. Liquid slot must be gasoline.
-                 *
-                 * If gasoline is disabled later, solvent may be accepted
-                 * from the liquid slot as a fallback.
-                 */
                 if (!RequireGasoline)
                 {
                     NativeItemSlot liquid =
@@ -816,12 +765,9 @@ namespace CustomNPCExample.Products
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] ReadRecipe failed: " +
-                    ex.Message
-                );
+
             }
 
             return recipe;
@@ -872,12 +818,9 @@ namespace CustomNPCExample.Products
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Cauldron] Solvent consumption failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -893,7 +836,7 @@ namespace CustomNPCExample.Products
                     cauldron
                 );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DMT Cauldron] Recipe available/required: " +
                 "bark=" + recipe.BarkQuantity + "/" + BarkPerBatch +
                 ", base=" + recipe.BaseQuantity + "/" + BasePerBatch +

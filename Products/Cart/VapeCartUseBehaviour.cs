@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using UnityEngine;
 
@@ -34,9 +34,7 @@ namespace CustomNPCExample.Products
 
             if (cartVisual == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Cart] Cart was clicked but visual child was not found."
-                );
+
 
                 return;
             }
@@ -44,13 +42,9 @@ namespace CustomNPCExample.Products
             _nextUseTime =
                 Time.time + CooldownSeconds;
 
-            /*
-             * Animate only WVC_CartVisual_Equippable.
-             * Do NOT animate this transform/root Equippable.
-             */
             CartAnimator.PlayHit(cartVisual);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cart] Cart inhale triggered."
             );
         }
@@ -63,7 +57,6 @@ namespace CustomNPCExample.Products
                 return false;
             }
 
-            // Ignore hidden template objects.
             if (transform.position.y < -1000f)
                 return false;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Reflection;
 using MelonLoader;
@@ -36,14 +36,14 @@ namespace CustomNPCExample.Products
                 ItemDefinition donor = ItemManager.GetDefinition(DonorId);
                 if (donor == null)
                 {
-                    MelonLogger.Warning("[WVC Cart] Donor template not ready.");
+
                     return false;
                 }
 
                 _cartVisual = CartObjVisual.GetOrCreate();
                 if (_cartVisual == null)
                 {
-                    MelonLogger.Warning("[WVC Cart] Cart OBJ visual not ready.");
+
                     return false;
                 }
 
@@ -64,18 +64,16 @@ namespace CustomNPCExample.Products
 
                 ApplyCustomRepresentations(CartId, _cartVisual);
 
-                // Create and apply our crisp 2D inventory icon
                 _cartIcon = CreateCartIconSprite("WVC_VapeCart_Icon_Fixed");
                 ApplyIcon(CartId, _cartIcon);
 
                 SetIngredientPrice(CartId, CartPrice);
                 MoveSourceOffscreen(_cartVisual);
 
-                // Reapply after UI load to overwrite any cached donor sprite
                 MelonCoroutines.Start(ReapplyCartIconAfterUiReady());
 
                 _registered = true;
-                MelonLogger.Msg("[WVC Cart] Vape Cart registered successfully with custom 2D icon.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] Vape Cart registered successfully with custom 2D icon.");
                 return true;
             }
             catch (Exception ex)
@@ -94,13 +92,9 @@ namespace CustomNPCExample.Products
             if (_cartIcon != null)
             {
                 ApplyIcon(CartId, _cartIcon);
-                MelonLogger.Msg("[WVC Cart] Cart icon refreshed for UI.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cart] Cart icon refreshed for UI.");
             }
         }
-
-                // ============================================================
-        // 2D Procedural Icon Generation (Redrawn - AA + cylindrical shading)
-        // ============================================================
 
         private static Sprite CreateCartIconSprite(string iconName)
         {
@@ -141,62 +135,49 @@ namespace CustomNPCExample.Products
             Color ceramic = new Color(0.95f, 0.95f, 0.97f, 1f);
             Color groove  = new Color(0.40f, 0.42f, 0.47f, 0.85f);
 
-            // ---- Soft ground shadow ----
             c.Ellipse(Cx, 50f, 92f, 15f, new Color(0f, 0f, 0f, 0.20f));
             c.Ellipse(Cx, 46f, 64f, 10f, new Color(0f, 0f, 0f, 0.16f));
 
-            // ---- 510 threaded metal connector (bottom) ----
             c.Cylinder(Cx, 92f, 30f, 30f, 12f, metal, 0.42f, 0.55f, -0.42f);
-            c.Ellipse(Cx, 76f, 27f, 2.6f, groove);   // thread grooves
+            c.Ellipse(Cx, 76f, 27f, 2.6f, groove);
             c.Ellipse(Cx, 90f, 27f, 2.6f, groove);
             c.Ellipse(Cx, 104f, 27f, 2.6f, groove);
-            c.Ellipse(Cx, 64f, 11f, 3.5f, new Color(0.80f, 0.63f, 0.22f, 0.90f)); // gold contact pin
+            c.Ellipse(Cx, 64f, 11f, 3.5f, new Color(0.80f, 0.63f, 0.22f, 0.90f));
 
-            // ---- White ceramic base ----
             c.Cylinder(Cx, 152f, 58f, 34f, 14f, ceramic, 0.70f, 0.35f, -0.40f);
-            c.Ellipse(Cx, 120f, 50f, 2.2f, new Color(0.55f, 0.57f, 0.62f, 0.35f)); // seam
-            // amber accent stripe
+            c.Ellipse(Cx, 120f, 50f, 2.2f, new Color(0.55f, 0.57f, 0.62f, 0.35f));
             c.Cylinder(Cx, 152f, 30f, 2.5f, 2.5f, new Color(0.95f, 0.55f, 0.10f, 0.60f), 0.55f, 0.25f, -0.40f);
 
-            // ---- Amber oil inside the glass ----
             c.RoundedRect(Cx, 256f, 49f, 68f, 16f, (x, y) =>
             {
                 float t = Mathf.Clamp((x - Cx) / 49f, -1f, 1f);
                 float facing = (float)Math.Sqrt(Math.Max(0f, 1f - t * t));
-                float v = Mathf.Clamp01((y - 188f) / 136f); // 0 bottom -> 1 top
+                float v = Mathf.Clamp01((y - 188f) / 136f);
 
                 Color oil = Color.Lerp(
                     new Color(0.78f, 0.36f, 0.03f),
                     new Color(1.00f, 0.75f, 0.25f),
                     v);
 
-                oil *= 0.72f + 0.28f * facing; // round the liquid toward the edges
+                oil *= 0.72f + 0.28f * facing;
                 oil.a = 0.97f;
                 return oil;
             });
 
-            // oil surface meniscus + suspended bubbles
             c.Ellipse(Cx, 318f, 43f, 5f, new Color(1f, 0.87f, 0.50f, 0.45f));
             c.Ellipse(238f, 286f, 7f, 7f, new Color(1f, 0.93f, 0.68f, 0.35f));
             c.Ellipse(274f, 240f, 5f, 5f, new Color(1f, 0.93f, 0.68f, 0.30f));
             c.Ellipse(250f, 212f, 3.5f, 3.5f, new Color(1f, 0.93f, 0.68f, 0.25f));
 
-            // glass reflections + rim
             c.RoundedRect(216f, 258f, 6f, 66f, 6f, new Color(1f, 1f, 1f, 0.38f));
             c.RoundedRect(298f, 258f, 4f, 60f, 4f, new Color(1f, 1f, 1f, 0.12f));
             c.StrokeRoundedRect(Cx, 260f, 58f, 80f, 20f, 2.5f, new Color(0.95f, 0.98f, 1f, 0.35f));
 
-            // ---- Metal collar above the tank ----
             c.Cylinder(Cx, 355f, 56f, 17f, 8f, metal, 0.45f, 0.50f, -0.42f);
 
-            // ---- White ceramic mouthpiece (capsule) ----
             c.Cylinder(Cx, 422f, 40f, 51f, 40f, ceramic, 0.70f, 0.40f, -0.40f);
-            c.Ellipse(Cx, 462f, 12f, 4.5f, new Color(0.16f, 0.16f, 0.20f, 0.85f)); // hole
+            c.Ellipse(Cx, 462f, 12f, 4.5f, new Color(0.16f, 0.16f, 0.20f, 0.85f));
         }
-
-        // ============================================================
-        // Anti-aliased software rasterizer for the icon
-        // ============================================================
 
         private sealed class IconCanvas
         {
@@ -215,7 +196,6 @@ namespace CustomNPCExample.Products
                 _scale = designToPixelScale;
             }
 
-            /// Rounded rect shaded like a vertical cylinder (light from upper-left).
             public void Cylinder(float cx, float cy, float hw, float hh, float r,
                 Color baseColor, float ambient, float specStrength, float specPos)
             {
@@ -298,7 +278,6 @@ namespace CustomNPCExample.Products
                     });
             }
 
-            /// Box-filter downsample (premultiplied alpha to avoid dark fringes).
             public Color[] Downsample(int factor)
             {
                 int nw = _w / factor;
@@ -332,8 +311,6 @@ namespace CustomNPCExample.Products
 
                 return result;
             }
-
-            // ---- internals ----
 
             private delegate void PixelFn(int x, int y);
 
@@ -375,10 +352,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Representations
-        // ============================================================
-
         private static void ApplyCustomRepresentations(string itemId, GameObject customModel)
         {
             try
@@ -390,9 +363,9 @@ namespace CustomNPCExample.Products
                 ApplyStationRepresentation(definition, itemId, customModel, Vector3.one * 0.05f);
                 ApplyStoredRepresentation(definition, itemId, customModel, Vector3.one * 0.05f);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cart] Representation setup failed: " + ex.Message);
+
             }
         }
 
@@ -417,13 +390,11 @@ namespace CustomNPCExample.Products
 
                 if (clone == null) return false;
 
-                // Retain native generic Equippable component
                 Il2CppScheduleOne.Equipping.Equippable equippable =
                     clone.GetComponent<Il2CppScheduleOne.Equipping.Equippable>();
 
                 if (equippable == null) return false;
 
-                // Attach custom click/use behavior
                 VapeCartUseBehaviour useBehaviour = clone.GetComponent<VapeCartUseBehaviour>();
                 if (useBehaviour == null)
                 {
@@ -433,9 +404,9 @@ namespace CustomNPCExample.Products
                 definition.Equippable = equippable;
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cart] Equippable failed: " + ex.Message);
+
                 return false;
             }
         }
@@ -466,14 +437,6 @@ namespace CustomNPCExample.Products
             catch { return false; }
         }
 
-        // ============================================================
-        // Product helpers
-        //
-        // These let VapeCartProduct keep the cart as a real product while
-        // reusing the original iodine-based hand representation and icon.
-        // Do NOT call CartItem.TryRegister() for the product version.
-        // ============================================================
-
         public static Sprite GetOrCreateCartIcon()
         {
             if (_cartIcon == null)
@@ -492,9 +455,7 @@ namespace CustomNPCExample.Products
 
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Cart] Could not create fixed cart icon."
-                );
+
 
                 return;
             }
@@ -502,17 +463,6 @@ namespace CustomNPCExample.Products
             ApplyIcon(productId, icon);
         }
 
-        /*
-         * This restores the exact hand setup from the old CartItem version:
-         *
-         * - Iodine's generic Equippable hand anchor
-         * - Cart model as child of that Equippable
-         * - local scale = 0.06
-         * - CartAnimator animates only the cart child, not the player's hand
-         *
-         * The item remains a ProductDefinition. This only replaces its held
-         * representation.
-         */
         public static bool ApplyOriginalHeldRepresentationToProduct(
             string productId)
         {
@@ -536,11 +486,6 @@ namespace CustomNPCExample.Products
                     return false;
                 }
 
-                /*
-                 * Important:
-                 * Clone IODINE's Equippable template, not the weed product donor.
-                 * This is what restores your old held position and scale.
-                 */
                 GameObject clone =
                     BuildRepresentationClone(
                         iodineDefinition.Equippable.gameObject,
@@ -571,19 +516,16 @@ namespace CustomNPCExample.Products
 
                 productDefinition.Equippable = equippable;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cart] Original iodine held representation restored " +
                     "for product."
                 );
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cart] Failed to restore original held representation: " +
-                    ex
-                );
+
 
                 return false;
             }
@@ -650,10 +592,6 @@ namespace CustomNPCExample.Products
             return clone;
         }
 
-        // ============================================================
-        // Helpers
-        // ============================================================
-
         private static void SetIngredientPrice(string itemId, float price)
         {
             try
@@ -683,9 +621,9 @@ namespace CustomNPCExample.Products
                 TrySetAnyIconSpriteMember(wrapper, icon);
                 TrySetAnyIconSpriteMember(raw, icon);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cart] Icon assignment failed: " + ex.Message);
+
             }
         }
 
@@ -785,7 +723,7 @@ namespace CustomNPCExample.Products
         private static void RegisterAliasSafely(string alias, string itemId)
         {
             try { ConsoleItemAliases.Register(alias, itemId); }
-            catch (Exception ex) { MelonLogger.Warning("[WVC Cart] Alias failed: " + ex.Message); }
+            catch (Exception) {  }
         }
     }
 }

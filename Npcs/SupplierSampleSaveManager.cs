@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using HarmonyLib;
@@ -8,10 +8,6 @@ using UnityEngine;
 
 namespace CustomNPCExample.NPCs
 {
-    /// <summary>
-    /// Persists supplier sample claims per save file so players can only
-    /// receive a free sample once per save.
-    /// </summary>
     public static class SupplierSampleSaveManager
     {
         public const string RoscoeKey       = "roscoe";
@@ -20,6 +16,8 @@ namespace CustomNPCExample.NPCs
         public const string MartyMellowsKey = "marty_mellows";
         public const string RemyKey         = "remy";
         public const string StellaVanceKey  = "stella_vance";
+        public const string SalViahKey      = "sal_viah";
+        public const string PillVilleKey    = "pill_ville";
 
         private static readonly MelonPreferences_Category Category =
             MelonPreferences.CreateCategory(
@@ -33,7 +31,6 @@ namespace CustomNPCExample.NPCs
                 ""
             );
 
-        // Memory cache: SaveId -> Set of claimed supplier keys
         private static readonly Dictionary<string, HashSet<string>> Cache =
             new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -59,15 +56,12 @@ namespace CustomNPCExample.NPCs
 
             string saveId = _activeSaveId;
 
-            // 1. Check in-memory cache for active save
             if (Cache.TryGetValue(saveId, out var set) && set.Contains(supplierKey))
                 return true;
 
-            // 2. Check in-memory cache for default save fallback
             if (Cache.TryGetValue("default_save", out var defaultSet) && defaultSet.Contains(supplierKey))
                 return true;
 
-            // 3. Check PlayerPrefs
             string prefKey = GetPlayerPrefKey(saveId, supplierKey);
             if (PlayerPrefs.GetInt(prefKey, 0) == 1)
             {
@@ -97,7 +91,6 @@ namespace CustomNPCExample.NPCs
             AddToCache(saveId, supplierKey);
             AddToCache("default_save", supplierKey);
 
-            // Save to PlayerPrefs
             try
             {
                 PlayerPrefs.SetInt(GetPlayerPrefKey(saveId, supplierKey), 1);
@@ -106,10 +99,9 @@ namespace CustomNPCExample.NPCs
             }
             catch { }
 
-            // Save to MelonPreferences file
             SavePreferences();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Samples] Sample marked as claimed for supplier '" +
                 supplierKey + "' in save '" + saveId + "'."
             );
@@ -140,7 +132,7 @@ namespace CustomNPCExample.NPCs
 
             SavePreferences();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Samples] Sample claim reset for supplier '" +
                 supplierKey + "' in save '" + saveId + "'."
             );
@@ -167,7 +159,7 @@ namespace CustomNPCExample.NPCs
             try { PlayerPrefs.Save(); } catch { }
             SavePreferences();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Samples] All sample claims reset for save '" + saveId + "'."
             );
         }
@@ -189,10 +181,6 @@ namespace CustomNPCExample.NPCs
             return raw.Replace(" ", "_").Replace(":", "_").Replace("/", "_").Replace("\\", "_");
         }
 
-        // ============================================================
-        // Storage & Serialization
-        // ============================================================
-
         private static void EnsureLoaded()
         {
             if (_loaded)
@@ -205,7 +193,6 @@ namespace CustomNPCExample.NPCs
                 string raw = ClaimedDataPref.Value;
                 if (!string.IsNullOrEmpty(raw))
                 {
-                    // Format: saveId:key1,key2;saveId2:key1
                     string[] entries = raw.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                     for (int i = 0; i < entries.Length; i++)
                     {
@@ -227,9 +214,9 @@ namespace CustomNPCExample.NPCs
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Samples] Error loading sample claims: " + ex.Message);
+
             }
         }
 
@@ -249,9 +236,9 @@ namespace CustomNPCExample.NPCs
                 ClaimedDataPref.Value = string.Join(";", list);
                 Category.SaveToFile();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Samples] Error saving sample claims: " + ex.Message);
+
             }
         }
 
@@ -266,10 +253,6 @@ namespace CustomNPCExample.NPCs
             set.Add(supplierKey);
         }
     }
-
-    // ============================================================
-    // Save tracking patch
-    // ============================================================
 
     [HarmonyPatch(typeof(SaveManager), "Save", new Type[] { typeof(string) })]
     public static class SupplierSampleSaveNamePatch

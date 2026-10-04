@@ -28,7 +28,6 @@ namespace CustomNPCExample.Products
 
         private bool _setupOk;
 
-        // Cool vapor palette
         private static readonly Color VaporWhite =
             new Color(0.94f, 0.96f, 1.00f);
 
@@ -50,7 +49,7 @@ namespace CustomNPCExample.Products
                 CreateVolume();
                 _setupOk = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Cart Effect] Vapor buzz post-processing ready."
                 );
             }
@@ -97,7 +96,6 @@ namespace CustomNPCExample.Products
 
         private void StartEffect()
         {
-            // If already active, extend duration (stacking hits)
             if (_active)
             {
                 _timeRemaining =
@@ -106,7 +104,7 @@ namespace CustomNPCExample.Products
                         EffectDuration * 2.0f
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Cart Effect] Hit stacked. Remaining: " +
                     _timeRemaining.ToString("0.0") + "s"
                 );
@@ -124,7 +122,7 @@ namespace CustomNPCExample.Products
                 _volume.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 $"[Cart Effect] Vapor buzz started. Duration: {EffectDuration}s"
             );
         }
@@ -141,12 +139,8 @@ namespace CustomNPCExample.Products
                 _volume.enabled = false;
             }
 
-            MelonLogger.Msg("[Cart Effect] Vapor buzz ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cart Effect] Vapor buzz ended.");
         }
-
-        // ============================================================
-        // Post-processing volume
-        // ============================================================
 
         private void CreateVolume()
         {
@@ -210,102 +204,63 @@ namespace CustomNPCExample.Products
             _volume.enabled = false;
         }
 
-        // ============================================================
-        // Effect application — clean, airy, foggy vapor buzz
-        // ============================================================
-
         private void ApplyEffects()
         {
             float elapsed = EffectDuration - _timeRemaining;
 
-            // Fast onset (vapor hits quickly), smooth fade-out
-            float fadeIn = Mathf.Clamp01(elapsed / 3f);
-            float fadeOut = Mathf.Clamp01(_timeRemaining / 20f);
+            float fadeIn = Mathf.Clamp01(elapsed / 4f);
+            float fadeOut = Mathf.Clamp01(_timeRemaining / 16f);
             float fade = Mathf.Min(fadeIn, fadeOut);
 
-            // Light floaty breathing
-            float breath =
+            float drift =
                 0.5f +
-                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.20f) * 0.5f;
+                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.045f) * 0.5f;
 
-            // Slower wave for heavier effects
-            float wave =
+            float swell =
                 0.5f +
-                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.08f) * 0.5f;
-
-            // Quick flutter for light-headedness
-            float flutter =
-                0.5f +
-                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.55f) * 0.5f;
+                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.09f + 1.7f) * 0.5f;
 
             _volume.weight = fade;
 
-            // --------------------------------------------------
-            // COLOR — slightly desaturated, hazy, cool
-            // Like looking through a thin vape cloud
-            // --------------------------------------------------
-
             _colorAdjust.saturation.value =
-                (-6f + breath * 10f) * fade;
+                (-22f + drift * 16f) * fade;
 
             _colorAdjust.contrast.value =
-                (-4f + wave * 6f) * fade;
+                (-6f + swell * 8f) * fade;
 
             _colorAdjust.postExposure.value =
-                (0.12f + breath * 0.08f) * fade;
+                (0.10f + drift * 0.16f) * fade;
 
-            // Cool, foggy color filter
             Color sober = Color.white;
-            Color hazed = Color.Lerp(VaporWhite, HazeBlue, wave * 0.35f);
+            Color clouded = Color.Lerp(VaporWhite, HazeBlue, drift * 0.55f);
             _colorAdjust.colorFilter.value =
-                Color.Lerp(sober, hazed, fade * 0.45f);
+                Color.Lerp(sober, clouded, fade * 0.60f);
 
-            // Minimal hue shift — just a gentle drift
-            _colorAdjust.hueShift.value =
-                Mathf.Sin(_pulseTimer * 0.12f) * 2.5f * fade;
+            _colorAdjust.hueShift.value = 0f;
 
-            // --------------------------------------------------
-            // BLOOM — vapor cloud glow, cool white
-            // Lights look softly diffused through haze
-            // --------------------------------------------------
             _bloom.intensity.value =
-                (0.90f + breath * 0.55f + wave * 0.30f) * fade;
-
+                (0.80f + drift * 1.30f) * fade;
             _bloom.tint.value =
-                Color.Lerp(VaporWhite, HazeBlue, breath * 0.25f);
+                Color.Lerp(VaporWhite, HazeBlue, 0.35f + drift * 0.25f);
 
-            // --------------------------------------------------
-            // CHROMATIC — light-headed pulsing
-            // Gentle fringe that throbs with breathing
-            // --------------------------------------------------
             _chromatic.intensity.value =
-                (0.08f + flutter * 0.10f + wave * 0.06f) * fade;
+                (0.05f + drift * 0.20f) * fade;
 
-            // --------------------------------------------------
-            // LENS — floating sensation
-            // Subtle distortion breathing, slightly buoyant
-            // --------------------------------------------------
+            float exhale =
+                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.06f);
+
             _lens.intensity.value =
-                (Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.15f) * 0.06f +
-                 wave * 0.03f) * fade;
+                (0.03f + exhale * 0.08f) * fade;
 
             _lens.scale.value =
-                1f - 0.02f * wave * fade;
+                1f + exhale * 0.035f * fade;
 
-            // --------------------------------------------------
-            // VIGNETTE — hazy peripheral vision
-            // Cool grey edges, lighter than edible effects
-            // --------------------------------------------------
             _vignette.intensity.value =
-                (0.22f + breath * 0.10f + wave * 0.05f) * fade;
-
+                (0.22f + drift * 0.22f) * fade;
             _vignette.color.value = FogGrey;
 
-            // --------------------------------------------------
-            // GRAIN — minimal, clean vapor aesthetic
-            // --------------------------------------------------
             _grain.intensity.value =
-                (0.03f + flutter * 0.04f) * fade;
+                (0.03f + swell * 0.04f) * fade;
         }
     }
 }

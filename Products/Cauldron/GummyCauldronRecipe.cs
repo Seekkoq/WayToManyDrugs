@@ -4,10 +4,6 @@ using MelonLoader;
 
 namespace CustomNPCExample.Products.Cauldrons
 {
-    /// <summary>
-    /// 3 THC Oil + 5 Gelatin + 3 Infused Sugar
-    /// -> Unbaked Gummy Mix
-    /// </summary>
     public static class GummyCauldronRecipe
     {
         public struct State
@@ -93,15 +89,11 @@ namespace CustomNPCExample.Products.Cauldrons
             return state;
         }
 
-        /*
-         * Currently unused. CauldronPatch.StartCustomCook
-         * handles consumption. No CauldronFinishedOutput here.
-         */
         public static void Consume(
             Cauldron cauldron,
             State state)
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cauldron] Consuming " +
                 CauldronRecipeAmounts.ThcOilRequired +
                 " THC Oil + " +

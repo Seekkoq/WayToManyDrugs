@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -10,8 +10,6 @@ namespace CustomNPCExample.Products
 {
     public static class DMTIngredients
     {
-        // Keep these IDs stable. Existing saves and supplier stock
-        // reference the internal IDs, not the display names.
         public const string DreamrootId =
             "westvilleconnection:ingredients/dreamroot";
 
@@ -42,10 +40,6 @@ namespace CustomNPCExample.Products
         private static Sprite _labSolventIcon;
         private static Sprite _crystalizerIcon;
 
-        // ============================================================
-        // Registration
-        // ============================================================
-
         public static bool TryRegister()
         {
             if (_registered)
@@ -65,16 +59,10 @@ namespace CustomNPCExample.Products
                 if (iodine == null ||
                     motorOil == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Ingredients] Base templates not ready."
-                    );
+
 
                     return false;
                 }
-
-                // ----------------------------------------------------
-                // Mimosa Root Bark
-                // ----------------------------------------------------
 
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
@@ -88,10 +76,6 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                // ----------------------------------------------------
-                // Caustic Base
-                // ----------------------------------------------------
-
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
                     .WithBasicInfo(
@@ -103,10 +87,6 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                // ----------------------------------------------------
-                // Lab Solvent
-                // ----------------------------------------------------
-
                 MixIngredientItemCreator
                     .CloneFrom("motoroil")
                     .WithBasicInfo(
@@ -117,10 +97,6 @@ namespace CustomNPCExample.Products
                         ItemCategory.Ingredient
                     )
                     .Build();
-
-                // ----------------------------------------------------
-                // Crystalizer
-                // ----------------------------------------------------
 
                 MixIngredientItemCreator
                     .CloneFrom("motoroil")
@@ -147,7 +123,6 @@ namespace CustomNPCExample.Products
                 RegisterAliasSafely("crystalizer", CrystalizerId);
                 RegisterAliasSafely("heptane", CrystalizerId);
 
-                // Build refined source models.
                 _mimosaBarkVisual =
                     CreateMimosaRootBarkBag();
 
@@ -160,7 +135,6 @@ namespace CustomNPCExample.Products
                 _crystalizerVisual =
                     CreateCrystalizerBottle();
 
-                // Apply models for held, loose, storage, and station use.
                 ApplyCustomRepresentations(
                     DreamrootId,
                     _mimosaBarkVisual,
@@ -189,7 +163,6 @@ namespace CustomNPCExample.Products
                     1.10f
                 );
 
-                // Render the actual custom models into inventory sprites.
                 _mimosaBarkIcon =
                     RenderModelIcon(
                         _mimosaBarkVisual,
@@ -272,7 +245,7 @@ namespace CustomNPCExample.Products
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Ingredients] Registration complete. " +
                     "Mimosa=$" + MimosaBarkPrice +
                     ", Caustic=$" + CausticBasePrice +
@@ -295,10 +268,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Custom model application
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId,
             GameObject customModel,
@@ -312,10 +281,7 @@ namespace CustomNPCExample.Products
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Ingredients] Raw definition missing: " +
-                        itemId
-                    );
+
 
                     return;
                 }
@@ -350,7 +316,7 @@ namespace CustomNPCExample.Products
                         worldScale
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Ingredients] Representations for " +
                     itemId +
                     ": Equippable=" + equippable +
@@ -358,12 +324,9 @@ namespace CustomNPCExample.Products
                     ", StoredItem=" + stored
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Representation setup failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -550,6 +513,10 @@ namespace CustomNPCExample.Products
 
             clone.SetActive(true);
 
+            // The template brings a drag constraint with it. On a clone that nobody drags it has no
+            // container to align to, so it threw a null reference every frame. See WvcCloneSanitizer.
+            global::CustomNPCExample.Utils.WvcCloneSanitizer.Strip(clone);
+
             UnityEngine.Object.DontDestroyOnLoad(
                 clone
             );
@@ -602,14 +569,6 @@ namespace CustomNPCExample.Products
             return clone;
         }
 
-        // ============================================================
-        // Refined ingredient models
-        // ============================================================
-
-        /*
-         * Kraft stand-up pouch with folded top, reseal stripe,
-         * cream label panel, and visible purple-red bark chips.
-         */
         private static GameObject CreateMimosaRootBarkBag()
         {
             GameObject root =
@@ -665,7 +624,6 @@ namespace CustomNPCExample.Products
                     1f
                 );
 
-            // Main pouch body.
             AddCube(
                 root.transform,
                 "BagLower",
@@ -683,7 +641,6 @@ namespace CustomNPCExample.Products
                 0.08f
             );
 
-            // Narrower upper pouch area.
             AddCube(
                 root.transform,
                 "BagUpper",
@@ -701,7 +658,6 @@ namespace CustomNPCExample.Products
                 0.08f
             );
 
-            // Bottom seam.
             AddCube(
                 root.transform,
                 "BagBottomSeam",
@@ -719,7 +675,6 @@ namespace CustomNPCExample.Products
                 0.06f
             );
 
-            // Folded top.
             AddCube(
                 root.transform,
                 "BagTopFold",
@@ -737,7 +692,6 @@ namespace CustomNPCExample.Products
                 0.06f
             );
 
-            // Resealable red stripe.
             AddCube(
                 root.transform,
                 "ResealStripe",
@@ -755,7 +709,6 @@ namespace CustomNPCExample.Products
                 0.10f
             );
 
-            // Cream front-label panel.
             AddCube(
                 root.transform,
                 "MimosaLabel",
@@ -773,7 +726,6 @@ namespace CustomNPCExample.Products
                 0.12f
             );
 
-            // Dark red bark marks on the label.
             AddCube(
                 root.transform,
                 "LabelBarkA",
@@ -840,7 +792,6 @@ namespace CustomNPCExample.Products
                 )
             );
 
-            // Loose bark chips peeking from the top.
             AddCube(
                 root.transform,
                 "LooseBarkA",
@@ -888,10 +839,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        /*
-         * Squat white HDPE chemical container with black cap,
-         * yellow hazard panel, and black warning diamond.
-         */
         private static GameObject CreateCausticBaseContainer()
         {
             GameObject root =
@@ -1109,10 +1056,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        /*
-         * Amber reagent bottle with liquid band, white cap,
-         * black label, and yellow side stripe.
-         */
         private static GameObject CreateLabSolventBottle()
         {
             GameObject root =
@@ -1182,7 +1125,6 @@ namespace CustomNPCExample.Products
                 0.38f
             );
 
-            // Darker lower liquid band.
             AddCylinder(
                 root.transform,
                 "SolventLiquidBand",
@@ -1310,10 +1252,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        /*
-         * Cobalt-blue specialty reagent bottle with silver cap,
-         * icy label panel, and crystal-shaped marks.
-         */
         private static GameObject CreateCrystalizerBottle()
         {
             GameObject root =
@@ -1516,10 +1454,6 @@ namespace CustomNPCExample.Products
 
             return root;
         }
-
-        // ============================================================
-        // Model geometry helpers
-        // ============================================================
 
         private static GameObject AddCube(
             Transform parent,
@@ -1752,13 +1686,9 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Render custom model into inventory icon
-        // ============================================================
-
         private static int _iconRenderIndex;
 
-        private static Sprite RenderModelIcon(
+        internal static Sprite RenderModelIcon(
             GameObject source,
             string iconName)
         {
@@ -1778,8 +1708,6 @@ namespace CustomNPCExample.Products
                 int iconLayer =
                     FindIsolationLayer();
 
-                // Unique position per icon so no two models
-                // can ever share render space.
                 _iconRenderIndex++;
 
                 Vector3 rigOrigin =
@@ -1804,7 +1732,6 @@ namespace CustomNPCExample.Products
                 model.transform.localScale = Vector3.one;
                 model.SetActive(true);
 
-                // Force the model onto the isolation layer FIRST.
                 SetLayerRecursive(model, iconLayer);
 
                 Renderer[] renderers =
@@ -1820,7 +1747,6 @@ namespace CustomNPCExample.Products
                         bounds.Encapsulate(renderers[i].bounds);
                 }
 
-                // Light also on the isolation layer.
                 GameObject lightObject =
                     new GameObject(iconName + "_Light");
                 lightObject.transform.SetParent(rig.transform, false);
@@ -1834,7 +1760,6 @@ namespace CustomNPCExample.Products
                 light.transform.rotation =
                     Quaternion.Euler(48f, -32f, 0f);
 
-                // Camera renders ONLY this layer.
                 GameObject cameraObject =
                     new GameObject(iconName + "_Camera");
                 cameraObject.transform.SetParent(rig.transform, false);
@@ -1899,12 +1824,9 @@ namespace CustomNPCExample.Products
 
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Icon render failed for " +
-                    iconName + ": " + ex.Message
-                );
+
                 return null;
             }
             finally
@@ -1914,14 +1836,12 @@ namespace CustomNPCExample.Products
                 if (target != null)
                     UnityEngine.Object.Destroy(target);
 
-                // Destroy the entire rig (model + light + camera)
-                // immediately so it cannot bleed into the next icon.
                 if (rig != null)
                     UnityEngine.Object.DestroyImmediate(rig);
             }
         }
 
-        private static int FindIsolationLayer()
+        internal static int FindIsolationLayer()
         {
             for (int layer = 31;
                  layer >= 8;
@@ -1939,7 +1859,7 @@ namespace CustomNPCExample.Products
             return 31;
         }
 
-        private static void SetLayerRecursive(
+        internal static void SetLayerRecursive(
             GameObject target,
             int layer)
         {
@@ -1965,20 +1885,13 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Icon assignment
-        // ============================================================
-
         private static void ApplyIcon(
             string itemId,
             Sprite icon)
         {
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Icon was null for " +
-                    itemId
-                );
+
 
                 return;
             }
@@ -2017,7 +1930,7 @@ namespace CustomNPCExample.Products
                         icon
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Ingredients] Icon applied for " +
                     itemId +
                     ": wrapperDirect=" + wrapperDirect +
@@ -2026,12 +1939,9 @@ namespace CustomNPCExample.Products
                     ", rawAny=" + rawAny
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Icon assignment failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -2141,10 +2051,6 @@ namespace CustomNPCExample.Products
             return applied;
         }
 
-        // ============================================================
-        // Item pricing and definition access
-        // ============================================================
-
         private static void SetIngredientPrice(
             string itemId,
             float price)
@@ -2168,19 +2074,16 @@ namespace CustomNPCExample.Products
                 storable.BasePurchasePrice =
                     price;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Ingredients] Price set: " +
                     itemId +
                     " = $" +
                     price
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Price failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -2203,10 +2106,6 @@ namespace CustomNPCExample.Products
             return raw as
                 Il2CppScheduleOne.ItemFramework.ItemDefinition;
         }
-
-        // ============================================================
-        // Reflection helpers
-        // ============================================================
 
         private static bool TrySetMember(
             object target,
@@ -2353,10 +2252,6 @@ namespace CustomNPCExample.Products
             return null;
         }
 
-        // ============================================================
-        // General utility
-        // ============================================================
-
         private static void MoveSourceOffscreen(
             GameObject source)
         {
@@ -2388,14 +2283,9 @@ namespace CustomNPCExample.Products
                     itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Ingredients] Alias '" +
-                    alias +
-                    "' failed: " +
-                    ex.Message
-                );
+
             }
         }
     }

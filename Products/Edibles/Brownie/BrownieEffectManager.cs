@@ -26,7 +26,7 @@ namespace CustomNPCExample.Products
             _effect =
                 _controllerObject.AddComponent<BrownieScreenEffect>();
 
-            MelonLogger.Msg("[Brownie Effect] Effect controller ready.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Brownie Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
@@ -35,7 +35,7 @@ namespace CustomNPCExample.Products
 
             BrownieScreenEffect.ShouldStart = true;
 
-            MelonLogger.Msg("[Brownie Effect] Trigger requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Brownie Effect] Trigger requested.");
         }
 
         public static void StopEffect()
@@ -44,7 +44,7 @@ namespace CustomNPCExample.Products
 
             BrownieScreenEffect.ShouldStop = true;
 
-            MelonLogger.Msg("[Brownie Effect] Forced stop requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Brownie Effect] Forced stop requested.");
         }
     }
 }

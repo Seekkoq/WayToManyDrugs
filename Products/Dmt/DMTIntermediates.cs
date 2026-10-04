@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -40,9 +40,7 @@ namespace CustomNPCExample.Products
             {
                 if (ItemManager.GetDefinition("iodine") == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT Intermediates] Base template not ready."
-                    );
+
 
                     return false;
                 }
@@ -119,7 +117,7 @@ namespace CustomNPCExample.Products
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT Intermediates] Crude extracts registered. " +
                     "Standard=$" + CrudeExtractPrice +
                     ", Premium=$" + PremiumCrudeExtractPrice + "."
@@ -152,10 +150,6 @@ namespace CustomNPCExample.Products
                        StringComparison.OrdinalIgnoreCase
                    );
         }
-
-        // ============================================================
-        // 3D model
-        // ============================================================
 
         private static GameObject CreateCrudeExtractDish(bool premium)
         {
@@ -211,10 +205,6 @@ namespace CustomNPCExample.Products
 
             return root;
         }
-
-        // ============================================================
-        // Icon — no text
-        // ============================================================
 
         private static Sprite CreateCrudeIconSprite(
             string iconName,
@@ -286,10 +276,6 @@ namespace CustomNPCExample.Products
             return CreateSpriteFromIconTexture(texture, iconName);
         }
 
-        // ============================================================
-        // Representations
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId,
             GameObject customModel,
@@ -325,12 +311,9 @@ namespace CustomNPCExample.Products
                     Vector3.one * worldMultiplier
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Intermediates] Representation failed: " +
-                    ex.Message
-                );
+
             }
         }
 
@@ -486,6 +469,10 @@ namespace CustomNPCExample.Products
 
             clone.name = "WVC_" + context + "_" + safeId;
             clone.SetActive(true);
+
+            // The template brings a drag constraint with it. On a clone that nobody drags it has no
+            // container to align to, so it threw a null reference every frame. See WvcCloneSanitizer.
+            global::CustomNPCExample.Utils.WvcCloneSanitizer.Strip(clone);
             clone.transform.position = new Vector3(0f, -20000f, 0f);
             UnityEngine.Object.DontDestroyOnLoad(clone);
 
@@ -514,10 +501,6 @@ namespace CustomNPCExample.Products
             return clone;
         }
 
-        // ============================================================
-        // Icon / price helpers
-        // ============================================================
-
         private static void ApplyIcon(string itemId, Sprite icon)
         {
             if (icon == null)
@@ -534,11 +517,9 @@ namespace CustomNPCExample.Products
                 TrySetMember(wrapper, "Icon", icon);
                 TrySetMember(raw, "Icon", icon);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Intermediates] Icon failed: " + ex.Message
-                );
+
             }
         }
 
@@ -563,10 +544,6 @@ namespace CustomNPCExample.Products
             {
             }
         }
-
-        // ============================================================
-        // Geometry
-        // ============================================================
 
         private static GameObject AddCylinder(
             Transform parent,
@@ -846,12 +823,9 @@ namespace CustomNPCExample.Products
             {
                 ConsoleItemAliases.Register(alias, itemId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT Intermediates] Alias '" + alias +
-                    "' failed: " + ex.Message
-                );
+
             }
         }
     }

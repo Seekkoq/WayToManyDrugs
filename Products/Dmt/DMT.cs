@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MelonLoader;
 using S1API.Console;
@@ -38,7 +38,7 @@ namespace CustomNPCExample.Products
         private static ProductPackagingContentProfile
     _brickProfile;
 
-        private static Material _brickMaterial;   
+        private static Material _brickMaterial;
 
         private static GameObject _visualSource;
         private static Material _powderMaterial;
@@ -51,19 +51,6 @@ namespace CustomNPCExample.Products
         private static bool _metadataFailureLogged;
         private static bool _presentationRegistering;
 
-        // ============================================================
-        // Powder model settings
-        // ============================================================
-
-        /*
-         * The mesh is constructed horizontally:
-         *
-         * X/Z = surface plane
-         * Y   = height
-         *
-         * Because Y is already up, loose and held presentation must
-         * not use the 90-degree rotations required by XY-plane models.
-         */
         private const int PowderSegments = 32;
         private const int PowderRings = 8;
 
@@ -72,10 +59,6 @@ namespace CustomNPCExample.Products
 
         private const float PowderHeight = 0.011f;
         private const float PowderBottomDepth = 0.0018f;
-
-        // ============================================================
-        // Registration
-        // ============================================================
 
         public static bool TryRegister()
         {
@@ -106,9 +89,7 @@ namespace CustomNPCExample.Products
 
                 if (weedTemplate == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC DMT] No weed donor template found."
-                    );
+
 
                     return false;
                 }
@@ -167,7 +148,7 @@ namespace CustomNPCExample.Products
 
                 _built = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT] Built with custom powder visual, " +
                     "weed smoking representation, and brick packaging."
                 );
@@ -187,7 +168,7 @@ namespace CustomNPCExample.Products
 
                 return false;
             }
-        }   
+        }
 
         private static bool TryDiscover()
         {
@@ -217,7 +198,7 @@ namespace CustomNPCExample.Products
 
                 _discovered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT] Registered and discovered."
                 );
 
@@ -225,7 +206,6 @@ namespace CustomNPCExample.Products
             }
             catch (InvalidOperationException)
             {
-                // Product registry is not ready yet.
                 return false;
             }
             catch (Exception ex)
@@ -243,10 +223,6 @@ namespace CustomNPCExample.Products
                 return false;
             }
         }
-
-        // ============================================================
-        // Product Manager metadata
-        // ============================================================
 
         public static bool TryRegisterMetadata()
         {
@@ -301,7 +277,7 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT] Metadata complete."
                 );
 
@@ -323,10 +299,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Powder visual
-        // ============================================================
-
         private static GameObject GetVisual()
         {
             GameObject visual =
@@ -340,6 +312,52 @@ namespace CustomNPCExample.Products
             }
 
             return visual;
+        }
+
+        private static bool _iconRepairDone;
+        private static float _iconRepairTimer;
+
+        public static void UpdateIconRepair()
+        {
+            if (_iconRepairDone || _definition == null || _visualSource == null)
+                return;
+
+            _iconRepairTimer += Time.deltaTime;
+
+            if (_iconRepairTimer < 90f)
+                return;
+
+            _iconRepairDone = true;
+
+            try
+            {
+                Sprite clean =
+                    DMTIngredients.RenderModelIcon(
+                        _visualSource,
+                        "WVC_DMT_Product_Icon_Clean"
+                    );
+
+                if (clean != null)
+                {
+                    bool applied =
+                        global::CustomNPCExample.Utils.WvcIcon.Apply(ProductId, clean);
+
+                    if (applied)
+                    {
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
+                            "[WVC DMT] Clean product icon applied over generated icon."
+                        );
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private static GameObject GetOrCreatePowderVisual()
@@ -386,7 +404,7 @@ namespace CustomNPCExample.Products
             _visualSource =
                 root;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC DMT] Created powder-only product visual."
             );
 
@@ -426,10 +444,6 @@ namespace CustomNPCExample.Products
             _powderMaterial.name =
                 "WVC_DMT_Powder_Material";
 
-            /*
-             * Slightly warm off-white. Pure white tends to resemble
-             * cocaine and can become overexposed under bright lighting.
-             */
             Color powderColor =
                 new Color(
                     0.94f,
@@ -456,7 +470,6 @@ namespace CustomNPCExample.Products
                 );
             }
 
-            // Powder should be matte rather than shiny.
             if (_powderMaterial.HasProperty(
                     "_Smoothness"))
             {
@@ -485,22 +498,12 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Powder mesh
-        // ============================================================
-
-        /*
-         * Creates one closed, continuous powder mound.
-         *
-         * It has:
-         * - an oval irregular footprint
-         * - a broad rounded top
-         * - shallow fine surface variation
-         * - a flat sealed underside
-         *
-         * No separate chunks, crystals, spheres, or containers.
-         */
-        private static Mesh CreatePowderMoundMesh()
+        /// <summary>
+        /// The powder mound the DMT product is modelled as. Internal so other powder items can reuse
+        /// the exact same heap rather than re-modelling it, which is what keeps a lump of Xanax
+        /// powder looking like the same white mound DMT does.
+        /// </summary>
+        internal static Mesh CreatePowderMoundMesh()
         {
             List<Vector3> vertices =
                 new List<Vector3>();
@@ -508,12 +511,6 @@ namespace CustomNPCExample.Products
             List<int> triangles =
                 new List<int>();
 
-            /*
-             * Top-center vertex.
-             *
-             * The center is offset slightly so the mound does not
-             * look perfectly manufactured or symmetrical.
-             */
             vertices.Add(
                 new Vector3(
                     0.0012f,
@@ -521,10 +518,6 @@ namespace CustomNPCExample.Products
                     -0.0007f
                 )
             );
-
-            // --------------------------------------------------------
-            // Top rings
-            // --------------------------------------------------------
 
             for (int ring = 1;
                  ring <= PowderRings;
@@ -586,12 +579,6 @@ namespace CustomNPCExample.Products
                         ) *
                         zRadius;
 
-                    /*
-                     * Wide rounded powder profile.
-                     *
-                     * Power > 1 keeps the top broad and lets the edge
-                     * fall away more strongly near the outside.
-                     */
                     float profile =
                         1f -
                         Mathf.Pow(
@@ -603,10 +590,6 @@ namespace CustomNPCExample.Products
                         PowderHeight *
                         profile;
 
-                    /*
-                     * Fine surface variation. This remains subtle so
-                     * the mound does not become faceted or rocky.
-                     */
                     float surfaceVariation =
                         Mathf.Sin(
                             angle * 4f +
@@ -630,9 +613,6 @@ namespace CustomNPCExample.Products
                     y +=
                         surfaceVariation;
 
-                    /*
-                     * Outer edge touches the ground plane exactly.
-                     */
                     if (ring == PowderRings)
                         y = 0f;
 
@@ -645,10 +625,6 @@ namespace CustomNPCExample.Products
                     );
                 }
             }
-
-            // --------------------------------------------------------
-            // Center fan
-            // --------------------------------------------------------
 
             int firstRingStart =
                 GetRingStart(
@@ -677,10 +653,6 @@ namespace CustomNPCExample.Products
                     segment
                 );
             }
-
-            // --------------------------------------------------------
-            // Connect the top rings
-            // --------------------------------------------------------
 
             for (int ring = 1;
                  ring < PowderRings;
@@ -746,10 +718,6 @@ namespace CustomNPCExample.Products
                 }
             }
 
-            // --------------------------------------------------------
-            // Closed bottom
-            // --------------------------------------------------------
-
             int outerTopStart =
                 GetRingStart(
                     PowderRings
@@ -812,7 +780,6 @@ namespace CustomNPCExample.Products
                     bottomRingStart +
                     next;
 
-                // Outer edge wall
                 triangles.Add(
                     topCurrent
                 );
@@ -837,7 +804,6 @@ namespace CustomNPCExample.Products
                     bottomNext
                 );
 
-                // Flat underside
                 triangles.Add(
                     bottomCenter
                 );
@@ -884,11 +850,6 @@ namespace CustomNPCExample.Products
             float angle
         )
         {
-            /*
-             * Small overlapping waves create an irregular powder edge.
-             * The values are deliberately restrained so the footprint
-             * stays natural and never becomes star-shaped.
-             */
             float broad =
                 Mathf.Sin(
                     angle * 2f +
@@ -916,10 +877,6 @@ namespace CustomNPCExample.Products
                 fine;
         }
 
-        // ============================================================
-        // Presentation
-        // ============================================================
-
         private static void EnsurePresentationRegistered()
         {
             if (_presentationProfile != null)
@@ -927,10 +884,7 @@ namespace CustomNPCExample.Products
 
             if (_presentationRegistering)
             {
-                MelonLogger.Warning(
-                    "[WVC DMT] Presentation re-entry blocked. " +
-                    "Profile will not apply. Find the recursive call."
-                );
+
 
                 return;
             }
@@ -939,7 +893,6 @@ namespace CustomNPCExample.Products
 
             try
             {
-                // Powder mesh is horizontal already.
                 ProductPresentationTransform loose =
                     new ProductPresentationTransform(
                         Vector3.zero,
@@ -996,7 +949,7 @@ namespace CustomNPCExample.Products
                     _presentationProfile
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC DMT] Presentation profile registered successfully."
                 );
             }
@@ -1019,10 +972,6 @@ namespace CustomNPCExample.Products
             if (clone == null)
                 return;
 
-            /*
-             * Pale waxy off-white, matching the powder color.
-             * Slightly darker so it reads as a pressed block.
-             */
             Color dmtBrick =
                 new Color(
                     0.86f,
@@ -1043,14 +992,6 @@ namespace CustomNPCExample.Products
                     if (mats[i] == null)
                         continue;
 
-                    /*
-                     * CRITICAL:
-                     * Copy the existing native material instead of
-                     * new Material(shader).
-                     *
-                     * Creating a fresh material discards the plastic wrap
-                     * and duct tape textures, producing a blank white block.
-                     */
                     Material copy = new Material(mats[i]);
                     copy.name = "WVC_DbMT_Brick_Material";
 
@@ -1067,21 +1008,10 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Packaging
-        // ============================================================
-
         private static void EnsurePackagingRegistered()
         {
             if (_baggieProfile == null)
             {
-                /*
-                 * The baggie is viewed primarily from the side/front.
-                 * Rotate the powder 90 degrees inside only this packaging
-                 * context so it remains visible through the plastic.
-                 *
-                 * This does not affect loose or held rotation.
-                 */
                 _baggieProfile =
                     new ProductPackagingContentProfileBuilder()
                     .WithContent(
@@ -1108,13 +1038,6 @@ namespace CustomNPCExample.Products
 
             if (_jarProfile == null)
             {
-                /*
-                 * Larger, wider-spread powder piles.
-                 *
-                 * Bottom layer sits near the jar floor and spreads outward.
-                 * Two smaller piles rest on top so the jar reads as filled
-                 * rather than having a few small clumps in the center.
-                 */
                 _jarProfile =
                     new ProductPackagingContentProfileBuilder()
                     .WithContent(
@@ -1123,62 +1046,84 @@ namespace CustomNPCExample.Products
                     .AddPlacements(
                         new ProductPresentationTransform[]
                         {
-                // Bottom layer
                 CreateJarPowder(
                     0.000f,
-                    0.004f,
+                    0.005f,
                     0.000f,
                     10f,
-                    0.95f
+                    1.30f
                 ),
 
                 CreateJarPowder(
-                    -0.019f,
-                    0.004f,
-                    -0.012f,
-                    -58f,
-                    0.86f
-                ),
-
-                CreateJarPowder(
-                    0.019f,
-                    0.004f,
-                    0.011f,
-                    92f,
-                    0.86f
-                ),
-
-                CreateJarPowder(
-                    0.014f,
-                    0.004f,
-                    -0.018f,
-                    150f,
-                    0.80f
-                ),
-
-                CreateJarPowder(
-                    -0.015f,
-                    0.004f,
-                    0.017f,
-                    -120f,
-                    0.80f
-                ),
-
-                // Upper layer
-                CreateJarPowder(
-                    -0.007f,
-                    0.015f,
+                    -0.022f,
                     0.005f,
-                    -30f,
-                    0.72f
+                    -0.014f,
+                    -58f,
+                    1.20f
                 ),
 
                 CreateJarPowder(
-                    0.008f,
-                    0.015f,
-                    -0.006f,
+                    0.022f,
+                    0.005f,
+                    0.013f,
+                    92f,
+                    1.20f
+                ),
+
+                CreateJarPowder(
+                    0.016f,
+                    0.005f,
+                    -0.020f,
+                    150f,
+                    1.10f
+                ),
+
+                CreateJarPowder(
+                    -0.017f,
+                    0.005f,
+                    0.019f,
+                    -120f,
+                    1.10f
+                ),
+
+                CreateJarPowder(
+                    -0.010f,
+                    0.017f,
+                    0.007f,
+                    -30f,
+                    1.00f
+                ),
+
+                CreateJarPowder(
+                    0.011f,
+                    0.017f,
+                    -0.008f,
                     64f,
-                    0.72f
+                    1.00f
+                ),
+
+                CreateJarPowder(
+                    0.001f,
+                    0.027f,
+                    0.001f,
+                    25f,
+                    0.90f
+                ),
+
+                CreateJarPowder(
+                    -0.011f,
+                    0.027f,
+                    -0.009f,
+                    -95f,
+                    0.85f
+                ),
+
+                CreateJarPowder(
+                    0.000f,
+                    0.040f,
+                    0.000f,
+                    0f,
+                    0.95f
                 )
                         }
                     )
@@ -1195,7 +1140,7 @@ namespace CustomNPCExample.Products
                         null
                     )
                     .Build();
-            }   
+            }
 
             ProductPackagingContentProfileRegistry.Register(
                 "westvilleconnection",
@@ -1240,6 +1185,8 @@ namespace CustomNPCExample.Products
             );
         }
 
+        private const float JarScaleBoost = 1.15f;
+
         private static ProductPresentationTransform CreateJarPowder(
             float x,
             float y,
@@ -1260,7 +1207,7 @@ namespace CustomNPCExample.Products
                     0f
                 ),
                 Vector3.one *
-                scale
+                (scale * JarScaleBoost)
             );
         }
     }

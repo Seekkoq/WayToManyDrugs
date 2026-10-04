@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -34,10 +34,6 @@ namespace CustomNPCExample.Products
         private static Sprite _butterIcon;
         private static Sprite _leavenIcon;
 
-        // ============================================================
-        // Registration
-        // ============================================================
-
         public static bool TryRegister()
         {
             if (_registered)
@@ -56,16 +52,10 @@ namespace CustomNPCExample.Products
 
                 if (iodine == null || motorOil == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Brownie Ingredients] Base templates not ready."
-                    );
+
 
                     return false;
                 }
-
-                // ----------------------------------------------------
-                // Baker's Cocoa
-                // ----------------------------------------------------
 
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
@@ -78,10 +68,6 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                // ----------------------------------------------------
-                // Infused Butter
-                // ----------------------------------------------------
-
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
                     .WithBasicInfo(
@@ -92,10 +78,6 @@ namespace CustomNPCExample.Products
                         ItemCategory.Ingredient
                     )
                     .Build();
-
-                // ----------------------------------------------------
-                // Leavening Mix
-                // ----------------------------------------------------
 
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
@@ -117,12 +99,10 @@ namespace CustomNPCExample.Products
                 RegisterAliasSafely("leaven", LeavenProductId);
                 RegisterAliasSafely("leavening", LeavenProductId);
 
-                // Build source models.
                 _cocoaVisual = CreateCocoaPouch();
                 _butterVisual = CreateButterStick();
                 _leavenVisual = CreateLeaveningTin();
 
-                // Apply models for held, loose, storage, station use.
                 ApplyCustomRepresentations(
                     CocoaProductId,
                     _cocoaVisual,
@@ -144,7 +124,6 @@ namespace CustomNPCExample.Products
                     1.15f
                 );
 
-                // Render models into inventory sprites.
                 _cocoaIcon =
                     RenderModelIcon(_cocoaVisual, "WVC_BakersCocoa_Icon");
 
@@ -168,7 +147,7 @@ namespace CustomNPCExample.Products
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Ingredients] Registration complete. " +
                     "Cocoa=$" + CocoaPrice +
                     ", Butter=$" + ButterPrice +
@@ -189,13 +168,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Models
-        // ============================================================
-
-        /*
-         * Brown resealable cocoa pouch with cream label and dark chips.
-         */
         private static GameObject CreateCocoaPouch()
         {
             GameObject root =
@@ -242,7 +214,6 @@ namespace CustomNPCExample.Products
                 new Vector3(0.013f, 0.047f, -0.0205f), cocoaDark, 0.10f,
                 Quaternion.Euler(0f, 0f, 45f));
 
-            // Loose cocoa peeking from the top fold.
             AddCube(root.transform, "LooseCocoaA",
                 new Vector3(0.018f, 0.004f, 0.009f),
                 new Vector3(-0.009f, 0.101f, 0.002f), cocoaDark, 0.06f,
@@ -256,10 +227,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        /*
-         * A wrapped stick of butter: cream block, gold foil wrap,
-         * printed label band.
-         */
         private static GameObject CreateButterStick()
         {
             GameObject root =
@@ -272,22 +239,18 @@ namespace CustomNPCExample.Products
             Color label = new Color(0.95f, 0.93f, 0.86f, 1f);
             Color print = new Color(0.30f, 0.18f, 0.05f, 1f);
 
-            // Main butter block.
             AddCube(root.transform, "ButterBlock",
                 new Vector3(0.088f, 0.030f, 0.032f),
                 new Vector3(0f, 0.020f, 0f), butter, 0.20f);
 
-            // Slightly darker top so it reads as 3D.
             AddCube(root.transform, "ButterTop",
                 new Vector3(0.086f, 0.006f, 0.030f),
                 new Vector3(0f, 0.036f, 0f), butterDeep, 0.20f);
 
-            // Gold foil wrap around the middle.
             AddCube(root.transform, "FoilWrap",
                 new Vector3(0.090f, 0.024f, 0.034f),
                 new Vector3(0f, 0.020f, 0f), foil, 0.55f);
 
-            // Foil edge seams.
             AddCube(root.transform, "FoilSeamLeft",
                 new Vector3(0.004f, 0.026f, 0.036f),
                 new Vector3(-0.045f, 0.020f, 0f), foilDark, 0.45f);
@@ -296,12 +259,10 @@ namespace CustomNPCExample.Products
                 new Vector3(0.004f, 0.026f, 0.036f),
                 new Vector3(0.045f, 0.020f, 0f), foilDark, 0.45f);
 
-            // Printed paper label band on the front.
             AddCube(root.transform, "ButterLabel",
                 new Vector3(0.050f, 0.018f, 0.0025f),
                 new Vector3(0f, 0.020f, -0.0185f), label, 0.12f);
 
-            // Print marks on the label.
             AddCube(root.transform, "LabelPrintA",
                 new Vector3(0.030f, 0.003f, 0.003f),
                 new Vector3(0f, 0.024f, -0.0205f), print, 0.08f);
@@ -313,10 +274,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        /*
-         * Small metal leavening tin: silver body, red lid,
-         * cream label, dark text marks.
-         */
         private static GameObject CreateLeaveningTin()
         {
             GameObject root =
@@ -341,7 +298,6 @@ namespace CustomNPCExample.Products
                 0.027f, 0.006f,
                 new Vector3(0f, 0.052f, 0f), metalDark, 0.32f);
 
-            // Red lid.
             AddCylinder(root.transform, "RedLid",
                 0.029f, 0.012f,
                 new Vector3(0f, 0.061f, 0f), lidRed, 0.30f);
@@ -350,7 +306,6 @@ namespace CustomNPCExample.Products
                 0.030f, 0.003f,
                 new Vector3(0f, 0.055f, 0f), lidRedDark, 0.28f);
 
-            // Cream label wrap.
             AddCube(root.transform, "TinLabel",
                 new Vector3(0.042f, 0.030f, 0.0025f),
                 new Vector3(0f, 0.026f, -0.0290f), label, 0.12f);
@@ -370,10 +325,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        // ============================================================
-        // Custom model application (identical pattern to DMTIngredients)
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId,
             GameObject customModel,
@@ -387,10 +338,7 @@ namespace CustomNPCExample.Products
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Brownie Ingredients] Raw definition missing: " +
-                        itemId
-                    );
+
                     return;
                 }
 
@@ -406,19 +354,16 @@ namespace CustomNPCExample.Products
                 bool stored =
                     ApplyStoredRepresentation(definition, itemId, customModel, worldScale);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Ingredients] Representations for " + itemId +
                     ": Equippable=" + equippable +
                     ", StationItem=" + station +
                     ", StoredItem=" + stored
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Representation setup failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -549,10 +494,6 @@ namespace CustomNPCExample.Products
             return clone;
         }
 
-        // ============================================================
-        // Model geometry helpers (copied from DMTIngredients)
-        // ============================================================
-
         private static GameObject AddCube(
             Transform parent, string name, Vector3 size,
             Vector3 localPosition, Color color, float smoothness)
@@ -656,10 +597,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Icon render (copied from DMTIngredients)
-        // ============================================================
-
         private static int _iconRenderIndex;
 
         private static Sprite RenderModelIcon(GameObject source, string iconName)
@@ -761,12 +698,9 @@ namespace CustomNPCExample.Products
 
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Icon render failed for " +
-                    iconName + ": " + ex.Message
-                );
+
                 return null;
             }
             finally
@@ -798,17 +732,11 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Icon assignment (copied from DMTIngredients)
-        // ============================================================
-
         private static void ApplyIcon(string itemId, Sprite icon)
         {
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Icon was null for " + itemId
-                );
+
                 return;
             }
 
@@ -823,7 +751,7 @@ namespace CustomNPCExample.Products
                 bool wrapperAny = TrySetAnyIconSpriteMember(wrapper, icon);
                 bool rawAny = TrySetAnyIconSpriteMember(raw, icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Ingredients] Icon applied for " + itemId +
                     ": wrapperDirect=" + wrapperDirect +
                     ", rawDirect=" + rawDirect +
@@ -831,12 +759,9 @@ namespace CustomNPCExample.Products
                     ", rawAny=" + rawAny
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Icon assignment failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -891,10 +816,6 @@ namespace CustomNPCExample.Products
             return applied;
         }
 
-        // ============================================================
-        // Pricing + definition access (copied from DMTIngredients)
-        // ============================================================
-
         private static void SetIngredientPrice(string itemId, float price)
         {
             try
@@ -911,16 +832,13 @@ namespace CustomNPCExample.Products
 
                 storable.BasePurchasePrice = price;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Ingredients] Price set: " + itemId + " = $" + price
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Price failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -933,10 +851,6 @@ namespace CustomNPCExample.Products
             object raw = GetMemberValue(wrapper, "S1ItemDefinition");
             return raw as Il2CppScheduleOne.ItemFramework.ItemDefinition;
         }
-
-        // ============================================================
-        // Reflection helpers (copied from DMTIngredients)
-        // ============================================================
 
         private static bool TrySetMember(object target, string name, object value)
         {
@@ -1012,10 +926,6 @@ namespace CustomNPCExample.Products
             return null;
         }
 
-        // ============================================================
-        // Utility (copied from DMTIngredients)
-        // ============================================================
-
         private static void MoveSourceOffscreen(GameObject source)
         {
             if (source == null) return;
@@ -1031,12 +941,9 @@ namespace CustomNPCExample.Products
             {
                 ConsoleItemAliases.Register(alias, itemId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Ingredients] Alias '" + alias +
-                    "' failed: " + ex.Message
-                );
+
             }
         }
     }
