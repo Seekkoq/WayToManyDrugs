@@ -53,7 +53,7 @@ better than the street, and there is heat attached to moving that much weight. A
 button on the phone starts the next run without waiting to be called again, with a cooldown so a
 refused run cannot be pushed over and over.
 
-**PillVille** — new supplier dialogue and a Xanax order/recipe hook, so powder and bars are part of
+**Elanor** — new supplier dialogue and a Xanax order/recipe hook, so powder and bars are part of
 the supplier loop rather than a one-off.
 
 **DMT trip audio** — the whisper that plays under a DMT trip now runs for the whole trip. It used to
@@ -62,8 +62,6 @@ be cut off a moment after the trip began, which left the trip itself silent.
 **Performance** — the runaway stream of errors raised by DMT station items, tens of thousands of them
 in a session, is fixed at the source, along with the UI drag handling behind it. Frame rate in and
 around stations is where it should be again.
-
-**Smaller things** — MDMA no longer replaces the player's pupils with hearts.
 
 ## What the mod adds
 
@@ -94,16 +92,6 @@ a few side quests, plus undercover stings, busts and a heat system to stay under
 
 A brighter flashlight, NPC memory and customer loyalty, and guards around the game's own failure
 paths so one bad item or clone cannot take the frame rate down with it.
-
-## Controls
-
-| Key | Action |
-| --- | --- |
-| **F2** | Request a bulk meetup with Damon Trey |
-| **F5** | Request a bulk meetup with PillVille |
-| **F6** | Request a bulk meetup with Sal Viah |
-| **F7** | Request a bulk meetup with Roscoe Bellweather |
-| **F12** | Admin menu (Escape or Enter to close) |
 
 ## Notes
 
