@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using CustomNPCExample.Products.Edibles;
 using HarmonyLib;
@@ -9,14 +9,6 @@ using MelonLoader;
 
 namespace CustomNPCExample.Products.Edibles
 {
-    /// <summary>
-    /// Allows only WVC THC Oil to pass the hard filters of a
-    /// Mixing Station's ProductSlot.
-    ///
-    /// This does not change THC Oil into a ProductDefinition.
-    /// It only allows the existing ingredient item to be inserted
-    /// into the product-side slot.
-    /// </summary>
     public static class THCOilMixerSlotPatch
     {
         private const string HarmonyId =
@@ -49,14 +41,11 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (original == null || postfix == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC THC Oil Slot] Could not find patch methods."
-                    );
+
 
                     return false;
                 }
 
-                // FIX: Explicitly use the fully qualified class name to avoid namespace conflicts
                 HarmonyLib.Harmony harmony = new HarmonyLib.Harmony(HarmonyId);
 
                 harmony.Patch(
@@ -66,7 +55,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _applied = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC THC Oil Slot] ProductSlot filter patch applied."
                 );
 
@@ -87,7 +76,6 @@ namespace CustomNPCExample.Products.Edibles
             ItemInstance item,
             ref bool __result)
         {
-            // Never alter an item that vanilla already accepts.
             if (__result)
                 return;
 
@@ -115,29 +103,25 @@ namespace CustomNPCExample.Products.Edibles
                     return;
                 }
 
-                // Only this exact item in this exact station slot.
                 __result = true;
 
                 if (!_allowLogged)
                 {
                     _allowLogged = true;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC THC Oil Slot] Allowed THC Oil into " +
                         "MixingStation.ProductSlot."
                     );
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (!_errorLogged)
                 {
                     _errorLogged = true;
 
-                    MelonLogger.Warning(
-                        "[WVC THC Oil Slot] Filter postfix failed: " +
-                        ex.Message
-                    );
+
                 }
             }
         }

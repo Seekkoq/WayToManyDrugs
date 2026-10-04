@@ -26,7 +26,7 @@ namespace CustomNPCExample.Products.Edibles
             _effect =
                 _controllerObject.AddComponent<THCCookieScreenEffect>();
 
-            MelonLogger.Msg("[Cookie Effect] Effect controller ready.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cookie Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
@@ -35,7 +35,7 @@ namespace CustomNPCExample.Products.Edibles
 
             THCCookieScreenEffect.ShouldStart = true;
 
-            MelonLogger.Msg("[Cookie Effect] Trigger requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cookie Effect] Trigger requested.");
         }
 
         public static void StopEffect()
@@ -44,7 +44,7 @@ namespace CustomNPCExample.Products.Edibles
 
             THCCookieScreenEffect.ShouldStop = true;
 
-            MelonLogger.Msg("[Cookie Effect] Forced stop requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cookie Effect] Forced stop requested.");
         }
     }
 }

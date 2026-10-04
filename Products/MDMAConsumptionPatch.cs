@@ -54,9 +54,9 @@ namespace CustomNPCExample.Products
                         _harmony.Patch(target, prefix: new HarmonyLib.HarmonyMethod(playerPrefix));
                         _playerMethodsPatched++;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MelonLogger.Warning($"[WVC Patch] Could not hook Player.{methodName}: {ex.Message}");
+
                     }
                 }
 
@@ -70,7 +70,7 @@ namespace CustomNPCExample.Products
                     _harmony.Patch(playerAwake, postfix: new HarmonyLib.HarmonyMethod(capturePostfix));
 
                 _patchApplied = true;
-                MelonLogger.Msg($"[WVC Patch] Consumption setup complete. Hooked {_playerMethodsPatched} methods.");
+                global::CustomNPCExample.Utils.WvcLog.Msg($"[WVC Patch] Consumption setup complete. Hooked {_playerMethodsPatched} methods.");
             }
             catch (Exception ex)
             {
@@ -86,7 +86,7 @@ namespace CustomNPCExample.Products
             {
                 _player = __instance;
                 MDMAEyeEffect.SetPlayer(__instance);
-                MelonLogger.Msg("[WVC Patch] Local player reference captured.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] Local player reference captured.");
             }
         }
 
@@ -103,12 +103,12 @@ namespace CustomNPCExample.Products
                 string itemId = ExtractId(__0);
                 if (string.IsNullOrEmpty(itemId)) itemId = GetCurrentEquippedItemId();
 
-                MelonLogger.Msg($"[WVC Patch] Player consumed item: {itemId ?? "(unknown)"}");
+                global::CustomNPCExample.Utils.WvcLog.Msg($"[WVC Patch] Player consumed item: {itemId ?? "(unknown)"}");
                 TryTriggerForId(itemId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Patch] Player consumption prefix failed: " + ex.Message);
+
             }
         }
 
@@ -117,12 +117,11 @@ namespace CustomNPCExample.Products
             if (string.IsNullOrEmpty(itemId)) return;
             string lower = itemId.ToLowerInvariant();
 
-            // 1. CUKE (Sobriety check for real in-game Cuke drinks)
             bool isCuke = lower == "cuke" || lower.Contains(":cuke") || lower.Contains("cuke");
 
             if (isCuke)
             {
-                MelonLogger.Msg("[WVC Patch] Cuke consumed. Clearing all effects.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] Cuke consumed. Clearing all effects.");
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
                 MDMANpcLoveEyes.Stop();
@@ -131,11 +130,12 @@ namespace CustomNPCExample.Products
                 BrownieEffectManager.StopEffect();
                 THCCookieEffectManager.StopEffect();
                 VapeCartEffectManager.StopEffect();
+                SalviaEffectManager.StopEffect();
+                XanaxEffectManager.StopEffect();
                 ClearNativeWeedEffectsFromPlayer();
                 return;
             }
 
-            // 2. DMT
             bool isDmt = lower == DMT.ProductId.ToLowerInvariant() || lower.Contains("dmt") || lower.Contains("dim");
 
             if (isDmt)
@@ -143,7 +143,7 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] DMT consumed. Activating visual sweep & walls.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] DMT consumed. Activating visual sweep & walls.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
@@ -158,7 +158,6 @@ namespace CustomNPCExample.Products
                 return;
             }
 
-            // 3. THC GUMMIES
             bool isGummy = lower == THCGummies.ProductId.ToLowerInvariant() || lower.Contains("thc_gummies") || lower.Contains("gummy");
 
             if (isGummy)
@@ -166,22 +165,21 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] Gummies consumed. Applying weed FX.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] Gummies consumed. Applying weed FX.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
                 MDMANpcLoveEyes.Stop();
-                THCGummyEffectManager.StopEffect();
                 DMTEffectManager.StopEffect();
                 BrownieEffectManager.StopEffect();
                 THCCookieEffectManager.StopEffect();
                 VapeCartEffectManager.StopEffect();
 
                 ApplyNativeWeedEffectsToPlayer();
+                THCGummyEffectManager.TriggerEffect();
                 return;
             }
 
-            // 4. MDMA
             bool isMdma = lower == MDMA.ProductId.ToLowerInvariant() || (lower.Contains("mdma") && !isGummy) || (lower.Contains("molly") && !isGummy);
 
             if (isMdma)
@@ -189,7 +187,7 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] MDMA consumption confirmed.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] MDMA consumption confirmed.");
 
                 THCGummyEffectManager.StopEffect();
                 DMTEffectManager.StopEffect();
@@ -204,7 +202,6 @@ namespace CustomNPCExample.Products
                 return;
             }
 
-            // 5. BROWNIE (Edible)
             bool isBrownie = lower == Brownie.ProductId.ToLowerInvariant() || lower.Contains("brownie");
 
             if (isBrownie)
@@ -212,7 +209,7 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] Brownie consumed. Applying warm edible high.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] Brownie consumed. Applying warm edible high.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
@@ -227,7 +224,6 @@ namespace CustomNPCExample.Products
                 return;
             }
 
-            // 6. COOKIE (Edible)
             bool isCookie = lower == THCCookie.ProductId.ToLowerInvariant() || lower.Contains("cookie");
 
             if (isCookie)
@@ -235,7 +231,7 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] THC Cookie consumed. Applying cozy cookie high.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] THC Cookie consumed. Applying cozy cookie high.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
@@ -250,7 +246,6 @@ namespace CustomNPCExample.Products
                 return;
             }
 
-            // 7. VAPE CART
             bool isCart = lower == VapeCartProduct.ProductId.ToLowerInvariant() ||
                           lower == VapeCartProduct.ProductId_Premium.ToLowerInvariant() ||
                           lower == VapeCartProduct.ProductId_Heavenly.ToLowerInvariant() ||
@@ -262,7 +257,7 @@ namespace CustomNPCExample.Products
                 if (UnityEngine.Time.time - _lastTriggerTime < 0.75f) return;
                 _lastTriggerTime = UnityEngine.Time.time;
 
-                MelonLogger.Msg("[WVC Patch] Vape Cart consumed. Applying airy buzz.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Patch] Vape Cart consumed. Applying airy buzz.");
 
                 MDMAEffectManager.StopEffect();
                 MDMAEyeEffect.StopEyeEffect();
@@ -276,11 +271,67 @@ namespace CustomNPCExample.Products
                 VapeCartEffectManager.TriggerEffect();
                 return;
             }
-        }
+            bool isSalvia =
+                lower == Salvia.ProductId.ToLowerInvariant() ||
+                lower.Contains("salvia");
 
-        // ============================================================
-        // Native Weed FX
-        // ============================================================
+            if (isSalvia)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f)
+                    return;
+
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Patch] Salvia consumed. Activating reality fracture."
+                );
+
+                MDMAEffectManager.StopEffect();
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                THCGummyEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                BrownieEffectManager.StopEffect();
+                THCCookieEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+
+                ClearNativeWeedEffectsFromPlayer();
+
+                SalviaEffectManager.TriggerEffect();
+                return;
+            }
+
+            bool isXanax =
+                lower == Xanax.ProductId.ToLowerInvariant() ||
+                lower.Contains("xanax") ||
+                lower.Contains("alprazolam");
+
+            if (isXanax)
+            {
+                if (UnityEngine.Time.time - _lastTriggerTime < 0.75f)
+                    return;
+
+                _lastTriggerTime = UnityEngine.Time.time;
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Patch] Xanax consumed. Settling into the calm."
+                );
+
+                // A bar is a depressant: it takes the edge off the loud highs and it stacks with
+                // itself through the manager instead of resetting. Weed highs (gummies, brownie,
+                // cookie) are left alone - a benzo on top of those is the realistic combination.
+                MDMAEyeEffect.StopEyeEffect();
+                MDMANpcLoveEyes.Stop();
+                MDMAEffectManager.StopEffect();
+                DMTEffectManager.StopEffect();
+                SalviaEffectManager.StopEffect();
+                VapeCartEffectManager.StopEffect();
+                ClearNativeWeedEffectsFromPlayer();
+
+                XanaxEffectManager.TriggerEffect();
+                return;
+            }
+        }
 
         private static void ApplyNativeWeedEffectsToPlayer()
         {
@@ -369,10 +420,6 @@ namespace CustomNPCExample.Products
             }
             catch { return null; }
         }
-
-        // ============================================================
-        // ID Extraction Helpers
-        // ============================================================
 
         private static string GetCurrentEquippedItemId()
         {

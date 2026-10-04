@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Reflection;
 using MelonLoader;
@@ -51,9 +51,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (motorOil == null || iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Ingredients] Base templates not ready."
-                    );
+
                     return false;
                 }
 
@@ -94,7 +92,7 @@ namespace CustomNPCExample.Products.Edibles
                 _gelatinIcon =
                     CreateGelatinIconSprite("WVC_Gelatin_Icon_v4");
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Ingredients] Using fixed 2D icons."
                 );
 
@@ -109,7 +107,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Ingredients] Registration complete. " +
                     "THC Oil=$" + ThcOilPrice +
                     ", Gelatin=$" + GelatinPrice + "."
@@ -127,10 +125,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // Representations
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId,
             GameObject customModel)
@@ -142,10 +136,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Ingredients] Raw definition not found: " +
-                        itemId
-                    );
+
                     return;
                 }
 
@@ -173,7 +164,7 @@ namespace CustomNPCExample.Products.Edibles
                         definition, itemId, customModel, worldScale
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Ingredients] Representations for " +
                     itemId +
                     ": Equippable=" + equippableApplied +
@@ -181,12 +172,9 @@ namespace CustomNPCExample.Products.Edibles
                     ", StoredItem=" + storedApplied
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Ingredients] Representation setup failed for " +
-                    itemId + ": " + ex
-                );
+
             }
         }
 
@@ -355,7 +343,7 @@ namespace CustomNPCExample.Products.Edibles
                     renderer.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Gummy Ingredients] Built " + context +
                 " representation for " + itemId +
                 " with " + customRenderers.Length +
@@ -365,20 +353,13 @@ namespace CustomNPCExample.Products.Edibles
             return clone;
         }
 
-        // ============================================================
-        // Icons
-        // ============================================================
-
         private static void ApplyIcon(
             string itemId,
             Sprite icon)
         {
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Ingredients] Cannot apply null icon for " +
-                    itemId
-                );
+
                 return;
             }
 
@@ -402,7 +383,7 @@ namespace CustomNPCExample.Products.Edibles
                 bool rawAny =
                     TrySetAnyIconSpriteMember(raw, icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Ingredients] Icon applied for " +
                     itemId +
                     ": wrapperDirect=" + wrapperDirect +
@@ -411,12 +392,9 @@ namespace CustomNPCExample.Products.Edibles
                     ", rawAny=" + rawAny
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Ingredients] Icon setup failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -494,10 +472,6 @@ namespace CustomNPCExample.Products.Edibles
             return applied;
         }
 
-        // ============================================================
-        // Fixed 2D icon sprites
-        // ============================================================
-
         private static Sprite CreateThcOilIconSprite(
             string iconName)
         {
@@ -536,7 +510,7 @@ namespace CustomNPCExample.Products.Edibles
 
             texture.Apply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Gummy Ingredients] Created fixed THC Oil icon."
             );
 
@@ -561,7 +535,6 @@ namespace CustomNPCExample.Products.Edibles
             DrawIconEllipse(texture, 256, 360, 111, 34,
                 new Color(0.94f, 0.93f, 0.89f, 1f));
 
-            // RED LID
             DrawIconRect(texture, 130, 355, 252, 44,
                 new Color(0.58f, 0.015f, 0.01f, 1f));
 
@@ -571,7 +544,6 @@ namespace CustomNPCExample.Products.Edibles
             DrawIconEllipse(texture, 256, 355, 126, 30,
                 new Color(0.40f, 0.005f, 0.005f, 1f));
 
-            // Red label
             DrawIconRect(texture, 150, 188, 212, 96,
                 new Color(0.68f, 0.045f, 0.035f, 1f));
 
@@ -580,7 +552,7 @@ namespace CustomNPCExample.Products.Edibles
 
             texture.Apply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Gummy Ingredients] Created fixed Gelatin icon with red cap."
             );
 
@@ -691,10 +663,6 @@ namespace CustomNPCExample.Products.Edibles
             DrawIconEllipse(texture, x + width - radius, y + height - radius,
                 radius, radius, color);
         }
-
-        // ============================================================
-        // 3D models (kept for held/world/station visuals)
-        // ============================================================
 
         private static GameObject CreateThcOilBottle()
         {
@@ -875,10 +843,6 @@ namespace CustomNPCExample.Products.Edibles
             return mat;
         }
 
-        // ============================================================
-        // Text rendering
-        // ============================================================
-
         private static void DrawTextCentered(
             Texture2D texture, string text,
             int centerY, int scale, Color color)
@@ -972,10 +936,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // Utility
-        // ============================================================
-
         private static void RemovePrimitiveCollider(GameObject go)
         {
             if (go == null) return;
@@ -1008,15 +968,13 @@ namespace CustomNPCExample.Products.Edibles
                 if (storable == null) return;
 
                 storable.BasePurchasePrice = price;
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Ingredients] Price set: " +
                     itemId + " = $" + price);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Ingredients] Price failed for " +
-                    itemId + ": " + ex.Message);
+
             }
         }
 
@@ -1106,11 +1064,9 @@ namespace CustomNPCExample.Products.Edibles
             {
                 ConsoleItemAliases.Register(alias, itemId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Ingredients] Alias '" + alias +
-                    "' failed: " + ex.Message);
+
             }
         }
     }

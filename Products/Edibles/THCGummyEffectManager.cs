@@ -5,20 +5,46 @@ namespace CustomNPCExample.Products.Edibles
 {
     public static class THCGummyEffectManager
     {
+        private static GameObject _controllerObject;
+        private static THCGummyScreenEffect _effect;
+
         public static void Update()
         {
-            // Do not create a volume. Vanilla weed handles the high.
+            EnsureEffectController();
+        }
+
+        private static void EnsureEffectController()
+        {
+            if (_controllerObject != null && _effect != null)
+                return;
+
+            _controllerObject =
+                new GameObject("WVC_Gummy_EffectController");
+
+            UnityEngine.Object.DontDestroyOnLoad(_controllerObject);
+
+            _effect =
+                _controllerObject.AddComponent<THCGummyScreenEffect>();
+
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Gummy Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
         {
-            MelonLogger.Msg("[Gummy Effect] Trigger ignored. Using native weed FX.");
+            EnsureEffectController();
+
+            THCGummyScreenEffect.ShouldStart = true;
+
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Gummy Effect] Trigger requested.");
         }
 
         public static void StopEffect()
         {
-            THCGummyScreenEffect.ShouldStart = false;
+            EnsureEffectController();
+
             THCGummyScreenEffect.ShouldStop = true;
+
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Gummy Effect] Forced stop requested.");
         }
     }
 }

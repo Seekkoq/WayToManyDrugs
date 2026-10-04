@@ -1,14 +1,9 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Products;
 
 namespace CustomNPCExample.Products.Edibles
 {
-    /// <summary>
-    /// Registers THC Gummies' mixing profile.
-    /// Map 1 keeps Gummies separate from MDMA (map 2) and
-    /// DMT (map 0) so the mixing station cannot confuse them.
-    /// </summary>
     public static class GummyMixing
     {
         private static ProductMixingProfile _profile;
@@ -22,9 +17,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (productKind == null)
             {
-                MelonLogger.Warning(
-                    "[Gummy Mixing] Product kind was null. Mixing not registered."
-                );
+
                 return;
             }
 
@@ -40,7 +33,7 @@ namespace CustomNPCExample.Products.Edibles
                     .WithOutputFactory(CreateMixedOutput)
                     .Build();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Gummy Mixing] THC Gummies mixing profile registered with color mixing."
                 );
             }
@@ -56,7 +49,7 @@ namespace CustomNPCExample.Products.Edibles
             ProductMixingOutput input
         )
         {
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[Gummy Mixing] Output factory called. Name=" +
                 input.MixName +
                 ", SourcePrice=" +

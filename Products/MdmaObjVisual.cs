@@ -59,7 +59,7 @@ namespace CustomNPCExample.Products
 
             _visual = root;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC MDMA] Embedded OBJ loaded: " +
                 mesh.vertexCount + " verts, " +
                 (mesh.triangles.Length / 3) + " tris."
@@ -90,13 +90,13 @@ namespace CustomNPCExample.Products
                     foreach (string name in
                         assembly.GetManifestResourceNames())
                     {
-                        MelonLogger.Msg("[WVC Resource] " + name);
+                        global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Resource] " + name);
                     }
 
                     return null;
                 }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC MDMA] Using resource: " + resolved
                 );
 
@@ -298,13 +298,12 @@ namespace CustomNPCExample.Products
             for (int i = 0; i < outPos.Count; i++)
                 outPos[i] -= offset;
 
-            // Shrink the imported mesh. 1.0 = original. Try 0.15–0.35.
             const float ModelScale = 0.45f;
 
             for (int i = 0; i < outPos.Count; i++)
                 outPos[i] *= ModelScale;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC MDMA] OBJ recentered. Old center=" +
                 offset +
                 ", size=" +
@@ -312,7 +311,7 @@ namespace CustomNPCExample.Products
                 ", applied scale=" +
                 ModelScale
             );
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC MDMA] OBJ recentered. Old center=" +
                 offset +
                 ", size=" +

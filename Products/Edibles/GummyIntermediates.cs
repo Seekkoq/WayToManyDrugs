@@ -60,7 +60,7 @@ namespace CustomNPCExample.Products.Edibles
                 catch { }
 
                 _registered = true;
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Intermediate ingredients registered."
                 );
                 return true;

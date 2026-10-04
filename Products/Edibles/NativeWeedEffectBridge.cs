@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MelonLoader;
 using UnityEngine;
@@ -19,11 +19,6 @@ namespace CustomNPCExample.Products.Edibles
         private static bool _active;
         private static float _timeRemaining;
 
-        /*
-         * If the auto matcher does not find the weed effect,
-         * press your debug key to dump all effect IDs, then add
-         * the exact ID/name here.
-         */
         private static readonly string[] ForcedEffectIds =
         {
             "weed",
@@ -70,10 +65,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (activated <= 0)
             {
-                MelonLogger.Warning(
-                    "[WVC WeedFX] No native weed effect handler matched. " +
-                    "Dumping available effects so we can identify the real ID."
-                );
+
 
                 DumpAvailableEffects();
                 return;
@@ -81,7 +73,7 @@ namespace CustomNPCExample.Products.Edibles
 
             _active = true;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC WeedFX] Native weed effect started. Handlers/controllers activated: " +
                 activated
             );
@@ -100,11 +92,9 @@ namespace CustomNPCExample.Products.Edibles
                 {
                     handler.Deactivate();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC WeedFX] Handler deactivate failed: " + ex.Message
-                    );
+
                 }
             }
 
@@ -119,11 +109,9 @@ namespace CustomNPCExample.Products.Edibles
                 {
                     controller.Deactivate();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC WeedFX] Controller deactivate failed: " + ex.Message
-                    );
+
                 }
             }
 
@@ -143,7 +131,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (_timeRemaining <= 0f)
             {
-                MelonLogger.Msg("[WVC WeedFX] Native weed effect expired.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC WeedFX] Native weed effect expired.");
                 Stop();
             }
         }
@@ -152,7 +140,7 @@ namespace CustomNPCExample.Products.Edibles
         {
             try
             {
-                MelonLogger.Msg("[WVC WeedFX] ===== EffectHandler dump =====");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC WeedFX] ===== EffectHandler dump =====");
 
                 NativeEffectHandler[] handlers =
                     Resources.FindObjectsOfTypeAll<NativeEffectHandler>();
@@ -168,14 +156,14 @@ namespace CustomNPCExample.Products.Edibles
                     string type = h.GetType().FullName;
                     string path = SafePath(h.gameObject);
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC WeedFX] Handler: id='" + id +
                         "' type='" + type +
                         "' path='" + path + "'"
                     );
                 }
 
-                MelonLogger.Msg("[WVC WeedFX] ===== EffectController dump =====");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC WeedFX] ===== EffectController dump =====");
 
                 NativeEffectController[] controllers =
                     Resources.FindObjectsOfTypeAll<NativeEffectController>();
@@ -198,18 +186,16 @@ namespace CustomNPCExample.Products.Edibles
                     }
                     catch { }
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC WeedFX] Controller: active='" + active +
                         "' type='" + type +
                         "' path='" + path + "'"
                     );
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC WeedFX] Dump failed: " + ex
-                );
+
             }
         }
 
@@ -250,17 +236,14 @@ namespace CustomNPCExample.Products.Edibles
                     _activeHandlers.Add(handler);
                     count++;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC WeedFX] Activated EffectHandler: id='" +
                         id + "' type='" + type + "' path='" + path + "'"
                     );
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC WeedFX] EffectHandler activate failed: " +
-                        id + " / " + ex.Message
-                    );
+
                 }
             }
 
@@ -297,17 +280,14 @@ namespace CustomNPCExample.Products.Edibles
                     _activeControllers.Add(controller);
                     count++;
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC WeedFX] Activated EffectController: type='" +
                         type + "' path='" + path + "'"
                     );
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MelonLogger.Warning(
-                        "[WVC WeedFX] EffectController activate failed: " +
-                        type + " / " + ex.Message
-                    );
+
                 }
             }
 

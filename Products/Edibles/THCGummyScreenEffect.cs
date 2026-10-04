@@ -36,7 +36,7 @@ namespace CustomNPCExample.Products.Edibles
             {
                 CreateVolume();
                 _setupOk = true;
-                MelonLogger.Msg("[Gummy Effect] Post-processing volume ready.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Gummy Effect] Post-processing volume ready.");
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ namespace CustomNPCExample.Products.Edibles
                 _volume.enabled = true;
             }
 
-            MelonLogger.Msg($"[Gummy Effect] Edible high started. Duration: {EffectDuration}s");
+            global::CustomNPCExample.Utils.WvcLog.Msg($"[Gummy Effect] Edible high started. Duration: {EffectDuration}s");
         }
 
         private void StopEffect()
@@ -102,7 +102,7 @@ namespace CustomNPCExample.Products.Edibles
                 _volume.enabled = false;
             }
 
-            MelonLogger.Msg("[Gummy Effect] Edible high ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Gummy Effect] Edible high ended.");
         }
 
         private void CreateVolume()
@@ -162,63 +162,54 @@ namespace CustomNPCExample.Products.Edibles
         {
             float elapsed = EffectDuration - _timeRemaining;
 
-            // Slow edible come-up / long hang
             float fadeIn = Mathf.Clamp01(elapsed / 16f);
             float fadeOut = Mathf.Clamp01(_timeRemaining / 38f);
             float fade = Mathf.Min(fadeIn, fadeOut);
 
-            // Lazy breathing
             float breath =
                 0.5f +
                 Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.14f) * 0.5f;
 
-            // Occasional heavier wave
             float wave =
                 0.5f +
                 Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.05f) * 0.5f;
 
+            float wobble =
+                0.5f +
+                Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.27f) * 0.5f;
+
             _volume.weight = fade;
 
-            // --------------------------------------------------
-            // COLOR — pop, not green
-            // Saturated, slightly warmer, like lights and food
-            // looking extra vivid while stoned
-            // --------------------------------------------------
+            _colorAdjust.saturation.value =
+                (34f + breath * 16f + wobble * 10f) * fade;
+            _colorAdjust.contrast.value = (6f + wave * 5f) * fade;
+            _colorAdjust.postExposure.value =
+                (0.08f + breath * 0.12f) * fade;
 
-            _colorAdjust.saturation.value = (28f + breath * 14f + wave * 8f) * fade;
-            _colorAdjust.contrast.value = (8f + breath * 4f) * fade;
-            _colorAdjust.postExposure.value = (0.10f + breath * 0.10f) * fade;
-
-            // Warm cream, not green. Keeps whites/skins looking right.
             Color sober = Color.white;
-            Color stoned = new Color(1.00f, 0.94f, 0.86f);
-            _colorAdjust.colorFilter.value = Color.Lerp(sober, stoned, fade * 0.55f);
+            Color candy = new Color(0.88f, 1.00f, 0.94f);
+            _colorAdjust.colorFilter.value =
+                Color.Lerp(sober, new Color(0.90f, 1.00f, 0.93f), fade * 0.50f);
 
             _colorAdjust.hueShift.value =
-                Mathf.Sin(_pulseTimer * 0.10f) * 3.5f * fade;
+                Mathf.Sin(_pulseTimer * 0.13f) * 6f * fade;
 
-            // --------------------------------------------------
-            // BLOOM — lights bloom, colors glow a bit
-            // --------------------------------------------------
-            _bloom.intensity.value = (0.85f + breath * 0.45f + wave * 0.25f) * fade;
-            _bloom.tint.value = new Color(1.00f, 0.97f, 0.90f);
+            _bloom.intensity.value =
+                (1.00f + breath * 0.55f + wobble * 0.35f) * fade;
+            _bloom.tint.value = new Color(0.88f, 1.00f, 0.94f);
 
-            // --------------------------------------------------
-            // CHROMATIC — soft-focus fringe on waves
-            // --------------------------------------------------
-            _chromatic.intensity.value = (0.06f + wave * 0.12f) * fade;
+            _chromatic.intensity.value =
+                (0.08f + wobble * 0.16f) * fade;
 
-            // --------------------------------------------------
-            // LENS — heavy-headed float
-            // --------------------------------------------------
             _lens.intensity.value =
-                (0.035f + Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.09f) * 0.045f) * fade;
+                (0.05f + Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.11f) * 0.06f) * fade;
 
-            // --------------------------------------------------
-            // VIGNETTE — eyelids, dark brown not green
-            // --------------------------------------------------
-            _vignette.intensity.value = (0.32f + breath * 0.10f + wave * 0.06f) * fade;
-            _vignette.color.value = new Color(0.06f, 0.05f, 0.04f);
+            _lens.scale.value =
+                1f + Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.06f) * 0.015f * fade;
+
+            _vignette.intensity.value =
+                (0.30f + breath * 0.12f + wobble * 0.05f) * fade;
+            _vignette.color.value = new Color(0.04f, 0.06f, 0.05f);
         }
     }
 }

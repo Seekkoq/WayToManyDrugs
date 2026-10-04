@@ -4,9 +4,6 @@ using UnityEngine;
 
 namespace CustomNPCExample.Products.Edibles
 {
-    /// <summary>
-    /// Creates a single-piece procedural gummy-bear mesh.
-    /// </summary>
     public static class GummyVisual
     {
         private static GameObject _source;
@@ -50,8 +47,8 @@ namespace CustomNPCExample.Products.Edibles
 
             _source = root;
 
-            MelonLoader.MelonLogger.Msg(
-                "[WVC Gummies] Single-piece gummy-bear visual created."
+            global::CustomNPCExample.Utils.WvcLog.Msg(
+                            "[WVC Gummies] Single-piece gummy-bear visual created."
             );
 
             return _source;
@@ -59,19 +56,11 @@ namespace CustomNPCExample.Products.Edibles
 
         private static Mesh CreateGummyBearMesh()
         {
-            /*
-             * One continuous bear silhouette in the XY plane.
-             *
-             * The arms, ears and legs are part of the outline, so they
-             * cannot become detached from the body.
-             */
             Vector2[] outline =
             {
-                // Top of head
                 new Vector2( 0.000f,  0.029f),
                 new Vector2(-0.006f,  0.029f),
 
-                // Left ear
                 new Vector2(-0.008f,  0.033f),
                 new Vector2(-0.013f,  0.035f),
                 new Vector2(-0.017f,  0.033f),
@@ -79,53 +68,43 @@ namespace CustomNPCExample.Products.Edibles
                 new Vector2(-0.018f,  0.025f),
                 new Vector2(-0.015f,  0.022f),
 
-                // Left side of head
                 new Vector2(-0.016f,  0.017f),
                 new Vector2(-0.014f,  0.013f),
 
-                // Left arm
                 new Vector2(-0.018f,  0.010f),
                 new Vector2(-0.021f,  0.005f),
                 new Vector2(-0.020f,  0.001f),
                 new Vector2(-0.017f, -0.001f),
                 new Vector2(-0.014f,  0.001f),
 
-                // Left side of body
                 new Vector2(-0.012f, -0.006f),
 
-                // Left leg and foot
                 new Vector2(-0.014f, -0.012f),
                 new Vector2(-0.014f, -0.018f),
                 new Vector2(-0.011f, -0.021f),
                 new Vector2(-0.006f, -0.021f),
                 new Vector2(-0.003f, -0.016f),
 
-                // Between legs
                 new Vector2( 0.000f, -0.013f),
 
-                // Right leg and foot
                 new Vector2( 0.003f, -0.016f),
                 new Vector2( 0.006f, -0.021f),
                 new Vector2( 0.011f, -0.021f),
                 new Vector2( 0.014f, -0.018f),
                 new Vector2( 0.014f, -0.012f),
 
-                // Right side of body
                 new Vector2( 0.012f, -0.006f),
 
-                // Right arm
                 new Vector2( 0.014f,  0.001f),
                 new Vector2( 0.017f, -0.001f),
                 new Vector2( 0.020f,  0.001f),
                 new Vector2( 0.021f,  0.005f),
                 new Vector2( 0.018f,  0.010f),
 
-                // Right side of head
                 new Vector2( 0.014f,  0.013f),
                 new Vector2( 0.016f,  0.017f),
                 new Vector2( 0.015f,  0.022f),
 
-                // Right ear
                 new Vector2( 0.018f,  0.025f),
                 new Vector2( 0.019f,  0.029f),
                 new Vector2( 0.017f,  0.033f),
@@ -142,14 +121,6 @@ namespace CustomNPCExample.Products.Edibles
 
             int count = outline.Length;
 
-            /*
-             * Four rings create slightly beveled edges:
-             *
-             * 0 = front face
-             * 1 = front outer edge
-             * 2 = back outer edge
-             * 3 = back face
-             */
             const int ringCount = 4;
 
             float[] depths =
@@ -196,7 +167,6 @@ namespace CustomNPCExample.Products.Edibles
             List<int> triangles =
                 new List<int>();
 
-            // Front face
             for (int i = 0; i < capTriangles.Count; i += 3)
             {
                 triangles.Add(capTriangles[i]);
@@ -204,7 +174,6 @@ namespace CustomNPCExample.Products.Edibles
                 triangles.Add(capTriangles[i + 2]);
             }
 
-            // Back face, with reversed winding
             int backOffset =
                 (ringCount - 1) * count;
 
@@ -223,7 +192,6 @@ namespace CustomNPCExample.Products.Edibles
                 );
             }
 
-            // Connect all four rings
             for (int ring = 0; ring < ringCount - 1; ring++)
             {
                 int currentOffset =
@@ -287,10 +255,6 @@ namespace CustomNPCExample.Products.Edibles
             material.name =
                 "WVC_THC_GummyRed_Material";
 
-            /*
-             * Keep it opaque for now. Transparent materials can produce
-             * sorting issues on procedural models.
-             */
             Color gummyRed =
                 new Color(
                     0.92f,

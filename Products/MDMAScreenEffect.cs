@@ -39,7 +39,7 @@ namespace CustomNPCExample.Products
                 CreateVolume();
                 _setupOk = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[MDMA Effect] Post-processing volume ready."
                 );
             }
@@ -96,7 +96,7 @@ namespace CustomNPCExample.Products
                 _volume.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 $"[MDMA Effect] Euphoria started. Duration: {EffectDuration}s"
             );
         }
@@ -116,7 +116,7 @@ namespace CustomNPCExample.Products
             MDMAEyeEffect.StopEyeEffect();
             MDMANpcLoveEyes.Stop();
 
-            MelonLogger.Msg("[MDMA Effect] Euphoria ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[MDMA Effect] Euphoria ended.");
         }
 
         private void CreateVolume()

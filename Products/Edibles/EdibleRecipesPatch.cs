@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
@@ -24,18 +24,6 @@ using NativeMixOperation =
 
 namespace CustomNPCExample.Products.Edibles
 {
-    /// <summary>
-    /// Mixer pipeline:
-    ///
-    /// THC Oil + Gelatin
-    ///     -> THC Gelatin Base
-    ///
-    /// THC Gelatin Base + Infused Sugar
-    ///     -> Unbaked Gummy Mix
-    ///
-    /// THC Oil remains an ingredient. A vanilla product definition is used
-    /// internally only so the native mixer can start its operation.
-    /// </summary>
     public static class EdibleRecipesPatch
     {
         private const string HarmonyId =
@@ -68,7 +56,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _applied = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Mixing Station patches applied."
                 );
 
@@ -99,9 +87,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (original == null || postfix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] Hard-filter method not found."
-                );
+
                 return;
             }
 
@@ -126,9 +112,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (original == null || prefix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] CanStartMix method not found."
-                );
+
                 return;
             }
 
@@ -153,9 +137,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (original == null || postfix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] GetMixQuantity method not found."
-                );
+
                 return;
             }
 
@@ -180,9 +162,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (original == null || postfix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] GetProduct method not found."
-                );
+
                 return;
             }
 
@@ -207,9 +187,7 @@ namespace CustomNPCExample.Products.Edibles
 
             if (original == null || prefix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] SetMixOperation method not found."
-                );
+
                 return;
             }
 
@@ -218,7 +196,7 @@ namespace CustomNPCExample.Products.Edibles
                 prefix: new HarmonyMethod(prefix)
             );
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Edibles] Patched MixingStation.SetMixOperation."
             );
         }
@@ -233,13 +211,10 @@ namespace CustomNPCExample.Products.Edibles
 
             if (prefix == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Edibles] MixingDone prefix missing."
-                );
+
                 return;
             }
 
-            // Base station
             MethodInfo baseDone = AccessTools.Method(
                 typeof(MixingStation),
                 nameof(MixingStation.MixingDone)
@@ -252,12 +227,11 @@ namespace CustomNPCExample.Products.Edibles
                     prefix: new HarmonyMethod(prefix)
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Patched MixingStation.MixingDone."
                 );
             }
 
-            // Mixing Station Mk2
             MethodInfo mk2Done = AccessTools.Method(
                 typeof(MixingStationMk2),
                 nameof(MixingStationMk2.MixingDone)
@@ -270,7 +244,7 @@ namespace CustomNPCExample.Products.Edibles
                     prefix: new HarmonyMethod(prefix)
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Patched MixingStationMk2.MixingDone."
                 );
             }
@@ -299,7 +273,7 @@ namespace CustomNPCExample.Products.Edibles
                     postfix: new HarmonyMethod(postfix)
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Patched MixingStation.OnTimePass."
                 );
             }
@@ -316,15 +290,11 @@ namespace CustomNPCExample.Products.Edibles
                     postfix: new HarmonyMethod(postfix)
                 );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Patched Mk2.OnTimePass."
                 );
             }
         }
-
-        // ============================================================
-        // Product-slot filter
-        // ============================================================
 
         private static void DoesItemMatchHardFilters_Postfix(
             NativeItemSlot __instance,
@@ -354,6 +324,11 @@ namespace CustomNPCExample.Products.Edibles
                     string.Equals(
                         itemId,
                         GummyIntermediates.GelatinBaseId,
+                        StringComparison.OrdinalIgnoreCase
+                    ) ||
+                    string.Equals(
+                        itemId,
+                        THCGummies.ProductId,
                         StringComparison.OrdinalIgnoreCase
                     );
 
@@ -390,10 +365,6 @@ namespace CustomNPCExample.Products.Edibles
                 );
             }
         }
-
-        // ============================================================
-        // Begin button availability
-        // ============================================================
 
         private static bool CanStartMix_Prefix(
             MixingStation __instance,
@@ -459,10 +430,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // Native product proxy
-        // ============================================================
-
         private static void GetProduct_Postfix(
             MixingStation __instance,
             ref NativeProductDefinition __result)
@@ -485,9 +452,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (proxy == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not get vanilla proxy product."
-                    );
+
                     return;
                 }
 
@@ -543,10 +508,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // SetMix operation capture
-        // ============================================================
-
         private static bool SetMixOperation_Prefix(
     MixingStation __instance,
     Il2CppFishNet.Connection.NetworkConnection conn,
@@ -561,8 +522,6 @@ namespace CustomNPCExample.Products.Edibles
                 IntPtr key =
                     IL2CPP.Il2CppObjectBaseToPtr(__instance);
 
-                // SetMixOperation fires more than once per click
-                // (server + observers). Only run the mix once.
                 if (IsRecentlyHandled(key))
                     return false;
 
@@ -585,10 +544,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (!CanOutputAccept(outputSlot, outputId))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Output slot will not accept " +
-                        outputId
-                    );
+
                     return false;
                 }
 
@@ -599,9 +555,7 @@ namespace CustomNPCExample.Products.Edibles
                         quantity,
                         out output))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not create " + outputId
-                    );
+
                     return false;
                 }
 
@@ -611,9 +565,7 @@ namespace CustomNPCExample.Products.Edibles
                         outputId,
                         quantity))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not place " + outputId
-                    );
+
                     return false;
                 }
 
@@ -627,12 +579,11 @@ namespace CustomNPCExample.Products.Edibles
                 try { __instance.SetMixerToLowered(); } catch { }
                 try { __instance.onMixDone?.Invoke(); } catch { }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Mixed " + outputId +
                     " x" + quantity
                 );
 
-                // Skip vanilla. Inputs consumed, output placed.
                 return false;
             }
             catch (Exception ex)
@@ -708,10 +659,6 @@ namespace CustomNPCExample.Products.Edibles
                 slot.SetQuantity(remaining, false);
         }
 
-        // ============================================================
-        // Custom outputs on mix completion
-        // ============================================================
-
         private static bool MixingDone_Prefix(
             MixingStation __instance)
         {
@@ -740,9 +687,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (operation == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] MixingDone had no CurrentMixOperation."
-                    );
+
                     return true;
                 }
 
@@ -750,13 +695,12 @@ namespace CustomNPCExample.Products.Edibles
                 string ingredientId = operation.IngredientID;
                 int quantity = operation.Quantity;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Finished mix operation: " +
                     productId + " + " + ingredientId + " x" + quantity +
                     " (Pending Output: " + (outputId ?? "none") + ")"
                 );
 
-                // FIX: If we cleared the dictionary, fallback only if null
                 if (string.IsNullOrEmpty(outputId))
                 {
                     outputId = ResolveOutput(productId, ingredientId);
@@ -775,10 +719,7 @@ namespace CustomNPCExample.Products.Edibles
                         quantity,
                         out output))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not create output: " +
-                        outputId
-                    );
+
                     return true;
                 }
 
@@ -787,9 +728,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (outputSlot == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Mixing Station OutputSlot is null."
-                    );
+
                     return true;
                 }
 
@@ -802,10 +741,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (!placed)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not place output: " +
-                        outputId
-                    );
+
                     return true;
                 }
 
@@ -814,7 +750,7 @@ namespace CustomNPCExample.Products.Edibles
                 try { __instance.SetMixerToLowered(); } catch { }
                 try { __instance.onMixDone?.Invoke(); } catch { }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Produced " +
                     outputId + " x" + quantity
                 );
@@ -867,9 +803,7 @@ namespace CustomNPCExample.Products.Edibles
                 NativeItemInstance output;
                 if (!TryCreateInstance(outputId, quantity, out output))
                 {
-                    MelonLogger.Warning(
-                        "[WVC Edibles] Could not create " + outputId
-                    );
+
                     PendingOutputs.Remove(key);
                     return;
                 }
@@ -889,7 +823,7 @@ namespace CustomNPCExample.Products.Edibles
                 try { __instance.SetMixerToLowered(); } catch { }
                 try { __instance.onMixDone?.Invoke(); } catch { }
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Edibles] Timer complete. Produced " +
                     outputId + " x" + quantity
                 );
@@ -899,10 +833,6 @@ namespace CustomNPCExample.Products.Edibles
                 LogOnce("OnTimePass completion failed: " + ex.Message);
             }
         }
-
-        // ============================================================
-        // Recipe definitions
-        // ============================================================
 
         private static string ResolveOutput(
             string productId,
@@ -980,10 +910,6 @@ namespace CustomNPCExample.Products.Edibles
 
             return quantity > 0;
         }
-
-        // ============================================================
-        // Output helpers
-        // ============================================================
 
         private static bool CanOutputAccept(
             NativeItemSlot outputSlot,
@@ -1171,9 +1097,7 @@ namespace CustomNPCExample.Products.Edibles
 
             _errorLogged = true;
 
-            MelonLogger.Warning(
-                "[WVC Edibles] " + message
-            );
+
         }
     }
 }

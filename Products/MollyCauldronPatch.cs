@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Il2CppScheduleOne.ItemFramework;
@@ -10,9 +10,6 @@ namespace CustomNPCExample.Products
 {
     public static class MollyCauldronPatch
     {
-        // ============================================================
-        // Item IDs
-        // ============================================================
 
         private const string SafroleId =
             "westvilleconnection:ingredients/safrole_oil";
@@ -30,10 +27,6 @@ namespace CustomNPCExample.Products
 
         private static string MdmaId => MDMA.ProductId;
 
-        // ============================================================
-        // Patch state
-        // ============================================================
-
         private static readonly HarmonyLib.Harmony Harmony =
             new HarmonyLib.Harmony("westvilleconnection.molly.cauldron");
 
@@ -47,10 +40,6 @@ namespace CustomNPCExample.Products
             SwappedDefinitions =
                 new Dictionary<int, QualityItemDefinition>();
 
-        /*
-         * Stores ItemSlot.Pointer values for cauldron output slots that are
-         * about to receive custom MDMA output.
-         */
         private static readonly HashSet<IntPtr> PendingMdmaOutputSlots =
             new HashSet<IntPtr>();
 
@@ -83,10 +72,6 @@ namespace CustomNPCExample.Products
             public bool HasAny => HasSafrole || HasPmk;
         }
 
-        // ============================================================
-        // Patch setup
-        // ============================================================
-
         public static void ApplyPatch()
         {
             if (_patchApplied)
@@ -99,7 +84,7 @@ namespace CustomNPCExample.Products
 
                 _patchApplied = true;
 
-                MelonLogger.Msg("[MollyCauldron] Patch setup complete.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[MollyCauldron] Patch setup complete.");
             }
             catch (Exception ex)
             {
@@ -195,10 +180,6 @@ namespace CustomNPCExample.Products
                 }
                 else if (method.Name == "SetStoredItem")
                 {
-                    /*
-                     * This is the important quantity fix.
-                     * Native cauldron output goes through SetStoredItem.
-                     */
                     PatchPostfix(method, nameof(PostfixSetStoredItem));
                 }
             }
@@ -242,10 +223,6 @@ namespace CustomNPCExample.Products
             PatchedMethods.Add(method);
         }
 
-        // ============================================================
-        // Cauldron selection
-        // ============================================================
-
         public static void MarkAsCustomMollyCauldron(object cauldron)
         {
             Component component = cauldron as Component;
@@ -287,10 +264,6 @@ namespace CustomNPCExample.Products
             Il2CppSystem.Object obj = instance as Il2CppSystem.Object;
             return obj?.TryCast<ItemInstance>();
         }
-
-        // ============================================================
-        // Slot filter patches
-        // ============================================================
 
         public static bool PrefixItemFilter(
             object[] __args,
@@ -343,10 +316,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Start button
-        // ============================================================
-
         public static void PrefixButtonClicked(object __instance)
         {
             Cauldron cauldron = AsCauldron(__instance);
@@ -361,16 +330,12 @@ namespace CustomNPCExample.Products
 
             if (recipe.HasSafrole && recipe.HasPmk)
             {
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[MollyCauldron] MDMA recipe detected. PMK grade: " +
                     recipe.PmkGrade
                 );
             }
         }
-
-        // ============================================================
-        // Recipe validation
-        // ============================================================
 
         public static bool PrefixHasIngredients(
             object __instance,
@@ -424,10 +389,6 @@ namespace CustomNPCExample.Products
             return false;
         }
 
-        // ============================================================
-        // Ingredient consumption + quality selection
-        // ============================================================
-
         public static bool PrefixRemoveIngredients(
             object __instance,
             ref EQuality __result
@@ -446,7 +407,7 @@ namespace CustomNPCExample.Products
             if (!recipe.HasSafrole || !recipe.HasPmk)
                 return true;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[MollyCauldron] Consuming Safrole Oil + " +
                 recipe.PmkGrade +
                 " PMK."
@@ -463,14 +424,12 @@ namespace CustomNPCExample.Products
             }
             else
             {
-                MelonLogger.Warning(
-                    "[MollyCauldron] Could not swap cauldron output definition to MDMA."
-                );
+
             }
 
             __result = GetOutputQuality(recipe.PmkGrade);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[MollyCauldron] Cook quality selected: " +
                 __result
             );
@@ -478,12 +437,6 @@ namespace CustomNPCExample.Products
             return false;
         }
 
-        /*
-         * Existing mapping:
-         * Standard = 2
-         * Premium  = 3
-         * Heavenly = 4
-         */
         private static EQuality GetOutputQuality(PmkGrade grade)
         {
             switch (grade)
@@ -499,10 +452,6 @@ namespace CustomNPCExample.Products
                     return (EQuality)2;
             }
         }
-
-        // ============================================================
-        // MDMA output-definition swap
-        // ============================================================
 
         private static bool SwapOutputDefinition(Cauldron cauldron)
         {
@@ -521,9 +470,7 @@ namespace CustomNPCExample.Products
 
                 if (wrapper == null)
                 {
-                    MelonLogger.Warning(
-                        "[MollyCauldron] MDMA definition wrapper not ready."
-                    );
+
 
                     return false;
                 }
@@ -535,9 +482,7 @@ namespace CustomNPCExample.Products
 
                 if (rawDefinition == null)
                 {
-                    MelonLogger.Warning(
-                        "[MollyCauldron] Could not access raw MDMA definition."
-                    );
+
 
                     return false;
                 }
@@ -552,7 +497,7 @@ namespace CustomNPCExample.Products
                 cauldron.CocaineBaseDefinition =
                     mdmaDefinition;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[MollyCauldron] Output definition swapped to MDMA."
                 );
 
@@ -580,9 +525,7 @@ namespace CustomNPCExample.Products
 
                 if (outputSlot == null)
                 {
-                    MelonLogger.Warning(
-                        "[MollyCauldron] OutputSlot was null; cannot track batch quantity."
-                    );
+
 
                     return;
                 }
@@ -591,32 +534,22 @@ namespace CustomNPCExample.Products
 
                 if (slotPointer == IntPtr.Zero)
                 {
-                    MelonLogger.Warning(
-                        "[MollyCauldron] OutputSlot pointer was zero."
-                    );
+
 
                     return;
                 }
 
                 PendingMdmaOutputSlots.Add(slotPointer);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[MollyCauldron] Tracking pending MDMA output slot."
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[MollyCauldron] TrackPendingOutputSlot failed: " +
-                    ex.Message
-                );
+
             }
         }
-
-        // ============================================================
-        // CRITICAL FIX:
-        // Force cauldron output item to quantity 10 when SetStoredItem runs
-        // ============================================================
 
         public static void PostfixSetStoredItem(
             object __instance,
@@ -664,7 +597,7 @@ namespace CustomNPCExample.Products
 
                 if (fixedStack)
                 {
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[MollyCauldron] Fixed MDMA output quantity: " +
                         currentQuantity +
                         " -> " +
@@ -673,20 +606,14 @@ namespace CustomNPCExample.Products
                 }
                 else
                 {
-                    MelonLogger.Warning(
-                        "[MollyCauldron] Failed to replace MDMA output with quantity " +
-                        MdmaBatchQuantity
-                    );
+
                 }
 
                 PendingMdmaOutputSlots.Remove(slotPointer);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[MollyCauldron] PostfixSetStoredItem failed: " +
-                    ex.Message
-                );
+
 
                 PendingMdmaOutputSlots.Remove(slotPointer);
             }
@@ -737,7 +664,6 @@ namespace CustomNPCExample.Products
                 _settingStoredItemInternally = false;
             }
 
-            // Fallback: try direct mutation if SetStoredItem reflection failed.
             bool changedItem =
                 TrySetQuantityOnObject(
                     originalItem,
@@ -952,10 +878,6 @@ namespace CustomNPCExample.Products
             return fallback;
         }
 
-        // ============================================================
-        // Finish cooking cleanup
-        // ============================================================
-
         public static void PostfixFinishCookOperation(object __instance)
         {
             Cauldron cauldron = AsCauldron(__instance);
@@ -981,9 +903,6 @@ namespace CustomNPCExample.Products
                     outputSlot.ItemInstance != null &&
                     outputSlot.Quantity != MdmaBatchQuantity)
                 {
-                    /*
-                     * Fallback only. Usually PostfixSetStoredItem already fixed it.
-                     */
                     ReplaceStoredItemWithQuantity(
                         outputSlot,
                         outputSlot.ItemInstance,
@@ -991,7 +910,7 @@ namespace CustomNPCExample.Products
                         null
                     );
 
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[MollyCauldron] Fallback fixed output quantity to " +
                         MdmaBatchQuantity
                     );
@@ -1009,14 +928,10 @@ namespace CustomNPCExample.Products
 
             SwappedDefinitions.Remove(cauldronId);
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[MollyCauldron] CocaineBaseDefinition restored."
             );
         }
-
-        // ============================================================
-        // Recipe reading
-        // ============================================================
 
         private static Recipe ReadRecipe(Cauldron cauldron)
         {
@@ -1061,12 +976,6 @@ namespace CustomNPCExample.Products
                         continue;
                     }
 
-                    /*
-                     * IMPORTANT:
-                     * Specific PMK grades must be checked before generic PMK,
-                     * because every PMK grade contains "pmk".
-                     */
-
                     if (Matches(lower, PmkLabGradeId, "pmk_lab_grade") ||
                         lower.Contains("lab_grade") ||
                         lower.Contains("lab-grade"))
@@ -1098,12 +1007,9 @@ namespace CustomNPCExample.Products
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[MollyCauldron] ReadRecipe failed: " +
-                    ex.Message
-                );
+
             }
 
             return recipe;
@@ -1148,10 +1054,6 @@ namespace CustomNPCExample.Products
             {
             }
         }
-
-        // ============================================================
-        // Item ID helpers
-        // ============================================================
 
         private static bool IsPrecursor(string id)
         {
@@ -1304,7 +1206,6 @@ namespace CustomNPCExample.Products
 
         public static void DumpCauldronState()
         {
-            // Keep your original debug dump here if needed.
         }
     }
 }

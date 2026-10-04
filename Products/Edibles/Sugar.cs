@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -19,6 +19,7 @@ namespace CustomNPCExample.Products.Edibles
 
         private static bool _registered;
         private static bool _failed;
+        private static bool _warnedDefinitionNotReady;
 
         private static GameObject _sugarVisual;
         private static Sprite _sugarIcon;
@@ -38,9 +39,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Sugar] Base template not ready."
-                    );
+
                     return false;
                 }
 
@@ -71,7 +70,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sugar] Registration complete. Infused Sugar = $" +
                     SugarPrice + "."
                 );
@@ -100,9 +99,11 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (sugarDefinition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Sugar] Sugar definition is not ready."
-                    );
+                    if (!_warnedDefinitionNotReady)
+                    {
+                        _warnedDefinitionNotReady = true;
+
+                    }
 
                     return false;
                 }
@@ -131,7 +132,7 @@ namespace CustomNPCExample.Products.Edibles
                     westHasSugar &&
                     centralHasSugar;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sugar] Gas-Mart injection: added=" +
                     added +
                     ", west=" +
@@ -142,12 +143,9 @@ namespace CustomNPCExample.Products.Edibles
 
                 return completed;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Gas-Mart injection failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -177,15 +175,13 @@ namespace CustomNPCExample.Products.Edibles
                 ApplyStoredRepresentation(
                     definition, itemId, customModel, worldScale);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sugar] Representations applied for " + itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Representation setup failed: " + ex.Message
-                );
+
             }
         }
 
@@ -408,9 +404,7 @@ namespace CustomNPCExample.Products.Edibles
         {
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Cannot apply null icon for " + itemId
-                );
+
                 return;
             }
 
@@ -425,16 +419,14 @@ namespace CustomNPCExample.Products.Edibles
                 bool w = TrySetMember(wrapper, "Icon", icon);
                 bool r = TrySetMember(raw, "Icon", icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sugar] Icon applied for " + itemId +
                     ": wrapper=" + w + ", raw=" + r
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Icon setup failed: " + ex.Message
-                );
+
             }
         }
 
@@ -442,19 +434,15 @@ namespace CustomNPCExample.Products.Edibles
         {
             Texture2D texture = CreateIconTexture(iconName + "_Texture");
 
-            // Shadow
             DrawIconEllipse(texture, 256, 78, 112, 24,
                 new Color(0f, 0f, 0f, 0.25f));
 
-            // Green box body
             DrawIconRect(texture, 145, 140, 222, 220,
                 new Color(0.08f, 0.38f, 0.16f, 1f));
 
-            // Darker top fold
             DrawIconRect(texture, 145, 350, 222, 35,
                 new Color(0.04f, 0.22f, 0.09f, 1f));
 
-            // Light green label
             DrawIconRect(texture, 160, 185, 192, 95,
                 new Color(0.42f, 0.78f, 0.25f, 1f));
 
@@ -463,7 +451,7 @@ namespace CustomNPCExample.Products.Edibles
 
             texture.Apply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Sugar] Created fixed Infused Sugar icon with green box and red cap area."
             );
 
@@ -475,21 +463,18 @@ namespace CustomNPCExample.Products.Edibles
             GameObject root =
                 new GameObject("WVC_Custom_InfusedSugar_Box");
 
-            // Green box body
             AddCube(root.transform, "BoxBody",
                 new Vector3(0.055f, 0.085f, 0.030f),
                 new Vector3(0f, 0.0425f, 0f),
                 new Color(0.08f, 0.38f, 0.16f, 1f),
                 0.18f);
 
-            // Darker top fold
             AddCube(root.transform, "BoxTop",
                 new Vector3(0.056f, 0.014f, 0.031f),
                 new Vector3(0f, 0.090f, 0f),
                 new Color(0.04f, 0.22f, 0.09f, 1f),
                 0.12f);
 
-            // Light green label
             AddLabelCube(root.transform, "InfusedSugarLabel",
                 new Vector3(0.048f, 0.038f, 0.002f),
                 new Vector3(0f, 0.045f, -0.016f),
@@ -735,13 +720,12 @@ namespace CustomNPCExample.Products.Edibles
                 if (storable == null) return;
 
                 storable.BasePurchasePrice = price;
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Sugar] Price set: " + itemId + " = $" + price);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Price failed: " + ex.Message);
+
             }
         }
 
@@ -823,11 +807,9 @@ namespace CustomNPCExample.Products.Edibles
             string alias, string itemId)
         {
             try { ConsoleItemAliases.Register(alias, itemId); }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Sugar] Alias '" + alias +
-                    "' failed: " + ex.Message);
+
             }
         }
 

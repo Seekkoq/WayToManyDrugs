@@ -12,22 +12,11 @@ namespace CustomNPCExample.Products.Edibles
         public static bool ShouldStart;
         public static bool ShouldStop;
 
-        /*
-         * Edible onset — slightly faster than brownie (cookies are lighter).
-         */
         public static float OnsetDelay = 6f;
         public static float EffectDuration = 140f;
 
-        /*
-         * Audio pitch slowing — slightly less aggressive than brownie.
-         * 1.0 = normal, 0.70 = deeper/slower.
-         */
         public static float MinimumAudioPitchMultiplier = 0.70f;
 
-        /*
-         * FOV tunnel zoom — lighter than brownie.
-         * 1.0 = normal, 0.68 = zoomed in.
-         */
         public static float MinimumFovMultiplier = 0.68f;
 
         private bool _setupOk;
@@ -57,7 +46,6 @@ namespace CustomNPCExample.Products.Edibles
         private readonly Dictionary<int, float> _originalCameraFovs =
             new Dictionary<int, float>();
 
-        // Warm cookie palette
         private static readonly Color CookieGold =
             new Color(0.92f, 0.68f, 0.22f);
 
@@ -82,7 +70,7 @@ namespace CustomNPCExample.Products.Edibles
                 CreateVolume();
                 _setupOk = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Cookie Effect] Cozy edible post-processing ready."
                 );
             }
@@ -151,7 +139,6 @@ namespace CustomNPCExample.Products.Edibles
 
         private void StartOrExtendEffect()
         {
-            // Already active — eat another cookie to extend the high.
             if (_active)
             {
                 _timeRemaining =
@@ -160,7 +147,7 @@ namespace CustomNPCExample.Products.Edibles
                         EffectDuration * 2.0f
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Cookie Effect] Effect extended. Remaining: " +
                     _timeRemaining.ToString("0.0") + "s"
                 );
@@ -168,7 +155,6 @@ namespace CustomNPCExample.Products.Edibles
                 return;
             }
 
-            // Waiting for onset — stack it slightly.
             if (_pendingOnset)
             {
                 _onsetTimer =
@@ -177,7 +163,7 @@ namespace CustomNPCExample.Products.Edibles
                         OnsetDelay + 5f
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Cookie Effect] Another cookie eaten. Onset delayed slightly."
                 );
 
@@ -190,7 +176,7 @@ namespace CustomNPCExample.Products.Edibles
             _effectAge = 0f;
             _pulseTimer = 0f;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[Cookie Effect] Cookie eaten. Effect starts in " +
                 OnsetDelay + "s."
             );
@@ -214,7 +200,7 @@ namespace CustomNPCExample.Products.Edibles
                 _volume.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[Cookie Effect] Cozy high started. Duration: " +
                 EffectDuration + "s"
             );
@@ -239,12 +225,8 @@ namespace CustomNPCExample.Products.Edibles
             RestoreAudio();
             RestoreCameras();
 
-            MelonLogger.Msg("[Cookie Effect] Cozy high ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Cookie Effect] Cozy high ended.");
         }
-
-        // ============================================================
-        // Post-processing volume
-        // ============================================================
 
         private void CreateVolume()
         {
@@ -320,10 +302,6 @@ namespace CustomNPCExample.Products.Edibles
             _volume.enabled = false;
         }
 
-        // ============================================================
-        // Visual effects — warm golden cookie haze
-        // ============================================================
-
         private void ApplyVisualEffects()
         {
             float fadeIn =
@@ -335,17 +313,14 @@ namespace CustomNPCExample.Products.Edibles
             float fade =
                 Mathf.Min(fadeIn, fadeOut);
 
-            // Slow, lazy breathing
             float breathSlow =
                 0.5f +
                 Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.15f) * 0.5f;
 
-            // Medium pulse for bloom/chromatic shifts
             float pulseMed =
                 0.5f +
                 Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.38f) * 0.5f;
 
-            // Very slow deep breathing for heavy effects
             float deepBreath =
                 0.5f +
                 Mathf.Sin(_pulseTimer * Mathf.PI * 2f * 0.09f) * 0.5f;
@@ -353,8 +328,6 @@ namespace CustomNPCExample.Products.Edibles
             if (_volume != null)
                 _volume.weight = fade;
 
-            // -- COLOR --
-            // Warm, saturated, golden — like a cozy afternoon
             _colorAdjust.saturation.value =
                 (22f + breathSlow * 18f) * fade;
 
@@ -364,11 +337,9 @@ namespace CustomNPCExample.Products.Edibles
             _colorAdjust.postExposure.value =
                 (0.05f + breathSlow * 0.12f) * fade;
 
-            // Very gentle hue shift — stays warm, no psychedelia
             _colorAdjust.hueShift.value =
                 Mathf.Sin(_pulseTimer * 0.14f) * 5f * fade;
 
-            // Golden cookie warmth
             Color filter =
                 Color.Lerp(
                     BakedAmber,
@@ -383,8 +354,6 @@ namespace CustomNPCExample.Products.Edibles
                     fade * 0.38f
                 );
 
-            // -- BLOOM --
-            // Warm glow on lights, like looking at bulbs while stoned
             _bloom.intensity.value =
                 (0.45f + breathSlow * 0.50f) * fade;
 
@@ -395,34 +364,24 @@ namespace CustomNPCExample.Products.Edibles
                     pulseMed
                 );
 
-            // -- CHROMATIC --
-            // Gentle fringe, slightly more than brownie
             _chromatic.intensity.value =
                 (0.04f + pulseMed * 0.07f) * fade;
 
-            // -- LENS --
-            // Gentle pull-in breathing — world warps in and out
             _lens.intensity.value =
                 (-0.14f - deepBreath * 0.08f) * fade;
 
             _lens.scale.value =
                 1f - 0.035f * fade * deepBreath;
 
-            // -- VIGNETTE --
-            // Dark chocolate edges — droopy eyelids
             _vignette.intensity.value =
                 (0.32f + deepBreath * 0.20f) * fade;
 
             _vignette.smoothness.value =
                 0.80f + deepBreath * 0.10f;
 
-            // -- GRAIN --
-            // Light grain — cozy film aesthetic
             _grain.intensity.value =
                 (0.04f + pulseMed * 0.05f) * fade;
 
-            // -- WHITE BALANCE --
-            // Shifts warm — everything looks golden and toasty
             _whiteBalance.temperature.value =
                 Mathf.Lerp(
                     10f,
@@ -433,10 +392,6 @@ namespace CustomNPCExample.Products.Edibles
             _whiteBalance.tint.value =
                 Mathf.Sin(_pulseTimer * 0.20f) * 4f * fade;
         }
-
-        // ============================================================
-        // Camera zoom / tunnel vision (lighter than brownie)
-        // ============================================================
 
         private void CacheCurrentCameras()
         {
@@ -578,10 +533,6 @@ namespace CustomNPCExample.Products.Edibles
 
             _originalCameraFovs.Clear();
         }
-
-        // ============================================================
-        // Audio slowdown (lighter than brownie)
-        // ============================================================
 
         private void ApplyAudioSlowdown()
         {

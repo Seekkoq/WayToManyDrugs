@@ -43,10 +43,6 @@ namespace CustomNPCExample.Products
         private static int _iconEnforceAttempts;
         private const int MaxIconEnforceAttempts = 180;
 
-        // ---- Jar tuning (calibrate these, everything else follows) ----
-        // Cookies clip through glass  -> halve both.
-        // Cookies still tiny          -> raise both.
-        // Keep Spread ~= 0.8 * Scale so the ring doesn't overlap the center cookie.
         private const float JarCookieScale = 0.070f;
         private const float JarSpreadRadius = 0.055f;
         private const float JarFloorY = 0.000f;
@@ -151,7 +147,7 @@ namespace CustomNPCExample.Products
 
             if (_iconEnforceAttempts <= 3)
             {
-                MelonLogger.Msg("[WVC Cookie] Icon enforce " + _iconEnforceAttempts +
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cookie] Icon enforce " + _iconEnforceAttempts +
                     ": wrapper=" + wrapperOk + ", raw=" + rawOk +
                     ", rawType=" + (rawObject?.GetType().Name ?? "null"));
             }
@@ -271,7 +267,7 @@ namespace CustomNPCExample.Products
             tex.Apply(false, true);
             _staticIcon = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
             _staticIcon.name = "WVC_Cookie_Static";
-            MelonLogger.Msg("[WVC Cookie] Static icon created.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cookie] Static icon created.");
             return _staticIcon;
         }
 
@@ -283,7 +279,7 @@ namespace CustomNPCExample.Products
                 ConsoleItemAliases.Register("cookie", ProductId);
                 ConsoleItemAliases.Register("thccookie", ProductId);
                 _discovered = true;
-                MelonLogger.Msg("[Westville Connection] THC Cookie registered and discovered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] THC Cookie registered and discovered.");
                 return true;
             }
             catch (InvalidOperationException) { return false; }
@@ -314,7 +310,7 @@ namespace CustomNPCExample.Products
                     .WithSearchAliases(new string[] { "cookie", "thccookie" })
                     .WithProductManagerVisibility(true)
                     .Build();
-                MelonLogger.Msg("[Westville Connection] THC Cookie Products app category registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] THC Cookie Products app category registered.");
                 return true;
             }
             catch (Exception ex)
@@ -327,10 +323,6 @@ namespace CustomNPCExample.Products
                 return false;
             }
         }
-
-        // ============================================================
-        // Visual source — domed cookie with chocolate chips
-        // ============================================================
 
         private static GameObject GetOrCreateVisualSource()
         {
@@ -379,8 +371,6 @@ namespace CustomNPCExample.Products
             return _visualSource;
         }
 
-        // Domed cookie body (submesh 0) + chocolate chips (submesh 1).
-        // Diameter = 1 unit, y spans -0.04 (base) .. +0.08 (dome crown).
         private static Mesh BuildCookieMesh()
         {
             const int seg = 28;
@@ -395,7 +385,6 @@ namespace CustomNPCExample.Products
             var tris0 = new List<int>();
             var tris1 = new List<int>();
 
-            // ---- Bottom disc ----
             int bottomCentre = verts.Count;
             verts.Add(new Vector3(0f, baseY, 0f));
             norms.Add(Vector3.down);
@@ -418,7 +407,6 @@ namespace CustomNPCExample.Products
                 tris0.Add(bottomCentre); tris0.Add(b); tris0.Add(a);
             }
 
-            // ---- Side wall ----
             for (int i = 0; i < seg; i++)
             {
                 float a0 = i * Mathf.PI * 2f / seg;
@@ -442,7 +430,6 @@ namespace CustomNPCExample.Products
                 tris0.Add(v + 1); tris0.Add(v + 3); tris0.Add(v + 2);
             }
 
-            // ---- Domed top ----
             for (int la = 0; la < lat; la++)
             {
                 float phi0 = la * Mathf.PI * 0.5f / lat;
@@ -479,7 +466,6 @@ namespace CustomNPCExample.Products
                 }
             }
 
-            // ---- Chocolate chips ----
             float[] chipAngles = { 15f, 52f, 96f, 138f, 185f, 226f, 268f, 310f, 350f, 40f, 160f, 280f, 0f };
             float[] chipRadii = { 0.36f, 0.22f, 0.34f, 0.20f, 0.35f, 0.24f, 0.36f, 0.21f, 0.33f, 0.10f, 0.12f, 0.08f, 0.00f };
             const float chipR = 0.080f;
@@ -537,18 +523,12 @@ namespace CustomNPCExample.Products
             return mesh;
         }
 
-        // ============================================================
-        // Jar layout (generated from the tunables at the top)
-        // ============================================================
-
         private static ProductPresentationTransform[] BuildJarCookiePlacements()
         {
             var list = new List<ProductPresentationTransform>();
 
-            // Mesh base is at y = -0.04 (unscaled). Lift so the flat bottom rests on the floor.
             float baseLift = 0.04f * JarCookieScale;
 
-            // Layer 1: one center cookie + ring of 6, lying flat with varied yaw.
             AddCookie(list, 0f, 0f, JarFloorY + baseLift, 0f, 37f, 0f, 1.00f);
 
             float[] ringYaw = { 12f, 71f, 133f, 190f, 248f, 305f };
@@ -565,7 +545,6 @@ namespace CustomNPCExample.Products
                     0.92f + (i % 3) * 0.04f);
             }
 
-            // Layer 2: three cookies resting on top, tilted like they fell in.
             float layer2Y = JarFloorY + baseLift + 0.12f * JarCookieScale + 0.004f;
             AddCookie(list, JarSpreadRadius * 0.45f, 0f, layer2Y, 18f, 100f, -12f, 0.95f);
             AddCookie(list, -JarSpreadRadius * 0.30f, JarSpreadRadius * 0.40f, layer2Y, -14f, 215f, 20f, 0.97f);
@@ -586,9 +565,51 @@ namespace CustomNPCExample.Products
                 Vector3.one * (JarCookieScale * sizeMul)));
         }
 
-        // ============================================================
-        // Presentation + Packaging
-        // ============================================================
+        private static bool _iconRepairDone;
+        private static float _iconRepairTimer;
+
+        public static void UpdateIconRepair()
+        {
+            if (_iconRepairDone || _definition == null)
+                return;
+
+            GameObject visual = GetOrCreateVisualSource();
+            if (visual == null)
+                return;
+
+            _iconRepairTimer += Time.deltaTime;
+
+            if (_iconRepairTimer < 90f)
+                return;
+
+            _iconRepairDone = true;
+
+            try
+            {
+                Sprite clean = DMTIngredients.RenderModelIcon(
+                    visual, "WVC_Cookie_Product_Icon_Clean");
+
+                if (clean == null)
+                    return;
+
+                bool applied =
+                    global::CustomNPCExample.Utils.WvcIcon.Apply(ProductId, clean);
+
+                if (applied)
+                {
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
+                        "[WVC Cookie] Clean product icon applied over generated icon.");
+                }
+                else
+                {
+
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
 
         private static void EnsurePresentationRegistered()
         {

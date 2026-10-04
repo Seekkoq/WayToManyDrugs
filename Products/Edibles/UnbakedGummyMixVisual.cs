@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Items;
@@ -6,19 +6,12 @@ using UnityEngine;
 
 namespace CustomNPCExample.Products.Edibles
 {
-    /// <summary>
-    /// Flat sheet of uncured gummy gel resting in a metal baking tray.
-    /// </summary>
     public static class UnbakedGummyMixVisual
     {
         private static bool _applied;
 
         private static GameObject _model;
         private static Sprite _icon;
-
-        // ============================================================
-        // Palette
-        // ============================================================
 
         private static readonly Color GelColor =
             new Color(0.84f, 0.16f, 0.14f, 1f);
@@ -37,10 +30,6 @@ namespace CustomNPCExample.Products.Edibles
             return _model;
         }
 
-        // ============================================================
-        // Entry point
-        // ============================================================
-
         public static bool Apply()
         {
             if (_applied)
@@ -53,10 +42,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Mix] Definition not ready: " +
-                        UnbakedGummyMix.ItemId
-                    );
+
 
                     return false;
                 }
@@ -97,7 +83,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _applied = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummy Mix] Visual applied. " +
                     "Equippable=" + equippable +
                     ", StationItem=" + station +
@@ -117,10 +103,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // Model: baking tray with a flat jello slab
-        // ============================================================
-
         private static GameObject BuildModel()
         {
             GameObject root =
@@ -128,9 +110,6 @@ namespace CustomNPCExample.Products.Edibles
                     "WVC_Custom_UnbakedGummyMix_CleanSheet"
                 );
 
-            /*
-             * Thin aluminium baking tray.
-             */
             AddCube(
                 root.transform,
                 "TrayFloor",
@@ -141,9 +120,6 @@ namespace CustomNPCExample.Products.Edibles
                 0.60f
             );
 
-            /*
-             * Raised tray lips.
-             */
             AddCube(
                 root.transform,
                 "TrayLipFront",
@@ -184,10 +160,6 @@ namespace CustomNPCExample.Products.Edibles
                 0.60f
             );
 
-            /*
-             * Clean flat jello/gummy slab.
-             * No blobs, no sugar dots, no overhanging circles.
-             */
             AddCube(
                 root.transform,
                 "CleanGelSlab",
@@ -198,10 +170,6 @@ namespace CustomNPCExample.Products.Edibles
                 0f
             );
 
-            /*
-             * Slightly darker underside/edge visible from the icon angle.
-             * Still rectangular, so it stays clean.
-             */
             AddCube(
                 root.transform,
                 "GelFrontEdge",
@@ -224,10 +192,6 @@ namespace CustomNPCExample.Products.Edibles
 
             return root;
         }
-
-        // ============================================================
-        // Isolated icon rendering
-        // ============================================================
 
         private static Sprite RenderIsolatedIcon(
     GameObject model,
@@ -446,10 +410,6 @@ namespace CustomNPCExample.Products.Edibles
 
         private static int FindIsolationLayer()
         {
-            /*
-             * Prefer a genuinely unused layer. Fall back to 31, which
-             * is almost always free in Unity projects.
-             */
             for (int layer = 31; layer >= 8; layer--)
             {
                 if (string.IsNullOrEmpty(
@@ -480,10 +440,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // Native representations
-        // ============================================================
-
         private static bool ApplyEquippableRepresentation(
             Il2CppScheduleOne.ItemFramework.ItemDefinition definition,
             GameObject customModel,
@@ -494,9 +450,7 @@ namespace CustomNPCExample.Products.Edibles
                 if (definition.Equippable == null ||
                     definition.Equippable.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Mix] No Equippable template."
-                    );
+
 
                     return false;
                 }
@@ -524,12 +478,9 @@ namespace CustomNPCExample.Products.Edibles
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Mix] Equippable failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -551,9 +502,7 @@ namespace CustomNPCExample.Products.Edibles
                     storable.StationItem == null ||
                     storable.StationItem.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Mix] No StationItem template."
-                    );
+
 
                     return false;
                 }
@@ -581,12 +530,9 @@ namespace CustomNPCExample.Products.Edibles
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Mix] StationItem failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -608,9 +554,7 @@ namespace CustomNPCExample.Products.Edibles
                     storable.StoredItem == null ||
                     storable.StoredItem.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummy Mix] No StoredItem template."
-                    );
+
 
                     return false;
                 }
@@ -638,12 +582,9 @@ namespace CustomNPCExample.Products.Edibles
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummy Mix] StoredItem failed: " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -671,10 +612,6 @@ namespace CustomNPCExample.Products.Edibles
 
             UnityEngine.Object.DontDestroyOnLoad(clone);
 
-            /*
-             * Hide the original template geometry but keep scripts,
-             * anchors, and colliders intact.
-             */
             Renderer[] oldRenderers =
                 clone.GetComponentsInChildren<Renderer>(true);
 
@@ -705,7 +642,7 @@ namespace CustomNPCExample.Products.Edibles
                     renderer.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Gummy Mix] Built " +
                 context +
                 " representation with " +
@@ -716,10 +653,6 @@ namespace CustomNPCExample.Products.Edibles
             return clone;
         }
 
-        // ============================================================
-        // Icon assignment
-        // ============================================================
-
         private static bool ApplyIcon(
             Il2CppScheduleOne.ItemFramework.ItemDefinition definition,
             Sprite icon)
@@ -727,18 +660,10 @@ namespace CustomNPCExample.Products.Edibles
             if (icon == null)
                 return false;
 
-            /*
-             * Clear first so no inherited template sprite can remain
-             * behind the new one in any UI path.
-             */
             TrySetMember(definition, "Icon", null);
 
             return TrySetMember(definition, "Icon", icon);
         }
-
-        // ============================================================
-        // Geometry helpers
-        // ============================================================
 
         private static GameObject AddCube(
             Transform parent,
@@ -895,10 +820,6 @@ namespace CustomNPCExample.Products.Edibles
 
             UnityEngine.Object.DontDestroyOnLoad(source);
         }
-
-        // ============================================================
-        // Definition helpers
-        // ============================================================
 
         private static Il2CppScheduleOne.ItemFramework.ItemDefinition
             GetRawDefinition(string itemId)

@@ -12,25 +12,11 @@ namespace CustomNPCExample.Products
         public static bool ShouldStart;
         public static bool ShouldStop;
 
-        /*
-         * Edible-style effect.
-         * It takes a few seconds to kick in, then lasts longer.
-         */
         public static float OnsetDelay = 8f;
         public static float EffectDuration = 150f;
 
-        /*
-         * Sound slowdown amount.
-         * 1.0 = normal pitch.
-         * 0.65 = deeper/slower sounds.
-         */
         public static float MinimumAudioPitchMultiplier = 0.62f;
 
-        /*
-         * Vision zoom.
-         * 1.0 = normal FOV.
-         * 0.62 = zoomed/tunneled in.
-         */
         public static float MinimumFovMultiplier = 0.62f;
 
         private bool _setupOk;
@@ -82,7 +68,7 @@ namespace CustomNPCExample.Products
 
                 _setupOk = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Brownie Effect] Warm edible post-processing ready."
                 );
             }
@@ -151,9 +137,6 @@ namespace CustomNPCExample.Products
 
         private void StartOrExtendEffect()
         {
-            /*
-             * If already active, eating another brownie extends the high.
-             */
             if (_active)
             {
                 _timeRemaining =
@@ -162,7 +145,7 @@ namespace CustomNPCExample.Products
                         EffectDuration * 2.0f
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Brownie Effect] Effect extended. Remaining: " +
                     _timeRemaining.ToString("0.0") + "s"
                 );
@@ -170,9 +153,6 @@ namespace CustomNPCExample.Products
                 return;
             }
 
-            /*
-             * If waiting for onset, restart the onset timer and stack duration.
-             */
             if (_pendingOnset)
             {
                 _onsetTimer =
@@ -181,7 +161,7 @@ namespace CustomNPCExample.Products
                         OnsetDelay + 6f
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[Brownie Effect] Another brownie eaten. Onset delayed slightly."
                 );
 
@@ -194,7 +174,7 @@ namespace CustomNPCExample.Products
             _effectAge = 0f;
             _pulseTimer = 0f;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[Brownie Effect] Brownie eaten. Effect starts in " +
                 OnsetDelay + "s."
             );
@@ -218,7 +198,7 @@ namespace CustomNPCExample.Products
                 _volume.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[Brownie Effect] Edible high started. Duration: " +
                 EffectDuration + "s"
             );
@@ -243,12 +223,8 @@ namespace CustomNPCExample.Products
             RestoreAudio();
             RestoreCameras();
 
-            MelonLogger.Msg("[Brownie Effect] Edible high ended.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[Brownie Effect] Edible high ended.");
         }
-
-        // ============================================================
-        // Post processing
-        // ============================================================
 
         private void CreateVolume()
         {
@@ -363,9 +339,6 @@ namespace CustomNPCExample.Products
             if (_volume != null)
                 _volume.weight = fade;
 
-            /*
-             * Warm, edible, tunnel-vision feel.
-             */
             _colorAdjust.saturation.value =
                 (18f + pulseSlow * 16f) * fade;
 
@@ -405,10 +378,6 @@ namespace CustomNPCExample.Products
             _chromatic.intensity.value =
                 (0.05f + pulseMedium * 0.08f) * fade;
 
-            /*
-             * Negative lens distortion + FOV zoom makes the world feel like
-             * it is pulling inward.
-             */
             _lens.intensity.value =
                 (-0.18f - breathing * 0.10f) * fade;
 
@@ -434,10 +403,6 @@ namespace CustomNPCExample.Products
             _whiteBalance.tint.value =
                 Mathf.Sin(_pulseTimer * 0.25f) * 6f * fade;
         }
-
-        // ============================================================
-        // Camera zoom / tunnel vision
-        // ============================================================
 
         private void CacheCurrentCameras()
         {
@@ -540,9 +505,6 @@ namespace CustomNPCExample.Products
             string name =
                 camera.gameObject.name.ToLowerInvariant();
 
-            /*
-             * Avoid touching item-icon cameras, UI cameras, preview cameras, etc.
-             */
             if (name.Contains("icon") ||
                 name.Contains("ui") ||
                 name.Contains("preview") ||
@@ -587,15 +549,8 @@ namespace CustomNPCExample.Products
             _originalCameraFovs.Clear();
         }
 
-        // ============================================================
-        // Audio slowdown
-        // ============================================================
-
         private void ApplyAudioSlowdown()
         {
-            /*
-             * Don't scan every frame. AudioSource lookup can be expensive.
-             */
             if (_audioScanTimer < 0.35f)
                 return;
 
@@ -637,9 +592,6 @@ namespace CustomNPCExample.Products
                     if (source == null)
                         continue;
 
-                    /*
-                     * Ignore silent or disabled sources.
-                     */
                     if (!source.enabled)
                         continue;
 

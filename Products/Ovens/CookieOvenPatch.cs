@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -15,12 +15,6 @@ using NativeItemSlot    = Il2CppScheduleOne.ItemFramework.ItemSlot;
 
 namespace CustomNPCExample.Products.Ovens
 {
-    /*
-     * 1x Unbaked Cookie Dough -> 6x THC Cookie
-     *
-     * Mirrors BrownieOvenPatch exactly — uses the native Lab Oven timer,
-     * lights, sounds, tray, hammer animation, and output handling.
-     */
     public static class CookieOvenPatch
     {
         private static readonly HarmonyLib.Harmony Harmony =
@@ -34,12 +28,7 @@ namespace CustomNPCExample.Products.Ovens
 
         private static bool _applied;
 
-        // Proxy ingredient to construct the native OvenCookOperation.
         private const string OperationIngredientId = "cocainebase";
-
-        // ============================================================
-        // Setup
-        // ============================================================
 
         public static void ApplyPatch()
         {
@@ -53,17 +42,13 @@ namespace CustomNPCExample.Products.Ovens
 
                 _applied = true;
 
-                MelonLogger.Msg("[WVC Cookie Oven] Patches applied.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cookie Oven] Patches applied.");
             }
             catch (Exception ex)
             {
                 MelonLogger.Error("[WVC Cookie Oven] Patch setup failed: " + ex);
             }
         }
-
-        // ============================================================
-        // Native Lab Oven patches
-        // ============================================================
 
         private static void PatchLabOvenMethods()
         {
@@ -104,10 +89,6 @@ namespace CustomNPCExample.Products.Ovens
             }
         }
 
-        // ============================================================
-        // Oven readiness
-        // ============================================================
-
         public static bool IsIngredientCookable_Prefix(
             LabOven __instance,
             ref bool __result)
@@ -142,10 +123,6 @@ namespace CustomNPCExample.Products.Ovens
             return false;
         }
 
-        // ============================================================
-        // Native visual tray count
-        // ============================================================
-
         public static void CreateStationItems_Prefix(
             LabOven __instance,
             ref int __0)
@@ -165,17 +142,13 @@ namespace CustomNPCExample.Products.Ovens
 
                 __0 = CookieOvenRecipes.CookiesProduced;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Oven] Tray count forced to " +
                     CookieOvenRecipes.CookiesProduced
                 );
             }
             catch { }
         }
-
-        // ============================================================
-        // SendCookOperation mark
-        // ============================================================
 
         public static void SendCookOperation_Prefix(LabOven __instance)
         {
@@ -189,10 +162,6 @@ namespace CustomNPCExample.Products.Ovens
                 LabOvenFinishedOutput.MarkPending(__instance, CookieOvenRecipes.CookieId);
             }
         }
-
-        // ============================================================
-        // Auto-start when player opens the oven
-        // ============================================================
 
         public static void Use_Postfix(LabOven __instance)
         {
@@ -212,9 +181,9 @@ namespace CustomNPCExample.Products.Ovens
 
                 MelonCoroutines.Start(AutoStartCookieBake(__instance, ovenId));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cookie Oven] Use postfix failed: " + ex.Message);
+
             }
         }
 
@@ -237,9 +206,7 @@ namespace CustomNPCExample.Products.Ovens
 
                 if (S1API.Items.ItemManager.GetDefinition(OperationIngredientId) == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cookie Oven] Missing proxy ingredient: " + OperationIngredientId
-                    );
+
                     yield break;
                 }
 
@@ -252,16 +219,16 @@ namespace CustomNPCExample.Products.Ovens
 
                 LabOvenFinishedOutput.MarkPending(oven, CookieOvenRecipes.CookieId);
 
-                MelonLogger.Msg("[WVC Cookie Oven] Auto-starting cookie bake.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Cookie Oven] Auto-starting cookie bake.");
 
                 oven.SendCookOperation(operation);
                 ConsumeCookieDough(oven);
 
                 started = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cookie Oven] Auto-start failed: " + ex.Message);
+
             }
             finally
             {
@@ -275,10 +242,6 @@ namespace CustomNPCExample.Products.Ovens
                 SendEscapeKey();
             }
         }
-
-        // ============================================================
-        // Ingredient consumption
-        // ============================================================
 
         private static bool ConsumeCookieDough(LabOven oven)
         {
@@ -300,28 +263,23 @@ namespace CustomNPCExample.Products.Ovens
                 if (slotIndex >= 0)
                 {
                     oven.SetItemSlotQuantity(slotIndex, remaining);
-                    MelonLogger.Msg(
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
                         "[WVC Cookie Oven] Consumed 1 Unbaked Cookie Dough. Remaining=" + remaining
                     );
                     return true;
                 }
 
-                // Fallback — clear slot
                 oven.IngredientSlot.SetStoredItem(null, true);
                 try { oven.IngredientSlot.ReplicateStoredInstance(); } catch { }
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cookie Oven] Failed to consume dough: " + ex.Message);
+
                 return false;
             }
         }
-
-        // ============================================================
-        // ItemSlot patches — allow dough into ingredient slot
-        // ============================================================
 
         private static void PatchItemSlotMethods()
         {
@@ -415,10 +373,6 @@ namespace CustomNPCExample.Products.Ovens
             catch { return true; }
         }
 
-        // ============================================================
-        // Output replacement — swap native output for THC Cookies
-        // ============================================================
-
         public static bool SetStoredItem_Prefix(
             NativeItemSlot __instance,
             ref NativeItemInstance __0)
@@ -448,7 +402,7 @@ namespace CustomNPCExample.Products.Ovens
                         out NativeItemInstance cookies) ||
                     cookies == null)
                 {
-                    MelonLogger.Warning("[WVC Cookie Oven] Could not create Cookie output.");
+
                     return true;
                 }
 
@@ -456,23 +410,19 @@ namespace CustomNPCExample.Products.Ovens
 
                 LabOvenFinishedOutput.ClearPending(oven);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Oven] Output redirected to THC Cookie x" +
                     CookieOvenRecipes.CookiesProduced
                 );
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[WVC Cookie Oven] Output replacement failed: " + ex.Message);
+
                 return true;
             }
         }
-
-        // ============================================================
-        // Helpers
-        // ============================================================
 
         private static void AddPrefix(MethodInfo method, string handler)
         {

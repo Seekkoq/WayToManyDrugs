@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MelonLoader;
 using S1API.Console;
@@ -48,12 +48,9 @@ namespace CustomNPCExample.Products
         {
             try
             {
-                // Cocaine is only kept as a fallback donor.
                 var cocaineTemplate =
                     ItemManager.GetDefinition("cocaine") as S1ProductDefinition;
 
-                // Shroom is the donor we actually want, because its native
-                // representation should carry the eating animation instead of snorting.
                 var shroomTemplate =
                     ItemManager.GetDefinition("shroom") as S1ProductDefinition;
 
@@ -73,7 +70,6 @@ namespace CustomNPCExample.Products
 
                 if (_productKind == null)
                 {
-                    // DO NOT change this to a shroom drug type. It breaks the item.
                     _productKind = new ProductKindBuilder(ProductKindId)
                         .WithCompatibilityDrugType(S1DrugType.Cocaine)
                         .Build();
@@ -92,7 +88,7 @@ namespace CustomNPCExample.Products
                     .WithLegalStatus((S1LegalStatus)1)
                     .WithBaseAddictiveness(0.65f)
                     .WithDefaultQuality((S1Quality)2)
-                    .WithRepresentationsFrom(template)   // <-- shroom, not cocaine
+                    .WithRepresentationsFrom(template)
                     .WithValidPackaging(new S1PackagingDefinition[] { baggie, jar, brick })
                     .WithEffectDurations(240, 480)
                     .WithNativeMixerMap((ProductMixingMap)2)
@@ -123,7 +119,7 @@ namespace CustomNPCExample.Products
                 ConsoleItemAliases.Register("ecstasy", ProductId);
 
                 _discovered = true;
-                MelonLogger.Msg("[Westville Connection] MDMA registered and discovered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] MDMA registered and discovered.");
                 return true;
             }
             catch (InvalidOperationException) { return false; }
@@ -157,7 +153,7 @@ namespace CustomNPCExample.Products
                     .WithProductManagerVisibility(true)
                     .Build();
 
-                MelonLogger.Msg("[Westville Connection] MDMA Products app category registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] MDMA Products app category registered.");
                 return true;
             }
             catch (Exception ex)
@@ -171,9 +167,55 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Upright Heart Mesh (Fixes Hotbar & Discovery Screen)
-        // ============================================================
+        private static bool _iconRepairDone;
+        private static float _iconRepairTimer;
+
+        public static void UpdateIconRepair()
+        {
+            if (_iconRepairDone || _definition == null)
+                return;
+
+            GameObject visual = GetOrCreateVisualSource();
+            if (visual == null)
+                return;
+
+            _iconRepairTimer += Time.deltaTime;
+
+            if (_iconRepairTimer < 90f)
+                return;
+
+            _iconRepairDone = true;
+
+            try
+            {
+                Sprite clean =
+                    DMTIngredients.RenderModelIcon(
+                        visual,
+                        "WVC_MDMA_Product_Icon_Clean"
+                    );
+
+                if (clean != null)
+                {
+                    bool applied =
+                        global::CustomNPCExample.Utils.WvcIcon.Apply(ProductId, clean);
+
+                    if (applied)
+                    {
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
+                            "[WVC MDMA] Clean product icon applied over generated icon."
+                        );
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
 
         private static GameObject GetOrCreateVisualSource()
         {
@@ -231,9 +273,7 @@ namespace CustomNPCExample.Products
 
             _visualSource = go;
 
-            MelonLogger.Warning(
-                "[Westville Connection] OBJ visual missing. Using procedural heart fallback."
-            );
+
 
             return _visualSource;
         }
@@ -242,7 +282,6 @@ namespace CustomNPCExample.Products
         {
             const float thickness = 0.006f;
 
-            // Upright heart outline in XY plane (point is at -Y, lobes at +Y)
             Vector2[] outline =
             {
                 new Vector2( 0.0000f,  0.0075f),
@@ -286,7 +325,6 @@ namespace CustomNPCExample.Products
 
             List<int> triangles = new List<int>();
 
-            // Front
             for (int i = 0; i < capTriangles.Count; i += 3)
             {
                 triangles.Add(capTriangles[i]);
@@ -294,7 +332,6 @@ namespace CustomNPCExample.Products
                 triangles.Add(capTriangles[i + 2]);
             }
 
-            // Back
             for (int i = 0; i < capTriangles.Count; i += 3)
             {
                 triangles.Add(count + capTriangles[i]);
@@ -302,7 +339,6 @@ namespace CustomNPCExample.Products
                 triangles.Add(count + capTriangles[i + 1]);
             }
 
-            // Outer sides
             for (int i = 0; i < count; i++)
             {
                 int next = (i + 1) % count;
@@ -406,23 +442,11 @@ namespace CustomNPCExample.Products
             return !(hasNeg && hasPos);
         }
 
-        // ============================================================
-        // Presentation + Packaging
-        // ============================================================
-
         private static void EnsurePresentationRegistered()
         {
             if (_presentationProfile != null)
                 return;
 
-            /*
-             * The heart mesh is built in XY.
-             *
-             * Rotate X by 90 so the game's icon/mixer/loose-item cameras
-             * see the full heart face instead of its thin edge.
-             *
-             * Z 180 flips the point downward.
-             */
             ProductPresentationTransform loose =
                 new ProductPresentationTransform(
                     Vector3.zero,
@@ -469,10 +493,6 @@ namespace CustomNPCExample.Products
 
         private static void EnsurePackagingRegistered()
 {
-            /*
-             * BAGGIE:
-             * Scale should match loose scale (~0.08f), not exceed it.
-             */
             if (_baggieProfile == null)
             {
                 _baggieProfile =
@@ -488,29 +508,18 @@ namespace CustomNPCExample.Products
                                 -0.001f
                             ),
 
-                            /*
-                             * Turn the tablet face toward the front of the bag.
-                             * Without X=90, the OBJ appears edge-on/invisible.
-                             */
                             new Vector3(
                                 90f,
                                 0f,
                                 180f
                             ),
 
-                            /*
-                             * Keep your corrected packaging size.
-                             */
                             Vector3.one * 0.028f
                         )
                     )
                     .Build();
             }
 
-            /*
-             * JAR:
-             * Multiple pills lying flat. Keep scales small so they don't clip.
-             */
             if (_jarProfile == null)
     {
         _jarProfile =
@@ -522,43 +531,59 @@ namespace CustomNPCExample.Products
                 new ProductPresentationTransform[]
                 {
                     JarHeart(
+                        -0.013f,
+                         0.007f,
                         -0.010f,
-                         0.006f,
-                        -0.008f,
                          20f,
-                         0.019f
+                         0.024f
                     ),
 
                     JarHeart(
-                         0.010f,
-                         0.006f,
-                        -0.006f,
+                         0.013f,
+                         0.007f,
+                        -0.008f,
                         -30f,
-                         0.019f
+                         0.024f
                     ),
 
                     JarHeart(
                          0.000f,
-                         0.006f,
-                         0.010f,
-                         55f,
-                         0.019f
-                    ),
-
-                    JarHeart(
-                        -0.007f,
-                         0.016f,
-                         0.003f,
-                        -60f,
-                         0.019f
-                    ),
-
-                    JarHeart(
                          0.007f,
-                         0.016f,
-                        -0.003f,
+                         0.013f,
+                         55f,
+                         0.024f
+                    ),
+
+                    JarHeart(
+                        -0.009f,
+                         0.018f,
+                         0.004f,
+                        -60f,
+                         0.023f
+                    ),
+
+                    JarHeart(
+                         0.009f,
+                         0.018f,
+                        -0.004f,
                          70f,
-                         0.019f
+                         0.023f
+                    ),
+
+                    JarHeart(
+                        -0.004f,
+                         0.028f,
+                         0.003f,
+                         15f,
+                         0.021f
+                    ),
+
+                    JarHeart(
+                         0.005f,
+                         0.028f,
+                        -0.002f,
+                        -80f,
+                         0.021f
                     )
                 }
             )
@@ -630,7 +655,6 @@ namespace CustomNPCExample.Products
             return new ProductPresentationTransform(
                 new Vector3(x, y, z),
 
-                // Flat on the jar floor.
                 new Vector3(
                     0f,
                     yRotation,

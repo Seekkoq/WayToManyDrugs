@@ -1,14 +1,9 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Products;
 
 namespace CustomNPCExample.Products
 {
-    /// <summary>
-    /// Registers MDMA's mixing profile.
-    /// WithPropertyColorMixing() is what makes mixed output take on
-    /// the mixed property color, like weed and cocaine do.
-    /// </summary>
     public static class MDMAMixing
     {
         private static ProductMixingProfile _profile;
@@ -22,9 +17,7 @@ namespace CustomNPCExample.Products
 
             if (productKind == null)
             {
-                MelonLogger.Warning(
-                    "[MDMA Mixing] Product kind was null. Mixing not registered."
-                );
+
                 return;
             }
 
@@ -40,7 +33,7 @@ namespace CustomNPCExample.Products
                     .WithOutputFactory(CreateMixedOutput)
                     .Build();
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[MDMA Mixing] MDMA mixing profile registered with color mixing."
                 );
             }
@@ -56,7 +49,6 @@ namespace CustomNPCExample.Products
             ProductMixingOutput input
         )
         {
-            // API rejects prices outside 1..999
             float price = input.SourcePrice + 12f;
 
             if (float.IsNaN(price) || float.IsInfinity(price))

@@ -10,12 +10,17 @@ namespace CustomNPCExample.Products
             if (string.IsNullOrEmpty(productId))
                 return;
 
-            MelonLogger.Msg("[WVC Effects] Consumed product ID: " + productId);
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Effects] Consumed product ID: " + productId);
 
             if (productId == MDMA.ProductId)
             {
                 THCGummyEffectManager.StopEffect();
                 MDMAEffectManager.TriggerEffect();
+                return;
+            }
+            if (productId == Salvia.ProductId)
+            {
+                SalviaEffectManager.TriggerEffect();
                 return;
             }
 

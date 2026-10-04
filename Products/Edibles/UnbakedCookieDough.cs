@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -36,9 +36,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cookie Dough] Base template not ready."
-                    );
+
                     return false;
                 }
 
@@ -76,7 +74,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Dough] Registered with 3D model. Price=$" + DoughPrice
                 );
 
@@ -92,9 +90,6 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        /*
-         * Metal baking tray with raw cookie dough mounds studded with butterscotch/chocolate chips.
-         */
         private static GameObject CreateDoughTray()
         {
             GameObject root =
@@ -102,17 +97,15 @@ namespace CustomNPCExample.Products.Edibles
 
             Color tray = new Color(0.65f, 0.67f, 0.70f, 1f);
             Color trayDark = new Color(0.46f, 0.48f, 0.52f, 1f);
-            Color dough = new Color(0.85f, 0.76f, 0.58f, 1f);        // Creamy raw dough
-            Color doughShade = new Color(0.78f, 0.68f, 0.50f, 1f);   // Dough contour
-            Color chip = new Color(0.88f, 0.58f, 0.16f, 1f);         // Butterscotch chip
-            Color darkChip = new Color(0.24f, 0.12f, 0.06f, 1f);     // Chocolate chip
+            Color dough = new Color(0.85f, 0.76f, 0.58f, 1f);
+            Color doughShade = new Color(0.78f, 0.68f, 0.50f, 1f);
+            Color chip = new Color(0.88f, 0.58f, 0.16f, 1f);
+            Color darkChip = new Color(0.24f, 0.12f, 0.06f, 1f);
 
-            // Tray floor.
             AddCube(root.transform, "TrayFloor",
                 new Vector3(0.086f, 0.005f, 0.064f),
                 new Vector3(0f, 0.003f, 0f), tray, 0.55f);
 
-            // Tray walls.
             AddCube(root.transform, "TrayWallFront",
                 new Vector3(0.086f, 0.018f, 0.004f),
                 new Vector3(0f, 0.011f, -0.030f), tray, 0.55f);
@@ -129,12 +122,10 @@ namespace CustomNPCExample.Products.Edibles
                 new Vector3(0.004f, 0.018f, 0.064f),
                 new Vector3(0.041f, 0.011f, 0f), tray, 0.55f);
 
-            // Rim highlight.
             AddCube(root.transform, "TrayRim",
                 new Vector3(0.090f, 0.003f, 0.068f),
                 new Vector3(0f, 0.020f, 0f), trayDark, 0.50f);
 
-            // 6 raw cookie dough mounds on the baking sheet: 2 rows of 3
             float[] xOffsets = { -0.024f, 0f, 0.024f };
             float[] zOffsets = { -0.014f, 0.014f };
 
@@ -146,25 +137,21 @@ namespace CustomNPCExample.Products.Edibles
                     index++;
                     Vector3 center = new Vector3(xOffsets[c], 0.009f, zOffsets[r]);
 
-                    // Main dough mound
                     AddCube(root.transform, "DoughMound_" + index,
                         new Vector3(0.018f, 0.008f, 0.018f),
                         center, dough, 0.22f,
                         Quaternion.Euler(0f, index * 35f, 0f));
 
-                    // Dough top crest
                     AddCube(root.transform, "DoughTop_" + index,
                         new Vector3(0.012f, 0.006f, 0.012f),
                         center + new Vector3(0f, 0.005f, 0f), doughShade, 0.20f,
                         Quaternion.Euler(0f, index * -25f, 0f));
 
-                    // Butterscotch chip on dough
                     AddCube(root.transform, "ButterscotchChip_" + index,
                         new Vector3(0.005f, 0.004f, 0.005f),
                         center + new Vector3(0.003f, 0.008f, -0.002f), chip, 0.35f,
                         Quaternion.Euler(15f, index * 40f, 10f));
 
-                    // Chocolate chip on dough
                     AddCube(root.transform, "ChocChip_" + index,
                         new Vector3(0.004f, 0.004f, 0.004f),
                         center + new Vector3(-0.003f, 0.007f, 0.003f), darkChip, 0.35f,
@@ -174,10 +161,6 @@ namespace CustomNPCExample.Products.Edibles
 
             return root;
         }
-
-        // ============================================================
-        // Representation and Icon helpers
-        // ============================================================
 
         private static void ApplyCustomRepresentations(
             string itemId, GameObject customModel,
@@ -190,9 +173,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cookie Dough] Raw definition missing: " + itemId
-                    );
+
                     return;
                 }
 
@@ -208,16 +189,14 @@ namespace CustomNPCExample.Products.Edibles
                 bool stored = ApplyStoredRepresentation(
                     definition, itemId, customModel, worldScale);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Dough] Representations: Equippable=" + equippable +
                     ", StationItem=" + station + ", StoredItem=" + stored
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Dough] Representation setup failed: " + ex.Message
-                );
+
             }
         }
 
@@ -503,11 +482,9 @@ namespace CustomNPCExample.Products.Edibles
 
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Dough] Icon render failed: " + ex.Message
-                );
+
                 return null;
             }
             finally
@@ -552,15 +529,13 @@ namespace CustomNPCExample.Products.Edibles
                 TrySetMember(wrapper, "Icon", icon);
                 TrySetMember(raw, "Icon", icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Dough] Icon applied for " + itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Dough] Icon failed: " + ex.Message
-                );
+
             }
         }
 
@@ -674,11 +649,9 @@ namespace CustomNPCExample.Products.Edibles
         private static void RegisterAliasSafely(string alias, string itemId)
         {
             try { ConsoleItemAliases.Register(alias, itemId); }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Dough] Alias '" + alias + "' failed: " + ex.Message
-                );
+
             }
         }
     }

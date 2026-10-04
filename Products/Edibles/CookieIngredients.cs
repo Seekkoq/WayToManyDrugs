@@ -51,13 +51,10 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (motorOil == null || iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cookie Ingredients] Base templates not ready."
-                    );
+
                     return false;
                 }
 
-                // ---- Butterscotch Chips ----
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
                     .WithBasicInfo(
@@ -69,7 +66,6 @@ namespace CustomNPCExample.Products.Edibles
                     )
                     .Build();
 
-                // ---- Cannabis Flour ----
                 MixIngredientItemCreator
                     .CloneFrom("motoroil")
                     .WithBasicInfo(
@@ -112,7 +108,7 @@ namespace CustomNPCExample.Products.Edibles
                 _cannabisFlourIcon =
                     CreateCannabisFlourIconSprite("WVC_CannabisFlour_Icon_v1");
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Ingredients] Using fixed 2D icons."
                 );
 
@@ -127,7 +123,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Ingredients] Registration complete. " +
                     "ButterscotchChips=$" + ButterscotchChipsPrice +
                     ", CannabisFlour=$" + CannabisFlourPrice + "."
@@ -145,16 +141,11 @@ namespace CustomNPCExample.Products.Edibles
             }
         }
 
-        // ============================================================
-        // 3D Visuals
-        // ============================================================
-
         private static GameObject CreateButterscotchBag()
         {
             GameObject root =
                 new GameObject("WVC_Custom_ButterscotchChips_Bag");
 
-            // A small golden-yellow flat bag shape using a cylinder
             AddCylinder(root.transform, "BagBody",
                 0.030f, 0.050f,
                 new Vector3(0f, 0.025f, 0f),
@@ -175,13 +166,11 @@ namespace CustomNPCExample.Products.Edibles
                 new Vector3(0f, 0.060f, 0f),
                 new Color(0.60f, 0.40f, 0.06f, 1f), 0.20f);
 
-            // Label strip on front
             AddCube(root.transform, "ButterscotchLabel",
                 new Vector3(0.042f, 0.030f, 0.002f),
                 new Vector3(0f, 0.026f, -0.031f),
                 new Color(0.98f, 0.92f, 0.60f, 1f), 0.12f);
 
-            // Chip specks on label
             AddCube(root.transform, "ChipA",
                 new Vector3(0.008f, 0.008f, 0.003f),
                 new Vector3(-0.008f, 0.030f, -0.033f),
@@ -207,7 +196,6 @@ namespace CustomNPCExample.Products.Edibles
             Color flourDark = new Color(0.30f, 0.42f, 0.22f, 1f);
             Color label = new Color(0.96f, 0.98f, 0.90f, 1f);
 
-            // Main flour bag cube shape
             AddCube(root.transform, "BagBody",
                 new Vector3(0.058f, 0.055f, 0.032f),
                 new Vector3(0f, 0.028f, 0f),
@@ -223,19 +211,16 @@ namespace CustomNPCExample.Products.Edibles
                 new Vector3(0f, 0.004f, 0f),
                 flourGreen, 0.10f);
 
-            // Green label band
             AddCube(root.transform, "GreenLabelBand",
                 new Vector3(0.050f, 0.020f, 0.0025f),
                 new Vector3(0f, 0.036f, -0.0165f),
                 flourGreen, 0.12f);
 
-            // Inner lighter label panel
             AddCube(root.transform, "LabelPanel",
                 new Vector3(0.038f, 0.012f, 0.003f),
                 new Vector3(0f, 0.036f, -0.0180f),
                 label, 0.10f);
 
-            // Dark speck (dried cannabis fleck)
             AddCube(root.transform, "FleckA",
                 new Vector3(0.005f, 0.005f, 0.003f),
                 new Vector3(-0.006f, 0.028f, -0.0170f),
@@ -248,10 +233,6 @@ namespace CustomNPCExample.Products.Edibles
 
             return root;
         }
-
-        // ============================================================
-        // Representation application
-        // ============================================================
 
         private static void ApplyCustomRepresentations(
             string itemId,
@@ -266,10 +247,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Cookie Ingredients] Raw definition not found: " +
-                        itemId
-                    );
+
                     return;
                 }
 
@@ -291,7 +269,7 @@ namespace CustomNPCExample.Products.Edibles
                         definition, itemId, customModel, worldScale
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Ingredients] Representations for " +
                     itemId +
                     ": Equippable=" + equippableApplied +
@@ -299,12 +277,9 @@ namespace CustomNPCExample.Products.Edibles
                     ", StoredItem=" + storedApplied
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Ingredients] Representation setup failed for " +
-                    itemId + ": " + ex
-                );
+
             }
         }
 
@@ -464,7 +439,7 @@ namespace CustomNPCExample.Products.Edibles
                 if (renderer != null)
                     renderer.enabled = true;
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cookie Ingredients] Built " + context +
                 " representation for " + itemId +
                 " with " + customRenderers.Length +
@@ -474,18 +449,11 @@ namespace CustomNPCExample.Products.Edibles
             return clone;
         }
 
-        // ============================================================
-        // Icons
-        // ============================================================
-
         private static void ApplyIcon(string itemId, Sprite icon)
         {
             if (icon == null)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Ingredients] Cannot apply null icon for " +
-                    itemId
-                );
+
                 return;
             }
 
@@ -509,7 +477,7 @@ namespace CustomNPCExample.Products.Edibles
                 bool rawAny =
                     TrySetAnyIconSpriteMember(raw, icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Ingredients] Icon applied for " + itemId +
                     ": wrapperDirect=" + wrapperDirect +
                     ", rawDirect=" + rawDirect +
@@ -517,12 +485,9 @@ namespace CustomNPCExample.Products.Edibles
                     ", rawAny=" + rawAny
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Ingredients] Icon setup failed for " +
-                    itemId + ": " + ex.Message
-                );
+
             }
         }
 
@@ -584,35 +549,25 @@ namespace CustomNPCExample.Products.Edibles
             return applied;
         }
 
-        // ============================================================
-        // Fixed 2D icon sprites
-        // ============================================================
-
         private static Sprite CreateButterscotchIconSprite(string iconName)
         {
             Texture2D texture = CreateIconTexture(iconName + "_Texture");
 
-            // Shadow ellipse
             DrawIconEllipse(texture, 256, 78, 100, 24,
                 new Color(0f, 0f, 0f, 0.22f));
 
-            // Main golden bag body (rounded rect)
             DrawIconRoundedRect(texture, 156, 100, 200, 260, 40,
                 new Color(0.92f, 0.68f, 0.15f, 1f));
 
-            // Darker bottom seam
             DrawIconRect(texture, 156, 100, 200, 30,
                 new Color(0.72f, 0.50f, 0.08f, 1f));
 
-            // Darker top seam
             DrawIconRect(texture, 156, 330, 200, 30,
                 new Color(0.72f, 0.50f, 0.08f, 1f));
 
-            // Label panel (cream)
             DrawIconRoundedRect(texture, 176, 160, 160, 120, 20,
                 new Color(0.98f, 0.93f, 0.62f, 1f));
 
-            // Chip specks on label
             DrawIconEllipse(texture, 220, 210, 12, 8,
                 new Color(0.55f, 0.35f, 0.08f, 1f));
             DrawIconEllipse(texture, 260, 200, 10, 7,
@@ -622,7 +577,6 @@ namespace CustomNPCExample.Products.Edibles
             DrawIconEllipse(texture, 240, 235, 9, 6,
                 new Color(0.55f, 0.35f, 0.08f, 1f));
 
-            // Text
             DrawTextCentered(texture, "BUTTER", 268, 5,
                 new Color(0.30f, 0.18f, 0.04f, 1f));
             DrawTextCentered(texture, "SCOTCH", 228, 5,
@@ -630,7 +584,7 @@ namespace CustomNPCExample.Products.Edibles
 
             texture.Apply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cookie Ingredients] Created Butterscotch Chips icon."
             );
 
@@ -641,35 +595,28 @@ namespace CustomNPCExample.Products.Edibles
         {
             Texture2D texture = CreateIconTexture(iconName + "_Texture");
 
-            // Shadow ellipse
             DrawIconEllipse(texture, 256, 78, 108, 24,
                 new Color(0f, 0f, 0f, 0.22f));
 
-            // Main flour bag body (rounded rect, light green-white)
             DrawIconRoundedRect(texture, 146, 95, 220, 280, 36,
                 new Color(0.88f, 0.93f, 0.82f, 1f));
 
-            // Top green seam
             DrawIconRect(texture, 146, 355, 220, 20,
                 new Color(0.42f, 0.60f, 0.28f, 1f));
             DrawIconEllipse(texture, 256, 375, 110, 22,
                 new Color(0.48f, 0.66f, 0.32f, 1f));
 
-            // Bottom green seam
             DrawIconRect(texture, 146, 95, 220, 22,
                 new Color(0.42f, 0.60f, 0.28f, 1f));
             DrawIconEllipse(texture, 256, 95, 110, 22,
                 new Color(0.38f, 0.55f, 0.26f, 1f));
 
-            // Green label band
             DrawIconRect(texture, 150, 220, 212, 80,
                 new Color(0.42f, 0.60f, 0.28f, 1f));
 
-            // Bright label strip inside green band
             DrawIconRect(texture, 162, 228, 188, 64,
                 new Color(0.92f, 0.98f, 0.86f, 1f));
 
-            // Text
             DrawTextCentered(texture, "CANNABIS", 282, 4,
                 new Color(0.22f, 0.36f, 0.12f, 1f));
             DrawTextCentered(texture, "FLOUR", 242, 5,
@@ -677,16 +624,12 @@ namespace CustomNPCExample.Products.Edibles
 
             texture.Apply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Cookie Ingredients] Created Cannabis Flour icon."
             );
 
             return CreateSpriteFromIconTexture(texture, iconName);
         }
-
-        // ============================================================
-        // Icon texture helpers
-        // ============================================================
 
         private static Texture2D CreateIconTexture(string textureName)
         {
@@ -770,10 +713,6 @@ namespace CustomNPCExample.Products.Edibles
             DrawIconEllipse(texture, x + radius, y + height - radius, radius, radius, color);
             DrawIconEllipse(texture, x + width - radius, y + height - radius, radius, radius, color);
         }
-
-        // ============================================================
-        // Text rendering
-        // ============================================================
 
         private static void DrawTextCentered(
             Texture2D texture, string text,
@@ -868,10 +807,6 @@ namespace CustomNPCExample.Products.Edibles
                 default:  return new[] { "11111", "10001", "00010", "00100", "00100", "00000", "00100" };
             }
         }
-
-        // ============================================================
-        // Model geometry helpers
-        // ============================================================
 
         private static GameObject AddCylinder(
             Transform parent, string name,
@@ -973,10 +908,6 @@ namespace CustomNPCExample.Products.Edibles
             UnityEngine.Object.DontDestroyOnLoad(source);
         }
 
-        // ============================================================
-        // Pricing + definition access
-        // ============================================================
-
         private static void SetIngredientPrice(string itemId, float price)
         {
             try
@@ -989,15 +920,13 @@ namespace CustomNPCExample.Products.Edibles
                 if (storable == null) return;
 
                 storable.BasePurchasePrice = price;
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Cookie Ingredients] Price set: " +
                     itemId + " = $" + price);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Ingredients] Price failed for " +
-                    itemId + ": " + ex.Message);
+
             }
         }
 
@@ -1009,10 +938,6 @@ namespace CustomNPCExample.Products.Edibles
             object raw = GetMemberValue(wrapper, "S1ItemDefinition");
             return raw as Il2CppScheduleOne.ItemFramework.ItemDefinition;
         }
-
-        // ============================================================
-        // Reflection helpers
-        // ============================================================
 
         private static bool TrySetMember(object target, string name, object value)
         {
@@ -1088,11 +1013,9 @@ namespace CustomNPCExample.Products.Edibles
             {
                 ConsoleItemAliases.Register(alias, itemId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Cookie Ingredients] Alias '" + alias +
-                    "' failed: " + ex.Message);
+
             }
         }
     }

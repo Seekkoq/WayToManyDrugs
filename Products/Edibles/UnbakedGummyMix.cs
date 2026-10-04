@@ -40,7 +40,7 @@ namespace CustomNPCExample.Products.Edibles
                 catch { }
 
                 _registered = true;
-                MelonLogger.Msg("[WVC] Unbaked Gummy Mix registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC] Unbaked Gummy Mix registered.");
                 return true;
             }
             catch (Exception ex)

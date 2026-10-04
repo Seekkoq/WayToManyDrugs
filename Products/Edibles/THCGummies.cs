@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MelonLoader;
 using S1API.Console;
 using S1API.Items;
@@ -58,9 +58,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 if (shroomTemplate == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Gummies] 'shroom' definition not found. " +
-                        "Falling back to cocaine representations.");
+
                 }
 
                 S1PackagingDefinition baggie =
@@ -99,7 +97,7 @@ namespace CustomNPCExample.Products.Edibles
 
                 _built = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Gummies] THC Gummies built (donor: " +
                     (shroomTemplate != null ? "shroom" : "cocaine") + ").");
 
@@ -129,7 +127,7 @@ namespace CustomNPCExample.Products.Edibles
                 ConsoleItemAliases.Register("thcgummies", ProductId);
 
                 _discovered = true;
-                MelonLogger.Msg("[WVC Gummies] THC Gummies registered and discovered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Gummies] THC Gummies registered and discovered.");
                 return true;
             }
             catch (InvalidOperationException) { return false; }
@@ -163,7 +161,7 @@ namespace CustomNPCExample.Products.Edibles
                     .WithProductManagerVisibility(true)
                     .Build();
 
-                MelonLogger.Msg("[WVC Gummies] Product Manager metadata registered.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Gummies] Product Manager metadata registered.");
                 return true;
             }
             catch (Exception ex)
@@ -182,15 +180,63 @@ namespace CustomNPCExample.Products.Edibles
             return GummyVisual.GetOrCreate();
         }
 
+        private static bool _iconRepairDone;
+        private static float _iconRepairTimer;
+
+        public static void UpdateIconRepair()
+        {
+            if (_iconRepairDone || _definition == null)
+                return;
+
+            GameObject visual = GetVisual();
+            if (visual == null)
+                return;
+
+            _iconRepairTimer += Time.deltaTime;
+
+            if (_iconRepairTimer < 90f)
+                return;
+
+            _iconRepairDone = true;
+
+            try
+            {
+                Sprite clean =
+                    DMTIngredients.RenderModelIcon(
+                        visual,
+                        "WVC_Gummies_Product_Icon_Clean"
+                    );
+
+                if (clean != null)
+                {
+                    bool applied =
+                        global::CustomNPCExample.Utils.WvcIcon.Apply(ProductId, clean);
+
+                    if (applied)
+                    {
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
+                            "[WVC Gummies] Clean product icon applied over generated icon."
+                        );
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+
         private static void EnsurePresentationRegistered()
         {
             if (_presentationProfile != null) return;
 
             if (_presentationRegistering)
             {
-                MelonLogger.Warning(
-                    "[WVC Gummies] Presentation re-entry blocked. " +
-                    "Profile will not apply. Find the recursive call.");
+
                 return;
             }
 
@@ -216,7 +262,7 @@ namespace CustomNPCExample.Products.Edibles
                 ProductPresentationProfileRegistry.RegisterForProductKind(
                     "westvilleconnection", _productKind, _presentationProfile);
 
-                MelonLogger.Msg("[WVC Gummies] Presentation profile registered successfully.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Gummies] Presentation profile registered successfully.");
             }
             catch (Exception ex)
             {
@@ -246,32 +292,45 @@ namespace CustomNPCExample.Products.Edibles
                     .WithContent(() => GetVisual())
                     .AddPlacements(new ProductPresentationTransform[]
                     {
-                        // Center
                         new ProductPresentationTransform(
-                            new Vector3(0f, 0.006f, 0f),
+                            new Vector3(0f, 0.007f, 0f),
                             new Vector3(90f, 0f, 180f),
-                            Vector3.one * 0.60f),
+                            Vector3.one * 0.80f),
 
-                        // Four around the center
                         new ProductPresentationTransform(
-                            new Vector3(0f, 0.006f, 0.010f),
+                            new Vector3(0f, 0.007f, 0.012f),
                             new Vector3(90f, 20f, 180f),
-                            Vector3.one * 0.55f),
+                            Vector3.one * 0.78f),
 
                         new ProductPresentationTransform(
-                            new Vector3(-0.009f, 0.006f, 0f),
+                            new Vector3(-0.012f, 0.007f, 0f),
                             new Vector3(90f, -75f, 180f),
-                            Vector3.one * 0.55f),
+                            Vector3.one * 0.78f),
 
                         new ProductPresentationTransform(
-                            new Vector3(0.009f, 0.006f, 0f),
+                            new Vector3(0.012f, 0.007f, 0f),
                             new Vector3(90f, 75f, 180f),
-                            Vector3.one * 0.55f),
+                            Vector3.one * 0.78f),
 
                         new ProductPresentationTransform(
-                            new Vector3(0f, 0.006f, -0.009f),
+                            new Vector3(0f, 0.007f, -0.012f),
                             new Vector3(90f, -160f, 180f),
-                            Vector3.one * 0.55f)
+                            Vector3.one * 0.78f),
+
+                        new ProductPresentationTransform(
+                            new Vector3(-0.006f, 0.017f, 0.006f),
+                            new Vector3(90f, 45f, 180f),
+                            Vector3.one * 0.70f),
+
+                        new ProductPresentationTransform(
+                            new Vector3(0.007f, 0.017f, -0.005f),
+                            new Vector3(90f, -110f, 180f),
+                            Vector3.one * 0.70f),
+
+                        new ProductPresentationTransform(
+                            new Vector3(0.001f, 0.017f, 0.001f),
+                            new Vector3(90f, 160f, 180f),
+                            Vector3.one * 0.68f)
                     })
                     .Build();
             }

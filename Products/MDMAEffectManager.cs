@@ -28,7 +28,7 @@ namespace CustomNPCExample.Products
             _effect =
                 _controllerObject.AddComponent<MDMAScreenEffect>();
 
-            MelonLogger.Msg("[MDMA Effect] Effect controller ready.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[MDMA Effect] Effect controller ready.");
         }
 
         public static void TriggerEffect()
@@ -37,7 +37,7 @@ namespace CustomNPCExample.Products
 
             MDMAScreenEffect.ShouldStart = true;
 
-            MelonLogger.Msg("[MDMA Effect] Trigger requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[MDMA Effect] Trigger requested.");
         }
 
         public static void StopEffect()
@@ -46,7 +46,7 @@ namespace CustomNPCExample.Products
 
             MDMAScreenEffect.ShouldStop = true;
 
-            MelonLogger.Msg("[MDMA Effect] Forced stop requested.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[MDMA Effect] Forced stop requested.");
         }
     }
 }

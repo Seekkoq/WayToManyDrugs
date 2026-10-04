@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using MelonLoader;
@@ -21,6 +21,18 @@ namespace CustomNPCExample.Products
         private static readonly Dictionary<object, SavedEyes> Originals =
             new Dictionary<object, SavedEyes>();
 
+        /// <summary>
+        /// The native pointers of the avatars whose eyes have already been painted.
+        ///
+        /// The pink is written into each NPC's own settings object, so once it is there the game paints
+        /// it whenever it repaints that avatar - there is nothing to keep writing. This is the list that
+        /// says which ones have been done, and it is keyed by the native pointer rather than by the
+        /// wrapper object, because a fresh wrapper is handed out for the same NPC on every scan and a
+        /// dictionary of those would grow without ever matching. Re-applying the same four values to
+        /// every NPC in the world every two seconds was the mod's own biggest recurring cost by far.
+        /// </summary>
+        private static readonly HashSet<IntPtr> Painted = new HashSet<IntPtr>();
+
         private static bool _active;
         private static float _scanTimer;
 
@@ -34,7 +46,7 @@ namespace CustomNPCExample.Products
 
             ScanAndApply();
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 $"[MDMA NPC Eyes] Started. NPCs affected: {Originals.Count}"
             );
         }
@@ -46,7 +58,7 @@ namespace CustomNPCExample.Products
             _scanTimer -= Time.deltaTime;
             if (_scanTimer > 0f) return;
 
-            _scanTimer = 2f;
+            _scanTimer = 3f;
             ScanAndApply();
         }
 
@@ -73,10 +85,11 @@ namespace CustomNPCExample.Products
             }
 
             Originals.Clear();
+            Painted.Clear();
             _active = false;
             _scanTimer = 0f;
 
-            MelonLogger.Msg("[MDMA NPC Eyes] NPC eyes reverted.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[MDMA NPC Eyes] NPC eyes reverted.");
         }
 
         private static void ScanAndApply()
@@ -94,6 +107,14 @@ namespace CustomNPCExample.Products
                 {
                     if (avatar == null) continue;
                     if (playerAvatar != null && avatar.Equals(playerAvatar)) continue;
+
+                    IntPtr key = avatar.Pointer;
+
+                    if (key == IntPtr.Zero) continue;
+
+                    // Already painted, and its own settings still carry the paint: nothing here changes
+                    // on its own, so there is nothing to write.
+                    if (Painted.Contains(key)) continue;
 
                     object avatarObject = avatar;
                     object settings = GetMember(avatarObject, "CurrentSettings");
@@ -118,11 +139,15 @@ namespace CustomNPCExample.Products
                     SetColor(settings, "RightEyeLidColor", lidPink);
 
                     ApplyEyeSettings(avatarObject, settings);
+
+                    // Only now, so an avatar the game would not take the settings for is tried again on
+                    // the next scan rather than being written off.
+                    Painted.Add(key);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning("[MDMA NPC Eyes] Scan/apply failed: " + ex.Message);
+
             }
         }
 

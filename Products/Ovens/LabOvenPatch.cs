@@ -3,14 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes;
-using UnityEngine.InputSystem.LowLevel;
 using Il2CppScheduleOne.ObjectScripts;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-using NativeEQuality =
-    Il2CppScheduleOne.ItemFramework.EQuality;
+using UnityEngine.InputSystem.LowLevel;
 
 using NativeItemInstance =
     Il2CppScheduleOne.ItemFramework.ItemInstance;
@@ -18,13 +15,16 @@ using NativeItemInstance =
 using NativeItemSlot =
     Il2CppScheduleOne.ItemFramework.ItemSlot;
 
+using NativeEQuality =
+    Il2CppScheduleOne.ItemFramework.EQuality;
+
 namespace CustomNPCExample.Products.Ovens
 {
-    public static class BrownieOvenPatch
+    public static class LabOvenPatch
     {
         private static readonly HarmonyLib.Harmony Harmony =
             new HarmonyLib.Harmony(
-                "westvilleconnection.brownieoven"
+                "westvilleconnection.laboven"
             );
 
         private static readonly HashSet<MethodInfo> PatchedMethods =
@@ -51,13 +51,13 @@ namespace CustomNPCExample.Products.Ovens
                 _applied = true;
 
                 global::CustomNPCExample.Utils.WvcLog.Msg(
-                    "[WVC Brownie Oven] Patches applied."
+                    "[WVC Oven] Patches applied."
                 );
             }
             catch (Exception ex)
             {
                 MelonLogger.Error(
-                    "[WVC Brownie Oven] Patch setup failed: " +
+                    "[WVC Oven] Patch setup failed: " +
                     ex
                 );
             }
@@ -93,6 +93,19 @@ namespace CustomNPCExample.Products.Ovens
                         nameof(IsIngredientCookable_Prefix)
                     );
                 }
+
+                else if (method.Name == "CreateStationItems" &&
+         parameterCount == 1)
+                {
+                    AddPrefix(
+                        method,
+                        nameof(CreateStationItems_Prefix)
+                    );
+
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
+                        "[WVC Oven] Patched CreateStationItems."
+                    );
+                }
                 else if (method.Name == "IsReadyToStart" &&
                          parameterCount == 0)
                 {
@@ -101,9 +114,10 @@ namespace CustomNPCExample.Products.Ovens
                         nameof(IsReadyToStart_Prefix)
                     );
                 }
-                else if (method.Name ==
-                             "CanOutputSpaceFitCurrentOperation" &&
-                         parameterCount == 0)
+                else if (
+                    method.Name ==
+                        "CanOutputSpaceFitCurrentOperation" &&
+                    parameterCount == 0)
                 {
                     AddPrefix(
                         method,
@@ -116,6 +130,10 @@ namespace CustomNPCExample.Products.Ovens
                     AddPostfix(
                         method,
                         nameof(Use_Postfix)
+                    );
+
+                    global::CustomNPCExample.Utils.WvcLog.Msg(
+                        "[WVC Oven] Hooked auto-start on Use."
                     );
                 }
                 else if (method.Name == "SendCookOperation" &&
@@ -138,14 +156,65 @@ namespace CustomNPCExample.Products.Ovens
                         nameof(SendCookOperation_Prefix)
                     );
                 }
-                else if (method.Name == "CreateStationItems" &&
-                         parameterCount == 1)
-                {
-                    AddPrefix(
-                        method,
-                        nameof(CreateStationItems_Prefix)
-                    );
-                }
+            }
+        }
+
+        private static bool IsGummyOven(
+    LabOven oven)
+        {
+            try
+            {
+                if (oven == null)
+                    return false;
+
+                if (LabOvenFinishedOutput.IsPending(oven))
+                    return true;
+
+                if (LabOvenRecipes.SlotHasGummyMix(oven))
+                    return true;
+
+                OvenCookOperation operation =
+                    oven.CurrentOperation;
+
+                return operation != null &&
+                       LabOvenRecipes.IdEquals(
+                           operation.ProductID,
+                           LabOvenRecipes.ThcGummiesId
+                       );
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void CreateStationItems_Prefix(
+            LabOven __instance,
+            ref int __0)
+        {
+            try
+            {
+                if (__instance == null)
+                    return;
+
+                if (!IsGummyOven(__instance))
+                    return;
+
+                if (__0 >= LabOvenRecipes.GummiesProduced)
+                    return;
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Oven] Tray item count " +
+                    __0 +
+                    " -> " +
+                    LabOvenRecipes.GummiesProduced
+                );
+
+                __0 = LabOvenRecipes.GummiesProduced;
+            }
+            catch (Exception)
+            {
+
             }
         }
 
@@ -154,7 +223,7 @@ namespace CustomNPCExample.Products.Ovens
             ref bool __result)
         {
             if (__instance == null ||
-                !BrownieOvenRecipes.SlotHasBrownieMix(__instance))
+                !LabOvenRecipes.SlotHasGummyMix(__instance))
             {
                 return true;
             }
@@ -168,13 +237,13 @@ namespace CustomNPCExample.Products.Ovens
             ref bool __result)
         {
             if (__instance == null ||
-                !BrownieOvenRecipes.SlotHasBrownieMix(__instance))
+                !LabOvenRecipes.SlotHasGummyMix(__instance))
             {
                 return true;
             }
 
             __result =
-                BrownieOvenRecipes.OutputIsEmpty(__instance) &&
+                LabOvenRecipes.OutputIsEmpty(__instance) &&
                 __instance.CurrentOperation == null;
 
             return false;
@@ -185,54 +254,15 @@ namespace CustomNPCExample.Products.Ovens
             ref bool __result)
         {
             if (__instance == null ||
-                !BrownieOvenRecipes.SlotHasBrownieMix(__instance))
+                !LabOvenRecipes.SlotHasGummyMix(__instance))
             {
                 return true;
             }
 
             __result =
-                BrownieOvenRecipes.OutputIsEmpty(__instance);
+                LabOvenRecipes.OutputIsEmpty(__instance);
 
             return false;
-        }
-
-        public static void CreateStationItems_Prefix(
-            LabOven __instance,
-            ref int __0)
-        {
-            try
-            {
-                if (__instance == null)
-                    return;
-
-                bool isBrownieBake =
-                    BrownieOvenRecipes.SlotHasBrownieMix(__instance) ||
-                    LabOvenFinishedOutput.TryGetPendingOutput(
-                        __instance,
-                        out string pendingId
-                    ) &&
-                    BrownieOvenRecipes.IdEquals(
-                        pendingId,
-                        BrownieOvenRecipes.BrownieId
-                    );
-
-                if (!isBrownieBake)
-                    return;
-
-                if (__0 >= BrownieOvenRecipes.BrowniesProduced)
-                    return;
-
-                __0 =
-                    BrownieOvenRecipes.BrowniesProduced;
-
-                global::CustomNPCExample.Utils.WvcLog.Msg(
-                    "[WVC Brownie Oven] Tray count forced to " +
-                    BrownieOvenRecipes.BrowniesProduced
-                );
-            }
-            catch
-            {
-            }
         }
 
         public static void SendCookOperation_Prefix(
@@ -241,19 +271,14 @@ namespace CustomNPCExample.Products.Ovens
             if (__instance == null)
                 return;
 
-            if (BrownieOvenRecipes.SlotHasBrownieMix(__instance) ||
+            if (LabOvenRecipes.SlotHasGummyMix(__instance) ||
                 LabOvenFinishedOutput.TryGetPendingOutput(
                     __instance,
-                    out string existing
-                ) &&
-                BrownieOvenRecipes.IdEquals(
-                    existing,
-                    BrownieOvenRecipes.BrownieId
-                ))
+                    out _))
             {
                 LabOvenFinishedOutput.MarkPending(
                     __instance,
-                    BrownieOvenRecipes.BrownieId
+                    LabOvenRecipes.ThcGummiesId
                 );
             }
         }
@@ -264,9 +289,9 @@ namespace CustomNPCExample.Products.Ovens
             try
             {
                 if (__instance == null ||
-                    !BrownieOvenRecipes.SlotHasBrownieMix(__instance) ||
+                    !LabOvenRecipes.SlotHasGummyMix(__instance) ||
                     __instance.CurrentOperation != null ||
-                    !BrownieOvenRecipes.OutputIsEmpty(__instance))
+                    !LabOvenRecipes.OutputIsEmpty(__instance))
                 {
                     return;
                 }
@@ -278,7 +303,7 @@ namespace CustomNPCExample.Products.Ovens
                     return;
 
                 MelonCoroutines.Start(
-                    AutoStartBrownieBake(
+                    AutoStartGummyBake(
                         __instance,
                         ovenId
                     )
@@ -290,7 +315,7 @@ namespace CustomNPCExample.Products.Ovens
             }
         }
 
-        private static IEnumerator AutoStartBrownieBake(
+        private static IEnumerator AutoStartGummyBake(
             LabOven oven,
             int ovenId)
         {
@@ -302,9 +327,9 @@ namespace CustomNPCExample.Products.Ovens
             try
             {
                 if (oven == null ||
-                    !BrownieOvenRecipes.SlotHasBrownieMix(oven) ||
+                    !LabOvenRecipes.SlotHasGummyMix(oven) ||
                     oven.CurrentOperation != null ||
-                    !BrownieOvenRecipes.OutputIsEmpty(oven))
+                    !LabOvenRecipes.OutputIsEmpty(oven))
                 {
                     yield break;
                 }
@@ -322,22 +347,26 @@ namespace CustomNPCExample.Products.Ovens
                     new OvenCookOperation(
                         OperationIngredientId,
                         NativeEQuality.Standard,
-                        BrownieOvenRecipes.BrowniesProduced,
-                        BrownieOvenRecipes.BrownieId
+                        LabOvenRecipes.GummiesProduced,
+                        LabOvenRecipes.ThcGummiesId
                     );
 
                 LabOvenFinishedOutput.MarkPending(
                     oven,
-                    BrownieOvenRecipes.BrownieId
+                    LabOvenRecipes.ThcGummiesId
                 );
 
                 global::CustomNPCExample.Utils.WvcLog.Msg(
-                    "[WVC Brownie Oven] Auto-starting brownie bake."
+                    "[WVC Oven] Auto-starting gummy bake."
                 );
 
                 oven.SendCookOperation(operation);
 
-                ConsumeBrownieMix(oven);
+                ConsumeGummyMix(oven);
+
+
+
+                started = true;
 
                 started = true;
             }
@@ -350,17 +379,17 @@ namespace CustomNPCExample.Products.Ovens
                 PendingAutoStarts.Remove(ovenId);
             }
 
-            if (started)
-            {
-                yield return null;
-                yield return new WaitForSeconds(0.10f);
+            if (!started)
+                yield break;
 
-                SendEscapeKey();
-            }
+            yield return null;
+            yield return new WaitForSeconds(0.1f);
+
+            SendEscapeKey();
         }
 
-        private static bool ConsumeBrownieMix(
-            LabOven oven)
+        private static bool ConsumeGummyMix(
+    LabOven oven)
         {
             try
             {
@@ -371,25 +400,21 @@ namespace CustomNPCExample.Products.Ovens
                     return false;
                 }
 
-                if (!BrownieOvenRecipes.IdEquals(
+                if (!LabOvenRecipes.IdEquals(
                         oven.IngredientSlot.ItemInstance.Definition?.ID,
-                        BrownieOvenRecipes.UnbakedBrownieMixId
-                    ))
+                        LabOvenRecipes.UnbakedGummyMixId))
                 {
                     return false;
                 }
 
                 int slotIndex =
-                    BrownieOvenRecipes.FindSlotIndex(
-                        oven,
-                        oven.IngredientSlot
-                    );
+                    FindIngredientSlotIndex(oven);
 
                 int remaining =
                     Math.Max(
                         0,
                         oven.IngredientSlot.Quantity -
-                        BrownieOvenRecipes.MixRequired
+                        LabOvenRecipes.MixRequired
                     );
 
                 if (slotIndex >= 0)
@@ -400,8 +425,8 @@ namespace CustomNPCExample.Products.Ovens
                     );
 
                     global::CustomNPCExample.Utils.WvcLog.Msg(
-                        "[WVC Brownie Oven] Consumed 1 Unbaked Brownie Mix. " +
-                        "Remaining=" + remaining
+                        "[WVC Oven] Consumed 1 Unbaked Gummy Mix. Remaining=" +
+                        remaining
                     );
 
                     return true;
@@ -420,6 +445,10 @@ namespace CustomNPCExample.Products.Ovens
                 {
                 }
 
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Oven] Consumed Unbaked Gummy Mix by clearing slot."
+                );
+
                 return true;
             }
             catch (Exception)
@@ -427,6 +456,72 @@ namespace CustomNPCExample.Products.Ovens
 
 
                 return false;
+            }
+        }
+
+        private static int FindIngredientSlotIndex(
+            LabOven oven)
+        {
+            try
+            {
+                if (oven?.ItemSlots != null &&
+                    oven.IngredientSlot != null)
+                {
+                    for (int i = 0; i < oven.ItemSlots.Count; i++)
+                    {
+                        NativeItemSlot slot =
+                            oven.ItemSlots[i];
+
+                        if (slot != null &&
+                            slot.Pointer == oven.IngredientSlot.Pointer)
+                        {
+                            return i;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return 0;
+        }
+
+        private static void SendEscapeKey()
+        {
+            try
+            {
+                Keyboard keyboard =
+                    Keyboard.current;
+
+                if (keyboard == null)
+                {
+
+
+                    return;
+                }
+
+                InputSystem.QueueStateEvent(
+                    keyboard,
+                    new KeyboardState(Key.Escape)
+                );
+
+                InputSystem.Update();
+
+                InputSystem.QueueStateEvent(
+                    keyboard,
+                    new KeyboardState()
+                );
+
+                InputSystem.Update();
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Oven] Sent simulated Escape to close oven UI."
+                );
+            }
+            catch (Exception)
+            {
+
             }
         }
 
@@ -452,6 +547,7 @@ namespace CustomNPCExample.Products.Ovens
                 {
                     AddPrefix(
                         method,
+                        typeof(LabOvenPatch),
                         nameof(ItemFilter_Prefix)
                     );
                 }
@@ -459,15 +555,30 @@ namespace CustomNPCExample.Products.Ovens
                 {
                     AddPrefix(
                         method,
+                        typeof(LabOvenPatch),
                         nameof(Capacity_Prefix)
                     );
                 }
                 else if (method.Name == "SetStoredItem")
                 {
-                    AddPrefix(
-                        method,
-                        nameof(SetStoredItem_Prefix)
-                    );
+                    try
+                    {
+                        Harmony.Patch(
+                            method,
+                            prefix: new HarmonyLib.HarmonyMethod(
+                                typeof(LabOvenPatch),
+                                nameof(SetStoredItem_Prefix)
+                            )
+                        );
+
+                        global::CustomNPCExample.Utils.WvcLog.Msg(
+                            "[WVC Oven] Patched ItemSlot.SetStoredItem."
+                        );
+                    }
+                    catch (Exception)
+                    {
+
+                    }
                 }
             }
         }
@@ -489,15 +600,15 @@ namespace CustomNPCExample.Products.Ovens
                     GetOwningOven(__instance);
 
                 if (oven?.IngredientSlot == null ||
-                    oven.IngredientSlot.Pointer != __instance.Pointer)
+                    oven.IngredientSlot.Pointer !=
+                        __instance.Pointer)
                 {
                     return true;
                 }
 
-                if (!BrownieOvenRecipes.IdEquals(
+                if (!LabOvenRecipes.IdEquals(
                         item.Definition?.ID,
-                        BrownieOvenRecipes.UnbakedBrownieMixId
-                    ))
+                        LabOvenRecipes.UnbakedGummyMixId))
                 {
                     return true;
                 }
@@ -529,15 +640,15 @@ namespace CustomNPCExample.Products.Ovens
                     GetOwningOven(__instance);
 
                 if (oven?.IngredientSlot == null ||
-                    oven.IngredientSlot.Pointer != __instance.Pointer)
+                    oven.IngredientSlot.Pointer !=
+                        __instance.Pointer)
                 {
                     return true;
                 }
 
-                if (!BrownieOvenRecipes.IdEquals(
+                if (!LabOvenRecipes.IdEquals(
                         item.Definition?.ID,
-                        BrownieOvenRecipes.UnbakedBrownieMixId
-                    ))
+                        LabOvenRecipes.UnbakedGummyMixId))
                 {
                     return true;
                 }
@@ -557,8 +668,8 @@ namespace CustomNPCExample.Products.Ovens
         }
 
         public static bool SetStoredItem_Prefix(
-            NativeItemSlot __instance,
-            ref NativeItemInstance __0)
+    NativeItemSlot __instance,
+    ref NativeItemInstance __0)
         {
             try
             {
@@ -572,48 +683,49 @@ namespace CustomNPCExample.Products.Ovens
                     GetOwningOven(__instance);
 
                 if (oven?.OutputSlot == null ||
-                    oven.OutputSlot.Pointer != __instance.Pointer)
+                    oven.OutputSlot.Pointer !=
+                        __instance.Pointer)
                 {
                     return true;
                 }
 
                 if (!LabOvenFinishedOutput.TryGetPendingOutput(
                         oven,
-                        out string outputItemId
-                    ))
+                        out string outputItemId))
                 {
                     return true;
                 }
 
-                if (!BrownieOvenRecipes.IdEquals(
-                        outputItemId,
-                        BrownieOvenRecipes.BrownieId
-                    ))
-                {
-                    return true;
-                }
+                string incomingId =
+                    __0.Definition?.ID ?? "null";
+
+                global::CustomNPCExample.Utils.WvcLog.Msg(
+                    "[WVC Oven] Native output write: " +
+                    incomingId
+                );
 
                 if (!LabOvenFinishedOutput.TryCreateOutputInstance(
                         outputItemId,
-                        BrownieOvenRecipes.BrowniesProduced,
-                        out NativeItemInstance brownies
-                    ) ||
-                    brownies == null)
+                        LabOvenRecipes.GummiesProduced,
+                        out NativeItemInstance gummies) ||
+                    gummies == null)
                 {
 
 
                     return true;
                 }
 
-                __0 = brownies;
+                __0 = gummies;
 
                 LabOvenFinishedOutput.ClearPending(
                     oven
                 );
 
                 global::CustomNPCExample.Utils.WvcLog.Msg(
-                    "[WVC Brownie Oven] Output redirected to Brownie x" +
-                    BrownieOvenRecipes.BrowniesProduced
+                    "[WVC Oven] Redirected output to: " +
+                    outputItemId +
+                    " x" +
+                    LabOvenRecipes.GummiesProduced
                 );
 
                 return true;
@@ -630,6 +742,18 @@ namespace CustomNPCExample.Products.Ovens
             MethodInfo method,
             string handler)
         {
+            AddPrefix(
+                method,
+                typeof(LabOvenPatch),
+                handler
+            );
+        }
+
+        private static void AddPrefix(
+            MethodInfo method,
+            Type handlerType,
+            string handler)
+        {
             if (method == null ||
                 PatchedMethods.Contains(method))
             {
@@ -639,7 +763,7 @@ namespace CustomNPCExample.Products.Ovens
             Harmony.Patch(
                 method,
                 prefix: new HarmonyLib.HarmonyMethod(
-                    typeof(BrownieOvenPatch),
+                    handlerType,
                     handler
                 )
             );
@@ -660,7 +784,7 @@ namespace CustomNPCExample.Products.Ovens
             Harmony.Patch(
                 method,
                 postfix: new HarmonyLib.HarmonyMethod(
-                    typeof(BrownieOvenPatch),
+                    typeof(LabOvenPatch),
                     handler
                 )
             );
@@ -684,37 +808,6 @@ namespace CustomNPCExample.Products.Ovens
             catch
             {
                 return null;
-            }
-        }
-
-        private static void SendEscapeKey()
-        {
-            try
-            {
-                Keyboard keyboard =
-                    Keyboard.current;
-
-                if (keyboard == null)
-                    return;
-
-                InputSystem.QueueStateEvent(
-                    keyboard,
-                    new KeyboardState(
-                        Key.Escape
-                    )
-                );
-
-                InputSystem.Update();
-
-                InputSystem.QueueStateEvent(
-                    keyboard,
-                    new KeyboardState()
-                );
-
-                InputSystem.Update();
-            }
-            catch
-            {
             }
         }
     }

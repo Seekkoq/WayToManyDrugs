@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using MelonLoader;
@@ -24,7 +24,6 @@ namespace CustomNPCExample.Products
         public const string PmkLabGradeId =
             "westvilleconnection:ingredients/pmk_lab_grade";
 
-        // Balanced against MDMA's $95 base value.
         private const float SafrolePrice = 40f;
         private const float PmkPrice = 35f;
         private const float PmkRefinedPrice = 75f;
@@ -42,6 +41,12 @@ namespace CustomNPCExample.Products
         private static Sprite _pmkIcon;
         private static Sprite _pmkRefinedIcon;
         private static Sprite _pmkLabGradeIcon;
+
+        /// <summary>
+        /// Counts the icon renders so each one is built in its own corner of the world instead of
+        /// on top of the previous one.
+        /// </summary>
+        private static int _rigSlot;
 
         private static readonly Dictionary<string, PropertyInfo> PropertyCache =
     new Dictionary<string, PropertyInfo>();
@@ -87,16 +92,10 @@ namespace CustomNPCExample.Products
 
                 if (motorOil == null || iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] Base templates are not ready."
-                    );
+
 
                     return false;
                 }
-
-                // ============================================================
-                // Safrole Oil
-                // ============================================================
 
                 MixIngredientItemCreator
                     .CloneFrom("motoroil")
@@ -110,10 +109,6 @@ namespace CustomNPCExample.Products
                         Property.Energizing
                     )
                     .Build();
-
-                // ============================================================
-                // Standard PMK
-                // ============================================================
 
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
@@ -129,10 +124,6 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                // ============================================================
-                // Refined PMK
-                // ============================================================
-
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
                     .WithBasicInfo(
@@ -146,10 +137,6 @@ namespace CustomNPCExample.Products
                         Property.Energizing
                     )
                     .Build();
-
-                // ============================================================
-                // Lab-Grade PMK
-                // ============================================================
 
                 MixIngredientItemCreator
                     .CloneFrom("iodine")
@@ -165,33 +152,21 @@ namespace CustomNPCExample.Products
                     )
                     .Build();
 
-                // ============================================================
-                // Console aliases
-                // ============================================================
-
-                // --- Console Aliases ---
                 RegisterAliasSafely("safrole", SafroleId);
 
-                // Standard PMK Aliases
                 RegisterAliasSafely("pmk", PmkId);
                 RegisterAliasSafely("pmkpowder", PmkId);
 
-                // Refined PMK Aliases
                 RegisterAliasSafely("refinedpmk", PmkRefinedId);
                 RegisterAliasSafely("refinedpmkpowder", PmkRefinedId);
                 RegisterAliasSafely("rpp", PmkRefinedId);
                 RegisterAliasSafely("pmkrefined", PmkRefinedId);
 
-                // Lab-Grade PMK Aliases
                 RegisterAliasSafely("labpmk", PmkLabGradeId);
                 RegisterAliasSafely("labgradepmk", PmkLabGradeId);
                 RegisterAliasSafely("labgradepmkpowder", PmkLabGradeId);
                 RegisterAliasSafely("lgpp", PmkLabGradeId);
                 RegisterAliasSafely("pmklab", PmkLabGradeId);
-
-                // ============================================================
-                // Models
-                // ============================================================
 
                 _safroleVisual =
     CreateSafroleBottle();
@@ -223,10 +198,6 @@ namespace CustomNPCExample.Products
                         "III"
                     );
 
-                // ============================================================
-                // Native representations
-                // ============================================================
-
                 ApplyCustomRepresentations(
                     SafroleId,
                     _safroleVisual
@@ -247,9 +218,14 @@ namespace CustomNPCExample.Products
                     _pmkLabGradeVisual
                 );
 
-                // ============================================================
-                // Icons
-                // ============================================================
+                // All four source models are built at the world origin and stacked on top of each
+                // other until they are parked away. They are parked first, because an icon camera
+                // that could still see them would photograph the neighbouring bottles into the very
+                // same sprite - which is how PMK ended up inside the Safrole icon.
+                MoveSourceOffscreen(_safroleVisual);
+                MoveSourceOffscreen(_pmkVisual);
+                MoveSourceOffscreen(_pmkRefinedVisual);
+                MoveSourceOffscreen(_pmkLabGradeVisual);
 
                 _safroleIcon =
                     RenderModelIcon(
@@ -295,10 +271,6 @@ namespace CustomNPCExample.Products
                     _pmkLabGradeIcon
                 );
 
-                // ============================================================
-                // Prices
-                // ============================================================
-
                 SetIngredientPrice(
                     SafroleId,
                     SafrolePrice
@@ -319,18 +291,11 @@ namespace CustomNPCExample.Products
                     PmkLabGradePrice
                 );
 
-                // ============================================================
-                // Preserve model sources
-                // ============================================================
-
-                MoveSourceOffscreen(_safroleVisual);
-                MoveSourceOffscreen(_pmkVisual);
-                MoveSourceOffscreen(_pmkRefinedVisual);
-                MoveSourceOffscreen(_pmkLabGradeVisual);
+                // (The source models were already parked away before the icons were rendered.)
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Ingredients] Registration complete. " +
                     $"Safrole=${SafrolePrice}, " +
                     $"PMK=${PmkPrice}, " +
@@ -353,10 +318,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        // ============================================================
-        // Native item representations
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId,
             GameObject customModel
@@ -369,18 +330,11 @@ namespace CustomNPCExample.Products
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] Raw definition not found: " +
-                        itemId
-                    );
+
 
                     return;
                 }
 
-                /*
-                 * Held items need to be smaller.
-                 * World/stored representations can stay full size.
-                 */
                 bool isPmk =
                     string.Equals(itemId, PmkId, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(itemId, PmkRefinedId, StringComparison.OrdinalIgnoreCase) ||
@@ -426,7 +380,7 @@ namespace CustomNPCExample.Products
                         worldScale
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Ingredients] Representations for " +
                     itemId +
                     ": Equippable=" +
@@ -437,14 +391,9 @@ namespace CustomNPCExample.Products
                     storedApplied
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] Representation setup failed for " +
-                    itemId +
-                    ": " +
-                    ex
-                );
+
             }
         }
 
@@ -460,10 +409,7 @@ namespace CustomNPCExample.Products
                 if (definition.Equippable == null ||
                     definition.Equippable.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] No Equippable template for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -489,10 +435,7 @@ namespace CustomNPCExample.Products
 
                 if (component == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] Equippable component missing on clone for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -501,14 +444,9 @@ namespace CustomNPCExample.Products
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] Equippable setup failed for " +
-                    itemId +
-                    ": " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -532,10 +470,7 @@ namespace CustomNPCExample.Products
                     storable.StationItem == null ||
                     storable.StationItem.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] No StationItem template for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -561,10 +496,7 @@ namespace CustomNPCExample.Products
 
                 if (component == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] StationItem component missing for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -573,14 +505,9 @@ namespace CustomNPCExample.Products
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] StationItem setup failed for " +
-                    itemId +
-                    ": " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -604,10 +531,7 @@ namespace CustomNPCExample.Products
                     storable.StoredItem == null ||
                     storable.StoredItem.gameObject == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] No StoredItem template for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -633,10 +557,7 @@ namespace CustomNPCExample.Products
 
                 if (component == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] StoredItem component missing for " +
-                        itemId
-                    );
+
 
                     return false;
                 }
@@ -645,14 +566,9 @@ namespace CustomNPCExample.Products
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] StoredItem setup failed for " +
-                    itemId +
-                    ": " +
-                    ex.Message
-                );
+
 
                 return false;
             }
@@ -685,9 +601,6 @@ namespace CustomNPCExample.Products
                 "_" +
                 safeId;
 
-            /*
-             * Keep active. Inactive prefab-like sources cause invisible held items.
-             */
             clone.SetActive(true);
 
             clone.transform.position =
@@ -695,10 +608,6 @@ namespace CustomNPCExample.Products
 
             UnityEngine.Object.DontDestroyOnLoad(clone);
 
-            /*
-             * Hide all original iodine/motor-oil renderers.
-             * Keep scripts, anchors, colliders, and hierarchy intact.
-             */
             Renderer[] oldRenderers =
                 clone.GetComponentsInChildren<Renderer>(true);
 
@@ -708,10 +617,6 @@ namespace CustomNPCExample.Products
                     renderer.enabled = false;
             }
 
-            /*
-             * Add the complete procedural model as a child.
-             * This fixes third-person/world still showing iodine/oil.
-             */
             GameObject visual =
                 UnityEngine.Object.Instantiate(customModel);
 
@@ -746,7 +651,7 @@ namespace CustomNPCExample.Products
                     renderer.enabled = true;
             }
 
-            MelonLogger.Msg(
+            global::CustomNPCExample.Utils.WvcLog.Msg(
                 "[WVC Ingredients] Built " +
                 context +
                 " representation for " +
@@ -758,10 +663,6 @@ namespace CustomNPCExample.Products
 
             return clone;
         }
-
-        // ============================================================
-        // Pricing
-        // ============================================================
 
         private static void SetIngredientPrice(
             string itemId,
@@ -783,37 +684,25 @@ namespace CustomNPCExample.Products
 
                 if (storable == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Ingredients] Item is not storable: " +
-                        itemId
-                    );
+
 
                     return;
                 }
 
                 storable.BasePurchasePrice = price;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Ingredients] Price set: " +
                     itemId +
                     " = $" +
                     price
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] Price setup failed for " +
-                    itemId +
-                    ": " +
-                    ex.Message
-                );
+
             }
         }
-
-        // ============================================================
-        // Icons
-        // ============================================================
 
         private static void ApplyIcon(
             string itemId,
@@ -838,22 +727,77 @@ namespace CustomNPCExample.Products
                         icon
                     );
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Ingredients] Icon applied=" +
                     applied +
                     " for " +
                     itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] Icon setup failed for " +
-                    itemId +
-                    ": " +
-                    ex.Message
-                );
+
             }
+        }
+
+        /// <summary>
+        /// World-space box of a model that has just been instantiated, measured from its meshes.
+        /// <c>Renderer.bounds</c> is not reliable for an object that was created in the current
+        /// frame - Unity still reports the box of the object it was copied from - so the corners of
+        /// every mesh are transformed by hand.
+        /// </summary>
+        private static Bounds ComputeWorldBounds(GameObject root)
+        {
+            Bounds result =
+                new Bounds(root.transform.position, Vector3.zero);
+
+            bool started = false;
+
+            foreach (MeshFilter filter in
+                root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh mesh = filter?.sharedMesh;
+
+                if (mesh == null || filter.transform == null)
+                    continue;
+
+                Bounds local = mesh.bounds;
+
+                Matrix4x4 matrix = filter.transform.localToWorldMatrix;
+
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = local.center + new Vector3(
+                        (corner & 1) == 0 ? -local.extents.x : local.extents.x,
+                        (corner & 2) == 0 ? -local.extents.y : local.extents.y,
+                        (corner & 4) == 0 ? -local.extents.z : local.extents.z);
+
+                    point = matrix.MultiplyPoint3x4(point);
+
+                    if (!started)
+                    {
+                        result = new Bounds(point, Vector3.zero);
+                        started = true;
+                    }
+                    else
+                    {
+                        result.Encapsulate(point);
+                    }
+                }
+            }
+
+            foreach (SkinnedMeshRenderer skinned in
+                root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (skinned?.sharedMesh == null)
+                    continue;
+
+                result.Encapsulate(skinned.bounds);
+
+                started = true;
+            }
+
+            return started ? result : new Bounds(Vector3.zero, Vector3.zero);
         }
 
         private static Sprite RenderModelIcon(
@@ -866,11 +810,19 @@ namespace CustomNPCExample.Products
 
             const int IconSize = 256;
 
+            // Every render gets its own patch of space. Destroy() only removes the previous rig at
+            // the end of the frame, so rigs that share one spot leave the previous model standing
+            // in the next icon - which is how PMK and Safrole ended up in a single sprite.
+            _rigSlot++;
+
             GameObject rig =
                 new GameObject(iconName + "_Rig");
 
             rig.transform.position =
-                new Vector3(6000f, 6000f, 6000f);
+                new Vector3(
+                    6000f + (_rigSlot * 20f),
+                    6000f,
+                    6000f + (_rigSlot * 20f));
 
             GameObject instance =
                 UnityEngine.Object.Instantiate(model);
@@ -901,7 +853,7 @@ namespace CustomNPCExample.Products
             if (renderers == null ||
                 renderers.Length == 0)
             {
-                UnityEngine.Object.Destroy(rig);
+                UnityEngine.Object.DestroyImmediate(rig);
                 return null;
             }
 
@@ -911,16 +863,52 @@ namespace CustomNPCExample.Products
                     r.enabled = true;
             }
 
-            Bounds bounds =
-                renderers[0].bounds;
+            // The sprite is photographed on a layer that nothing else in the game uses, so no
+            // object outside this rig - a rig from the previous render that is still being cleaned
+            // up, a shelf, the cauldron - can ever leak into the picture.
+            int iconLayer =
+                DMTIngredients.FindIsolationLayer();
 
-            for (int i = 1; i < renderers.Length; i++)
+            DMTIngredients.SetLayerRecursive(
+                instance,
+                iconLayer
+            );
+
+            // Renderer.bounds is not refreshed for a model that was instantiated in this very
+            // frame: it still reports where the source model was standing, which points the icon
+            // camera at the wrong place and photographs whatever else happens to be there. The
+            // frame is therefore aimed using the meshes themselves.
+            Bounds bounds =
+                ComputeWorldBounds(instance);
+
+            if (bounds.size == Vector3.zero)
             {
-                if (renderers[i] != null)
-                    bounds.Encapsulate(renderers[i].bounds);
+                bool started = false;
+
+                foreach (Renderer r in renderers)
+                {
+                    if (r == null)
+                        continue;
+
+                    if (!started)
+                    {
+                        bounds = r.bounds;
+                        started = true;
+
+                        continue;
+                    }
+
+                    bounds.Encapsulate(r.bounds);
+                }
             }
 
-            // Main directional light
+            if (bounds.size == Vector3.zero)
+            {
+                UnityEngine.Object.Destroy(rig);
+
+                return null;
+            }
+
             GameObject lightObject =
                 new GameObject(iconName + "_Light");
 
@@ -942,7 +930,6 @@ namespace CustomNPCExample.Products
                     0f
                 );
 
-            // Secondary fill light
             GameObject fillObject =
                 new GameObject(iconName + "_FillLight");
 
@@ -964,7 +951,6 @@ namespace CustomNPCExample.Products
                     0f
                 );
 
-            // Icon camera
             GameObject cameraObject =
                 new GameObject(iconName + "_Camera");
 
@@ -983,6 +969,9 @@ namespace CustomNPCExample.Products
                 new Color(0f, 0f, 0f, 0f);
 
             camera.orthographic = true;
+
+            camera.cullingMask =
+                1 << iconLayer;
 
             float largestExtent =
                 Mathf.Max(
@@ -1065,8 +1054,8 @@ namespace CustomNPCExample.Products
             camera.targetTexture =
                 null;
 
-            UnityEngine.Object.Destroy(target);
-            UnityEngine.Object.Destroy(rig);
+            UnityEngine.Object.DestroyImmediate(target);
+            UnityEngine.Object.DestroyImmediate(rig);
             UnityEngine.Object.DontDestroyOnLoad(texture);
 
             Sprite sprite =
@@ -1090,10 +1079,6 @@ namespace CustomNPCExample.Products
 
             return sprite;
         }
-
-        // ============================================================
-        // Procedural Safrole Oil bottle
-        // ============================================================
 
         private static GameObject CreateSafroleBottle()
         {
@@ -1205,19 +1190,15 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        // ============================================================
-        // Procedural PMK Powder jar
-        // ============================================================
-
         private static GameObject CreatePmkJar()
         {
             return CreatePmkJarStyled(
                 "WVC_Custom_PmkPowder_Jar",
-                new Color(0.92f, 0.93f, 0.94f, 1f),   // body
-                new Color(0.06f, 0.10f, 0.18f, 1f),   // lid
-                new Color(0.97f, 0.96f, 0.92f, 1f),   // powder
-                new Color(0.12f, 0.34f, 0.58f, 1f),   // label bg
-                Color.white,                          // label text
+                new Color(0.92f, 0.93f, 0.94f, 1f),
+                new Color(0.06f, 0.10f, 0.18f, 1f),
+                new Color(0.97f, 0.96f, 0.92f, 1f),
+                new Color(0.12f, 0.34f, 0.58f, 1f),
+                Color.white,
                 "PMK",
                 "POWDER"
             );
@@ -1330,10 +1311,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        // ============================================================
-        // Procedural geometry helpers
-        // ============================================================
-
         private static GameObject AddCylinder(
             Transform parent,
             string name,
@@ -1362,9 +1339,6 @@ namespace CustomNPCExample.Products
             part.transform.localRotation =
                 Quaternion.identity;
 
-            /*
-             * A Unity cylinder is two units tall by default.
-             */
             part.transform.localScale =
                 new Vector3(
                     radius * 2f,
@@ -1453,10 +1427,6 @@ namespace CustomNPCExample.Products
     Color textColor
 )
         {
-            /*
-             * A Quad has one predictable UV face. A cube displays the same
-             * texture on multiple faces with different/mirrored UV directions.
-             */
             GameObject part =
                 GameObject.CreatePrimitive(
                     PrimitiveType.Quad
@@ -1472,10 +1442,6 @@ namespace CustomNPCExample.Products
             part.transform.localPosition =
                 localPosition;
 
-            /*
-             * Identity faces outward on the bottle/jar's negative-Z side.
-             * Do not rotate this 180 degrees.
-             */
             part.transform.localRotation =
                 Quaternion.identity;
 
@@ -1499,7 +1465,6 @@ namespace CustomNPCExample.Products
                         line1,
                         line2
                     );
-
 
             }
 
@@ -1566,10 +1531,6 @@ namespace CustomNPCExample.Products
             return material;
         }
 
-        // ============================================================
-        // Label text material
-        // ============================================================
-
         private static Material CreateLabelMaterial(
     string name,
     Color background,
@@ -1617,8 +1578,6 @@ namespace CustomNPCExample.Products
             texture.wrapMode = TextureWrapMode.Clamp;
 
             texture.Apply();
-
-
 
             UnityEngine.Object.DontDestroyOnLoad(texture);
 
@@ -1747,11 +1706,6 @@ namespace CustomNPCExample.Products
                                 col * scale +
                                 sx;
 
-                            /*
-                             * Texture2D uses bottom-left as its origin, while
-                             * the glyph arrays are written top-to-bottom.
-                             * Reverse rows vertically, but do not mirror columns.
-                             */
                             int py =
                                 y +
                                 (glyph.Length - 1 - row) * scale +
@@ -1999,11 +1953,6 @@ namespace CustomNPCExample.Products
             };
         }
 
-
-        // ============================================================
-        // Collider removal without PhysicsModule reference
-        // ============================================================
-
         private static void RemovePrimitiveCollider(
             GameObject gameObject
         )
@@ -2057,10 +2006,6 @@ namespace CustomNPCExample.Products
                 source
             );
         }
-
-        // ============================================================
-        // Definition helpers
-        // ============================================================
 
         private static Il2CppScheduleOne.ItemFramework.ItemDefinition
             GetRawDefinition(
@@ -2233,6 +2178,14 @@ namespace CustomNPCExample.Products
             return null;
         }
 
+        public static void SetPrice(string itemId, float price)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+                return;
+
+            SetIngredientPrice(itemId, price);
+        }
+
         private static void RegisterAliasSafely(
             string alias,
             string itemId
@@ -2245,14 +2198,9 @@ namespace CustomNPCExample.Products
                     itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Ingredients] Alias '" +
-                    alias +
-                    "' failed: " +
-                    ex.Message
-                );
+
             }
         }
     }

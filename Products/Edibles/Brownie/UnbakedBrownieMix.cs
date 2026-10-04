@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using MelonLoader;
 using S1API.Console;
@@ -36,9 +36,7 @@ namespace CustomNPCExample.Products
 
                 if (iodine == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Brownie Mix] Base template not ready."
-                    );
+
 
                     return false;
                 }
@@ -79,7 +77,7 @@ namespace CustomNPCExample.Products
 
                 _registered = true;
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Mix] Registered. Price=$" + MixPrice
                 );
 
@@ -97,9 +95,6 @@ namespace CustomNPCExample.Products
             }
         }
 
-        /*
-         * Metal baking tray filled with dark chocolate batter.
-         */
         private static GameObject CreateBatterTray()
         {
             GameObject root =
@@ -110,12 +105,10 @@ namespace CustomNPCExample.Products
             Color batter = new Color(0.22f, 0.12f, 0.06f, 1f);
             Color batterLight = new Color(0.32f, 0.18f, 0.09f, 1f);
 
-            // Tray floor.
             AddCube(root.transform, "TrayFloor",
                 new Vector3(0.084f, 0.005f, 0.062f),
                 new Vector3(0f, 0.003f, 0f), tray, 0.55f);
 
-            // Tray walls.
             AddCube(root.transform, "TrayWallFront",
                 new Vector3(0.084f, 0.020f, 0.004f),
                 new Vector3(0f, 0.012f, -0.029f), tray, 0.55f);
@@ -132,17 +125,14 @@ namespace CustomNPCExample.Products
                 new Vector3(0.004f, 0.020f, 0.062f),
                 new Vector3(0.040f, 0.012f, 0f), tray, 0.55f);
 
-            // Rim highlight.
             AddCube(root.transform, "TrayRim",
                 new Vector3(0.088f, 0.003f, 0.066f),
                 new Vector3(0f, 0.022f, 0f), trayDark, 0.50f);
 
-            // Batter surface.
             AddCube(root.transform, "Batter",
                 new Vector3(0.076f, 0.013f, 0.054f),
                 new Vector3(0f, 0.012f, 0f), batter, 0.30f);
 
-            // Uneven batter lumps.
             AddCube(root.transform, "BatterLumpA",
                 new Vector3(0.022f, 0.005f, 0.018f),
                 new Vector3(-0.018f, 0.019f, 0.008f), batterLight, 0.28f,
@@ -161,10 +151,6 @@ namespace CustomNPCExample.Products
             return root;
         }
 
-        // ============================================================
-        // Shared helpers (same pattern as BrownieIngredients)
-        // ============================================================
-
         private static void ApplyCustomRepresentations(
             string itemId, GameObject customModel,
             float heldMultiplier, float worldMultiplier)
@@ -176,9 +162,7 @@ namespace CustomNPCExample.Products
 
                 if (definition == null)
                 {
-                    MelonLogger.Warning(
-                        "[WVC Brownie Mix] Raw definition missing: " + itemId
-                    );
+
                     return;
                 }
 
@@ -194,16 +178,14 @@ namespace CustomNPCExample.Products
                 bool stored = ApplyStoredRepresentation(
                     definition, itemId, customModel, worldScale);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Mix] Representations: Equippable=" + equippable +
                     ", StationItem=" + station + ", StoredItem=" + stored
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Mix] Representation setup failed: " + ex.Message
-                );
+
             }
         }
 
@@ -489,11 +471,9 @@ namespace CustomNPCExample.Products
 
                 return sprite;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Mix] Icon render failed: " + ex.Message
-                );
+
                 return null;
             }
             finally
@@ -538,15 +518,13 @@ namespace CustomNPCExample.Products
                 TrySetMember(wrapper, "Icon", icon);
                 TrySetMember(raw, "Icon", icon);
 
-                MelonLogger.Msg(
+                global::CustomNPCExample.Utils.WvcLog.Msg(
                     "[WVC Brownie Mix] Icon applied for " + itemId
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Mix] Icon failed: " + ex.Message
-                );
+
             }
         }
 
@@ -660,11 +638,9 @@ namespace CustomNPCExample.Products
         private static void RegisterAliasSafely(string alias, string itemId)
         {
             try { ConsoleItemAliases.Register(alias, itemId); }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MelonLogger.Warning(
-                    "[WVC Brownie Mix] Alias '" + alias + "' failed: " + ex.Message
-                );
+
             }
         }
     }
