@@ -855,6 +855,8 @@ namespace CustomNPCExample.Weather
 
             WeatherConditions conditions = GetConditions();
 
+            // Snow first: it is the most visible thing that can be falling, and the game's own
+            // snowy conditions say so whatever the profile is called.
             if (conditions != null)
             {
                 if (conditions.Snowy >= 0.5f)
@@ -862,21 +864,13 @@ namespace CustomNPCExample.Weather
 
                 if (conditions.Snowy >= 0.25f)
                     return MoodSnow;
-
-                if (conditions.Rainy >= 0.35f)
-                    return MoodRain;
-
-                if (conditions.Foggy >= 0.45f)
-                    return MoodFog;
-
-                if (conditions.Cloudy >= 0.45f)
-                    return MoodOvercast;
             }
 
-            // The conditions are not always filled in - a profile that has only just been selected has
-            // nothing blended into them yet - so the weather the game is running is asked as well, by
-            // name. Without this a grey afternoon reads as a clear one, and the people on the street
-            // talk about the sunshine.
+            // Then the profile the game is actually running, by name: a profile that has only just
+            // been selected has nothing blended into its conditions yet, and the blend can lag
+            // behind the sky - so rain or fog the game has switched to is believed over a grey
+            // remainder of the last one. Without this a grey afternoon reads as a clear one, and the
+            // people on the street talk about the sunshine.
             string profile = CurrentProfileWord();
 
             if (profile.Length > 0)
@@ -889,6 +883,19 @@ namespace CustomNPCExample.Weather
 
                 if (profile.Contains("rain") || profile.Contains("storm"))
                     return MoodRain;
+            }
+
+            // The blended conditions still decide what the profile could not name.
+            if (conditions != null)
+            {
+                if (conditions.Rainy >= 0.35f)
+                    return MoodRain;
+
+                if (conditions.Foggy >= 0.45f)
+                    return MoodFog;
+
+                if (conditions.Cloudy >= 0.45f)
+                    return MoodOvercast;
             }
 
             if (conditions == null && profile.Length == 0)

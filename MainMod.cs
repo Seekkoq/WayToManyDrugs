@@ -20,7 +20,7 @@ using HarmonyInstance = HarmonyLib.Harmony;
 [assembly: MelonInfo(
     typeof(CustomNPCMod.MainMod),
     "WayToManyDrugs",
-    "3.7.0",
+    "3.9.1",
     "0.Seek"
 )]
 [assembly: MelonGame("TVGS", "Schedule I")]
@@ -80,7 +80,7 @@ namespace CustomNPCMod
 
         public override void OnInitializeMelon()
         {
-            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC] Westville Connection 3.7.0 initializing.");
+            global::CustomNPCExample.Utils.WvcLog.Msg("[WVC] Westville Connection 3.9.1 initializing.");
 
             RegisterIl2CppTypes();
 
@@ -108,6 +108,11 @@ namespace CustomNPCMod
             CustomNPCExample.NPCs.SalViahBulkMeetupManager.ApplyPatch();
             CustomNPCExample.NPCs.DamonTreyBulkMeetupManager.ApplyPatch();
             CustomNPCExample.NPCs.PillVilleBulkMeetupManager.ApplyPatch();
+
+            // 0.4.7 renamed MSGConversation's contact-name member; re-apply each custom
+            // NPC's real name so phone message headers stop cross-wiring between NPCs.
+            WvcContactNameFix.ApplyPatch();
+
             CustomNPCExample.Products.XanaxBrickPressPatch.ApplyPatch();
 
             // The snow command takes the console's own 'setweather' word out of the way and answers
@@ -121,6 +126,16 @@ namespace CustomNPCMod
 
             CustomNPCExample.Utils.WvcLog.Initialize();
 
+            // Frame spike checker: register which drug effects run so a spike report can name them.
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("MDMA", () => MDMAEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("VapeCart", () => VapeCartEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("DMT", () => DMTEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("Brownie", () => BrownieEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("THCCookie", () => THCCookieEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("THCGummy", () => THCGummyEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("Salvia", () => SalviaEffectManager.IsActive);
+            CustomNPCExample.Utils.WvcPerfMonitor.RegisterActive("Xanax", () => XanaxEffectManager.IsActive);
+
             FlashlightBoost.Initialize(_snitchStoryHarmony);
             WvcRecipesPhoneApp.Initialize();
 
@@ -132,6 +147,15 @@ namespace CustomNPCMod
             CustomNPCExample.Weather.WvcWeatherChatterPatches.ApplyPatch(_snitchStoryHarmony);
 
             CustomNPCExample.UI.WvcSettingsTab.Initialize(_snitchStoryHarmony);
+
+            // Casino money laundering: brings the preference category into existence and hooks
+            // Philip Wentworth's dialogue entry points. Nothing happens until the Main scene asks
+            // for him, and the whole feature is off if EnableCasinoLaundering is turned off.
+            CustomNPCExample.Casino.PhilipWentworthBootstrap.Initialize();
+
+            // Pawnshop money laundering with Mick Lubbin: the same append-style pattern, but
+            // $20,000 per run with a one in-game day wait before the payout can be claimed.
+            CustomNPCExample.Pawnshop.MickLubbinBootstrap.Initialize();
 
             global::CustomNPCExample.Utils.WvcLog.Msg("[WVC] Initialization complete.");
         }
@@ -226,9 +250,14 @@ namespace CustomNPCMod
 
         public override void OnUpdate()
         {
+            CustomNPCExample.Utils.WvcPerfMonitor.Tick();
+            long __perfT0 = CustomNPCExample.Utils.WvcPerfMonitor.Now();
+
             AdminMenu.Update();
 
             CustomNPCExample.Utils.WvcIconGuard.Update();
+
+            CustomNPCExample.Utils.WvcClaimReadyNotifier.Tick();
 
             CustomNPCExample.Qol.WvcExceptionGuards.Update();
 
@@ -260,25 +289,25 @@ namespace CustomNPCMod
 
             ChemistryStationPatch.Update();
 
-            MDMAEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("MDMAEffectManager")) MDMAEffectManager.Update();
 
-            MDMAEyeEffect.UpdateEyeEffect();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("MDMAEyeEffect")) MDMAEyeEffect.UpdateEyeEffect();
 
-            MDMANpcLoveEyes.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("MDMANpcLoveEyes")) MDMANpcLoveEyes.Update();
 
-            THCGummyEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("THCGummyEffectManager")) THCGummyEffectManager.Update();
 
-            DMTEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("DMTEffectManager")) DMTEffectManager.Update();
 
-            BrownieEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("BrownieEffectManager")) BrownieEffectManager.Update();
 
-            THCCookieEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("THCCookieEffectManager")) THCCookieEffectManager.Update();
 
-            VapeCartEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("VapeCartEffectManager")) VapeCartEffectManager.Update();
 
-            SalviaEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("SalviaEffectManager")) SalviaEffectManager.Update();
 
-            XanaxEffectManager.Update();
+            using (CustomNPCExample.Utils.WvcPerfMonitor.Section("XanaxEffectManager")) XanaxEffectManager.Update();
 
             CustomNPCExample.NPCs.RoscoeBulkMeetupManager.Update();
             CustomNPCExample.NPCs.SalViahBulkMeetupManager.Update();
@@ -316,6 +345,7 @@ namespace CustomNPCMod
                 }
             }
 
+            CustomNPCExample.Utils.WvcPerfMonitor.End("Mod.Update", __perfT0);
         }
 
         public override void OnGUI()
@@ -324,6 +354,7 @@ namespace CustomNPCMod
             // more than once per frame on its own, so calling it from both made its timer run down at
             // several times the rate it was written for.
             AdminMenu.Draw();
+            WvcChangelogOverlay.Draw();
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -331,7 +362,14 @@ namespace CustomNPCMod
             ChemistryStationPatch.RequestScan(3f);
 
             if (sceneName == "Main")
+            {
                 _activityScanTimer = 5f;
+
+                // Philip Wentworth is a vanilla NPC - re-arm his casino dialogue against the
+                // world that was just loaded (the routine waits for him if he is not up yet).
+                CustomNPCExample.Casino.PhilipWentworthBootstrap.OnMainSceneLoaded();
+            CustomNPCExample.Pawnshop.MickLubbinBootstrap.OnMainSceneLoaded();
+            }
         }
 
         private void RegisterIngredients()

@@ -4,6 +4,7 @@ using System.Reflection;
 using HarmonyLib;
 using Il2CppScheduleOne.Dialogue;
 using Il2CppScheduleOne.UI;
+using Il2CppScheduleOne.VoiceOver;
 using MelonLoader;
 using UnityEngine;
 
@@ -332,6 +333,18 @@ namespace CustomNPCExample.Weather
                         // rather than keeping a snowstorm's line in the sun.
                         ForgetGreetingCache(controller, "the weather moved on");
                     }
+                    else if (mood == WvcSnowWeather.MoodClear && MentionsRain(greeting))
+                    {
+                        // Rain words with no rain outside: same story, the cache is emptied so the
+                        // game stops repeating what the sky is no longer doing.
+                        ForgetGreetingCache(controller, "the rain stopped");
+                    }
+                    else if (mood == WvcSnowWeather.MoodRain && ContradictsMood(greeting, mood))
+                    {
+                        // A sun or snow line cached while the rain came in: forget it so the game
+                        // picks a line for the weather that is actually running.
+                        ForgetGreetingCache(controller, "the line belongs to another sky");
+                    }
 
                     return;
                 }
@@ -418,13 +431,51 @@ namespace CustomNPCExample.Weather
 
                 if (mood == WvcSnowWeather.MoodClear)
                 {
-                    why = "no weather to talk about";
+                    if (ours || aboutRain)
+                    {
+                        // A weather line left standing under a clear sky - the snow line still on
+                        // somebody the morning after a snowstorm. Clear skies have something to say
+                        // about that: it is reworded to the day that is actually running, and held
+                        // steady while it is on screen like any other drawn line, so it does not
+                        // flicker between lines on the frames it is up.
+                        if (stillOnScreen)
+                        {
+                            why = "already on screen";
+                        }
+                        else if (ReuseDrawn(seen, WvcSnowWeather.MoodSunny, ref line))
+                        {
+                            why = "kept: the same line is still being drawn";
+                        }
+                        else
+                        {
+                            line = Pick(WvcSnowWeather.MoodSunny, 0);
+
+                            if (string.IsNullOrEmpty(line))
+                            {
+                                line = null;
+                                why = "no line to say";
+                            }
+                            else
+                            {
+                                Remember(0, line, WvcSnowWeather.MoodSunny);
+                                RememberDrawn(seen, line, WvcSnowWeather.MoodSunny);
+                                _linesSpoken++;
+                                why = "picked: stale weather line under a clear sky";
+
+                                Announce(line, WvcSnowWeather.MoodSunny, source);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        why = "no weather to talk about";
+                    }
                 }
                 else if (ours && InPool(mood, text))
                 {
                     why = "the line they were given, for this weather";
                 }
-                else if (!ours && !aboutRain)
+                else if (!ours && !aboutRain && !ContradictsMood(text, mood))
                 {
                     why = "not a weather line";
                 }
@@ -509,13 +560,21 @@ namespace CustomNPCExample.Weather
 
             try
             {
-                string held = controller.cachedGreeting;
+                // 0.4.7f12 keeps the line it is holding in the private fields _cachedGreeting and
+                // _lastGreetingTime; older builds exposed the same state as the public properties
+                // cachedGreeting and lastGreetingTime. Referring to a member the running build does
+                // not have throws a MissingMethodException while this method is being prepared -
+                // before the body runs, so the catch below never sees it - and that took the whole
+                // conversation-end hook down with it. Reaching the field by name instead resolves
+                // against whatever the running build actually ships, and quietly does nothing when
+                // it has neither name rather than exploding.
+                object held = ReadMember(controller, "_cachedGreeting", "cachedGreeting");
 
-                if (string.IsNullOrEmpty(held))
+                if (!(held is string line) || string.IsNullOrEmpty(line))
                     return;
 
-                controller.cachedGreeting = null;
-                controller.lastGreetingTime = 0f;
+                WriteMember(controller, null, "_cachedGreeting", "cachedGreeting");
+                WriteMember(controller, 0f, "_lastGreetingTime", "lastGreetingTime");
 
                 if (_diagnostics > 0)
                 {
@@ -528,6 +587,95 @@ namespace CustomNPCExample.Weather
             {
                 Warn(ex);
             }
+        }
+
+        private static object ReadMember(DialogueController controller, params string[] names)
+        {
+            Type type = controller.GetType();
+            const BindingFlags flags =
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            foreach (string name in names)
+            {
+                FieldInfo field = type.GetField(name, flags);
+
+                if (field != null)
+                    return field.GetValue(controller);
+
+                PropertyInfo property = type.GetProperty(name, flags);
+
+                if (property != null && property.CanRead)
+                    return property.GetValue(controller, null);
+            }
+
+            return null;
+        }
+
+        private static void WriteMember(DialogueController controller, object value, params string[] names)
+        {
+            Type type = controller.GetType();
+            const BindingFlags flags =
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            foreach (string name in names)
+            {
+                FieldInfo field = type.GetField(name, flags);
+
+                if (field != null)
+                {
+                    field.SetValue(controller, value);
+                    return;
+                }
+
+                PropertyInfo property = type.GetProperty(name, flags);
+
+                if (property != null && property.CanWrite)
+                {
+                    property.SetValue(controller, value, null);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// True when a line clearly talks about weather that is not the weather running now - a sun
+        /// line drawn in the rain, a snow line in the fog. Used to decide that a short line the mod
+        /// does not recognise as its own still needs rewording. Snow and blizzard count as the same
+        /// sky, and a grey line is only clearly wrong under a sun; anything the words do not clearly
+        /// place is left alone.
+        /// </summary>
+        private static bool ContradictsMood(string text, int mood)
+        {
+            if (string.IsNullOrEmpty(text) || mood == WvcSnowWeather.MoodClear)
+                return false;
+
+            string lower = text.ToLowerInvariant();
+
+            bool snowish = lower.Contains("snow") || lower.Contains("blizzard") ||
+                           lower.Contains("freez") || lower.Contains("frost") ||
+                           lower.Contains("frozen") || lower.Contains("icy");
+            if (snowish)
+                return mood != WvcSnowWeather.MoodSnow &&
+                       mood != WvcSnowWeather.MoodBlizzard;
+
+            if (MentionsRain(text))
+                return mood != WvcSnowWeather.MoodRain;
+
+            if (lower.Contains("sun") || lower.Contains("hot") ||
+                lower.Contains("humid") || lower.Contains("muggy"))
+                return mood != WvcSnowWeather.MoodSunny;
+
+            if (lower.Contains("fog") || lower.Contains("mist"))
+                return mood != WvcSnowWeather.MoodFog &&
+                       mood != WvcSnowWeather.MoodOvercast &&
+                       mood != WvcSnowWeather.MoodRain;
+
+            if (lower.Contains("cloud") || lower.Contains("gloom") ||
+                lower.Contains("overcast") || lower.Contains("grey") ||
+                lower.Contains("gray"))
+                return mood == WvcSnowWeather.MoodSunny;
+
+            return false;
         }
 
         private static string Format(float value)
@@ -898,13 +1046,28 @@ namespace CustomNPCExample.Weather
                 nameof(WvcWeatherChatter.Renderer_Prefix),
                 true);
 
-            Patch(
+            // 0.4.7 changed GetActiveGreeting from a parameterless method to
+            // GetActiveGreeting(ref bool, ref EVOLineType). Try the new signature first and
+            // fall back to the old parameterless one so this works across game builds. The
+            // postfix only reads __result (the greeting string); the out-params are ignored.
+            bool greetingHooked = Patch(
                 harmony,
                 typeof(DialogueController),
                 "GetActiveGreeting",
-                null,
+                new[] { typeof(bool).MakeByRefType(), typeof(EVOLineType).MakeByRefType() },
                 nameof(WvcWeatherChatter.Greeting_Postfix),
                 false);
+
+            if (!greetingHooked)
+            {
+                Patch(
+                    harmony,
+                    typeof(DialogueController),
+                    "GetActiveGreeting",
+                    null,
+                    nameof(WvcWeatherChatter.Greeting_Postfix),
+                    false);
+            }
 
             if (!drawn)
             {

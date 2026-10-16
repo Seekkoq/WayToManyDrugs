@@ -12,7 +12,7 @@ namespace CustomNPCExample.UI
             "WAYTOMANYDRUGS";
 
         public const string ModVersion =
-            "V3.7.0";
+            "V3.9.1";
 
         private const float DetectionInterval = 2f;
 
@@ -50,6 +50,13 @@ namespace CustomNPCExample.UI
 
         private static MainMenuRig _cachedRig;
 
+        /// <summary>
+        /// True while the main menu is on screen. Computed by Update() on the detection interval
+        /// and read by WvcChangelogOverlay so both overlays agree on when the menu is visible
+        /// without paying for a second FindObjectOfType scan.
+        /// </summary>
+        public static bool Visible { get; private set; }
+
         public static void Update()
         {
             _timer += Time.unscaledDeltaTime;
@@ -61,6 +68,8 @@ namespace CustomNPCExample.UI
 
             bool menuVisible =
                 IsMainMenuVisible();
+
+            Visible = menuVisible;
 
             if (menuVisible)
             {
@@ -112,6 +121,29 @@ namespace CustomNPCExample.UI
 
                 if (scene.name == "Main")
                     return false;
+
+                // The boot disclaimer is a pre-menu overlay (not a MenuScreen) and the main-menu rig
+                // is already up underneath it, so gate on the disclaimer actually being faded out:
+                // while its canvas group is still visible it covers the screen. Once it fades
+                // (alpha ~0) or is destroyed, the real menu is what's on show.
+                Disclaimer disclaimer =
+                    UnityEngine.Object.FindObjectOfType<Disclaimer>();
+
+                if (disclaimer != null)
+                {
+                    // The disclaimer fades its two canvas layers out to reveal the menu. Hide only
+                    // while both layers are still faded-in: that keeps the overlays off for the whole
+                    // disclaimer, but they can never be stuck hidden either, because the moment one
+                    // layer starts fading the real menu is what's underneath.
+                    CanvasGroup group = disclaimer.Group;
+                    CanvasGroup textGroup = disclaimer.TextGroup;
+
+                    bool groupUp = group != null && group.alpha > 0.05f;
+                    bool textUp = textGroup != null && textGroup.alpha > 0.05f;
+
+                    if (groupUp && textUp)
+                        return false;
+                }
 
                 MainMenuRig cached = _cachedRig;
 

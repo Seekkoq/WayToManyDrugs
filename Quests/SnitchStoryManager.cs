@@ -263,9 +263,9 @@ namespace CustomNPCExample.Quests
             {
                 var time = Il2CppScheduleOne.DevUtilities.NetworkSingleton<Il2CppScheduleOne.GameTime.TimeManager>.Instance;
                 if (time == null) return;
-                time.onSleepEnd += new Action(OnNativeSleepEnd);
+                time.onDayPass += new Action(OnNativeSleepEnd);
                 _sleepHooked = true;
-                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Hooked TimeManager.onSleepEnd.");
+                global::CustomNPCExample.Utils.WvcLog.Msg("[WVC Snitch] Hooked TimeManager.onDayPass.");
             }
             catch (Exception)
             {

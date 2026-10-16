@@ -670,6 +670,10 @@ namespace CustomNPCExample.NPCs
             return true;
         }
 
+        // Distinct-exception latch: this method used to swallow every failure silently, which hid
+        // the 0.4.7 sendables break. Log each new failure once instead of spamming every 3s tick.
+        private static string _lastPhoneSendableError;
+
         public static void ConfigurePhoneSendables()
         {
             try
@@ -686,18 +690,14 @@ namespace CustomNPCExample.NPCs
 
                 var conv = npc.MSGConversation;
 
-                // Game build 0.4.7f12 renamed MSGConversation.Sendables (property) to a
-                // public _sendables field in its regenerated interop assemblies, while our
-                // reference assembly still exposes the old property. Resolve the backing
-                // list by reflection so this compiles against the reference and runs
-                // against the game regardless of which member name is present.
-                var convType = conv.GetType();
-                var listField = convType.GetField("_sendables", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                             ?? convType.GetField("Sendables", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                if (listField == null)
-                    return;
+                // 0.4.7's MSGConversation keeps its sendable list in `_sendables`
+                // (get__sendables/set__sendables), typed as an *Il2Cpp* List<SendableMessage>.
+                // Il2CppSystem.Collections.Generic.List does NOT implement System.Collections.IList,
+                // so the old reflection + `as IList` cast always resolved to null and this method
+                // returned before ever creating a single reply option. Use the typed property
+                // directly - the compiler binds it straight to the interop getter.
+                var sendables = conv._sendables;
 
-                var sendables = listField.GetValue(conv) as System.Collections.IList;
                 if (sendables == null)
                     return;
 
@@ -787,9 +787,13 @@ namespace CustomNPCExample.NPCs
                     conv.senderInterface.UpdateSendables();
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                if (ex.ToString() != _lastPhoneSendableError)
+                {
+                    _lastPhoneSendableError = ex.ToString();
+                    MelonLogger.Warning("[Offshore] ConfigurePhoneSendables threw:\n" + ex);
+                }
             }
         }
 

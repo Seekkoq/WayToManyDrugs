@@ -789,12 +789,8 @@ namespace CustomNPCExample.UI
                     },
                     new string[]
                     {
-                        "Pour Xanax Powder into the press - it fits the mould slot, the raw slot " +
-                        "or the equipment tray.",
                         "Press BEGIN: ten units of powder come out as ten bars.",
-                        "One press takes up to ten units, so twenty powder takes two runs; " +
-                        "everything left over stays in the machine.",
-                        "Take the bars from the output, then load the next batch."
+                        "One press takes up to ten units, so twenty powder takes two runs; "
                     },
                     new string[]
                     {
