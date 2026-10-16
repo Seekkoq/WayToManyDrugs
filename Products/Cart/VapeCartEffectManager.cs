@@ -8,6 +8,8 @@ namespace CustomNPCExample.Products
         private static GameObject _controllerObject;
         private static VapeCartScreenEffect _effect;
 
+        public static bool IsActive => _effect != null && _effect.IsActive;
+
         public static void Update()
         {
             EnsureEffectController();

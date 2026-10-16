@@ -75,9 +75,31 @@ namespace CustomNPCExample.NPCs
             if (lower.Contains("supermarket") || lower.Contains("grocery"))
                 return Building.Get<Supermarket>();
 
-
+            // 0.4.7's Hyland Medical schedule pass renamed/removed the plain
+            // "Apartment Building". Exact and fuzzy matching above already missed it and
+            // there is no apartment keyword below - so without this those NPCs silently
+            // landed on the West Gas-Mart default. Fall back to whatever apartment
+            // building still resolves instead.
+            if (lower.Contains("apart") || lower.Contains("apt"))
+            {
+                Building apartment = FindByContains("apart") ?? FindByContains("apt");
+                if (apartment != null)
+                    return apartment;
+            }
 
             return Building.Get<WestGasMart>() ?? Building.Get<HylandBank>();
+        }
+
+        private static Building FindByContains(string needle)
+        {
+            if (_cachedBuildings == null)
+                return null;
+            foreach (var b in _cachedBuildings)
+            {
+                if (b != null && Normalize(b.Name).Contains(needle))
+                    return b;
+            }
+            return null;
         }
 
         private static string Normalize(string input)

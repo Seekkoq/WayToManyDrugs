@@ -32,6 +32,12 @@ namespace CustomNPCExample.NPCs
         public static Vector3 DockSpawnPosition = new Vector3(-84.807f, -2.36f, -26.24f);
         public static Quaternion DockSpawnRotation = Quaternion.Euler(0f, 116.95f, 0f);
 
+        /// <summary>In-game days between the voyage's return and the payout becoming collectible.</summary>
+        public const int PayoutClaimDelayDays = 2;
+
+        /// <summary>The in-game day the last voyage returned, -1 when none is recorded.</summary>
+        private static int _payoutReturnDay = -1;
+
         public static readonly Vector3 OverseasVoyagePosition = new Vector3(-84.807f, -500f, -26.24f);
 
         private static readonly OffshoreOrderInfo[] DrugCatalog = new OffshoreOrderInfo[]
@@ -535,6 +541,7 @@ namespace CustomNPCExample.NPCs
             }
 
             State = OffshoreState.ReturnedWithCash;
+            _payoutReturnDay = CurrentDay();
 
             CaptainDeclanCross.TryWarp(DockSpawnPosition, DockSpawnRotation);
 
@@ -593,10 +600,37 @@ namespace CustomNPCExample.NPCs
             OffshoreHeat.RegisterSeizure();
         }
 
+        /// <summary>The current in-game day, or -1 when the time manager is unavailable.</summary>
+        private static int CurrentDay()
+        {
+            try
+            {
+                var timeManager = Il2CppScheduleOne.GameTime.TimeManager.Instance;
+                return timeManager != null ? timeManager.ElapsedDays : -1;
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
+        }
+
         public static bool PlayerCollectPayout()
         {
             if (State != OffshoreState.ReturnedWithCash)
                 return false;
+
+            // The buyers' money sits for two in-game days after the ship docks before Declan
+            // hands it over.
+            int today = CurrentDay();
+            int readyDay = _payoutReturnDay >= 0 ? _payoutReturnDay : today - PayoutClaimDelayDays;
+            if (today >= 0 && (today - readyDay) < PayoutClaimDelayDays)
+            {
+                int left = PayoutClaimDelayDays - (today - readyDay);
+                SendDeclanMessage(
+                    $"Declan: The buyers' transfer needs another {left} in-game day(s) to settle. " +
+                    $"Come back then - ${CurrentOrder.TotalPayout:F0} is counted and waiting.");
+                return false;
+            }
 
             float payout = CurrentOrder.TotalPayout;
 
@@ -652,8 +686,20 @@ namespace CustomNPCExample.NPCs
 
                 var conv = npc.MSGConversation;
 
-                if (conv.Sendables == null)
-                    conv.Sendables = new Il2CppSystem.Collections.Generic.List<Il2CppScheduleOne.Messaging.SendableMessage>();
+                // Game build 0.4.7f12 renamed MSGConversation.Sendables (property) to a
+                // public _sendables field in its regenerated interop assemblies, while our
+                // reference assembly still exposes the old property. Resolve the backing
+                // list by reflection so this compiles against the reference and runs
+                // against the game regardless of which member name is present.
+                var convType = conv.GetType();
+                var listField = convType.GetField("_sendables", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                             ?? convType.GetField("Sendables", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (listField == null)
+                    return;
+
+                var sendables = listField.GetValue(conv) as System.Collections.IList;
+                if (sendables == null)
+                    return;
 
                 bool hasStatus = false;
                 bool hasDetails = false;
@@ -662,9 +708,9 @@ namespace CustomNPCExample.NPCs
                 bool hasDecline = false;
                 bool hasRunNow = false;
 
-                for (int i = 0; i < conv.Sendables.Count; i++)
+                for (int i = 0; i < sendables.Count; i++)
                 {
-                    var s = conv.Sendables[i];
+                    var s = sendables[i] as Il2CppScheduleOne.Messaging.SendableMessage;
                     if (s != null)
                     {
                         if (s.Text == "Shipment status?")
@@ -962,18 +1008,20 @@ namespace CustomNPCExample.NPCs
         {
             ConfigurePhoneSendables();
 
+            // 0.4.7 removed the raw NPC.SendTextMessage. S1API's wrapper and the direct fallback
+            // below both route through MSGConversation.SendMessage, which still exists, so the
+            // message goes out that way (the same path RoscoeMarketTexts uses).
             try
             {
                 var declan = CaptainDeclanCross.Instance;
                 if (declan != null)
                 {
-                    declan.SendTextMessage(body);
+                    declan.SendTextMessage(body); // S1API wrapper -> builds a Message + SendMessage
                     return;
                 }
             }
             catch (Exception)
             {
-
             }
 
             try
@@ -990,11 +1038,6 @@ namespace CustomNPCExample.NPCs
                         {
                             var msg = new Il2CppScheduleOne.Messaging.Message(body, Il2CppScheduleOne.Messaging.Message.ESenderType.Other);
                             npc.MSGConversation.SendMessage(msg, true, true);
-                            return;
-                        }
-                        else
-                        {
-                            npc.SendTextMessage(body);
                             return;
                         }
                     }

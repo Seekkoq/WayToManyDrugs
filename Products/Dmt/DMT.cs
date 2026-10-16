@@ -181,20 +181,21 @@ namespace CustomNPCExample.Products
                     false
                 );
 
-                ConsoleItemAliases.Register(
-                    "dmt",
-                    ProductId
-                );
-
-                ConsoleItemAliases.Register(
-                    "dim",
-                    ProductId
-                );
-
-                ConsoleItemAliases.Register(
-                    "dimethyl",
-                    ProductId
-                );
+                // The console aliases are a debug convenience, and the backing item only lands in
+                // S1API's registry a few frames after start-up. Registering before that throws
+                // "Canonical item ID ... is not registered"; catching it here keeps that off the
+                // error log and returns false so the caller's retry loop picks the aliases up on a
+                // later frame once the item exists.
+                try
+                {
+                    ConsoleItemAliases.Register("dmt", ProductId);
+                    ConsoleItemAliases.Register("dim", ProductId);
+                    ConsoleItemAliases.Register("dimethyl", ProductId);
+                }
+                catch (ArgumentException)
+                {
+                    return false;
+                }
 
                 _discovered = true;
 

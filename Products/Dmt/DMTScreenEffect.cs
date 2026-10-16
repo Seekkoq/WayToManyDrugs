@@ -16,9 +16,10 @@ namespace CustomNPCExample.Products
 
         /// <summary>
         /// How hard the trip runs, as a multiplier over everything it does: the post-processing, the
-        /// surface patterns and their opacity. It is allowed past 1 so it can be turned up.
+        /// surface patterns and their opacity. It is allowed past 1 so it can be turned up, and it now
+        /// starts well above 1 so the default trip is a hard one rather than a gentle one.
         /// </summary>
-        public static float Intensity = 1.3f;
+        public static float Intensity = 1.9f;
 
         /// <summary>
         /// How long the trip takes to come up, in seconds.
@@ -95,7 +96,7 @@ namespace CustomNPCExample.Products
 
     internal sealed class DMTEffectController
     {
-        private const int PatternPoolSize = 40;
+        private const int PatternPoolSize = 52;
 
         /// <summary>
         /// The size of the square each surface shape is drawn into. Every shape is soft, a few pixels of
@@ -109,7 +110,7 @@ namespace CustomNPCExample.Products
         /// the number of different things a wall can be covered with during one trip. They are different
         /// kinds of figure - outlined, filled, structural, organic - rather than variations on one.
         /// </summary>
-        private const int PatternVariantCount = 28;
+        private const int PatternVariantCount = 34;
         private const float PatternMaxDistance = 40f;
 
         private readonly GameObject _owner;
@@ -317,12 +318,13 @@ namespace CustomNPCExample.Products
                 if (_spawnTimer <= 0f)
                 {
                     _spawnTimer =
-                        Mathf.Lerp(0.30f, 0.08f, _peakBlend);
+                        Mathf.Lerp(0.22f, 0.05f, _peakBlend);
 
                     // More than one at a time: a single pattern per tick never fills a pool this size
                     // inside a trip, and the point of the walls is that they are everywhere at once.
+                    // The pool is bigger now, so the tick both comes sooner and asks for more.
                     int perTick =
-                        1 + Mathf.RoundToInt(_patternBlend * (2f + _peakBlend * 6f));
+                        1 + Mathf.RoundToInt(_patternBlend * (3f + _peakBlend * 9f));
 
                     for (int i = 0; i < perTick; i++)
                     {
@@ -487,19 +489,27 @@ namespace CustomNPCExample.Products
 
             // The stages come on sooner and hand over sooner than they used to: the trip reaches its
             // peak in about a sixth of its length and holds it for a good stretch of the middle.
+            //
+            // The comedown lives in the master. It is the trip's carrier, and it used to hold full
+            // strength until the last eighth of the trip and then dump - the trip simply stopped.
+            // It now starts giving itself back the moment the peak lets go (around three-fifths of
+            // the way through) and keeps easing all the way to the end, so the whole back half of
+            // the trip is a long, gentle decline rather than a stop. What is left in the final
+            // stretch is the Afterglow stage, and it clears on its own instead of snapping back to
+            // normal the instant the clock runs out.
             float masterTarget =
                 onset *
-                (1f - Ramp(0.88f, 1f, progress));
+                (1f - Ramp(0.62f, 1f, progress));
 
             float peakTarget =
                 onset *
-                Ramp(0.05f, 0.17f, progress) *
-                (1f - Ramp(0.62f, 0.88f, progress));
+                Ramp(0.04f, 0.14f, progress) *
+                (1f - Ramp(0.70f, 0.93f, progress));
 
             float patternTarget =
                 onset *
-                Ramp(0.03f, 0.15f, progress) *
-                (1f - Ramp(0.62f, 0.87f, progress));
+                Ramp(0.02f, 0.12f, progress) *
+                (1f - Ramp(0.70f, 0.92f, progress));
 
             if (!DMTScreenEffect.WorldPatternsEnabled)
                 patternTarget = 0f;
@@ -562,8 +572,8 @@ namespace CustomNPCExample.Products
             if (float.IsNaN(value) || float.IsInfinity(value))
                 return 1f;
 
-            // Up to twice the baseline, so the trip can be turned up rather than only down.
-            return Mathf.Clamp(value, 0f, 2f);
+            // Up to three times the baseline, so the trip can be turned up rather than only down.
+            return Mathf.Clamp(value, 0f, 3f);
         }
 
         private void CreateVolume()
@@ -641,13 +651,13 @@ namespace CustomNPCExample.Products
 
             _volume.weight = _masterBlend * intensity;
 
-            _color.saturation.value = 25f + peak * (85f + breath * 20f);
+            _color.saturation.value = 30f + peak * (150f + breath * 36f);
 
             // Contrast and exposure both lift the picture towards white, so both are held well down. The
             // saturation above is what carries the effect, and it does not brighten anything.
-            _color.contrast.value = 4f + peak * 14f;
-            _color.postExposure.value = -0.09f - peak * 0.04f;
-            _color.hueShift.value = Mathf.Sin(t * 0.22f) * 110f * peak;
+            _color.contrast.value = 6f + peak * 27f;
+            _color.postExposure.value = -0.11f - peak * 0.06f;
+            _color.hueShift.value = Mathf.Sin(t * 0.24f) * 178f * peak;
 
             Color peakFilter = Color.Lerp(
                 new Color(0.80f, 0.66f, 0.56f),
@@ -660,46 +670,46 @@ namespace CustomNPCExample.Products
             Color afterglow = new Color(0.82f, 0.79f, 0.75f);
 
             _color.colorFilter.value =
-                Color.Lerp(afterglow, peakFilter, peak * 0.42f);
+                Color.Lerp(afterglow, peakFilter, peak * 0.62f);
 
             // Bloom is the one effect that adds light rather than moving it about, so it is held low and
             // its threshold is above white: only the genuinely blown parts of the picture glow, and the
             // trip stays a lot of colour instead of a lot of light.
-            _bloom.intensity.value = 0.14f + peak * 0.70f;
+            _bloom.intensity.value = 0.22f + peak * 1.55f;
             _bloom.tint.value = Color.Lerp(
                 new Color(1f, 0.93f, 0.80f),
                 Color.Lerp(Gold, Teal, colorCycle),
-                peak * 0.5f
+                peak * 0.72f
             );
 
             _chromatic.intensity.value =
-                (0.05f + peak * (0.8f + breath * 0.28f)) * motion;
+                (0.07f + peak * (1.75f + breath * 0.55f)) * motion;
 
             float distortion =
-                (Mathf.Sin(t * 0.65f) * 0.42f +
-                 Mathf.Sin(t * 0.31f) * 0.14f) * peak * motion;
+                (Mathf.Sin(t * 0.65f) * 0.74f +
+                 Mathf.Sin(t * 0.31f) * 0.26f) * peak * motion;
 
             _lens.intensity.value = distortion;
-            _lens.scale.value = 1f + Mathf.Abs(distortion) * 0.32f;
+            _lens.scale.value = 1f + Mathf.Abs(distortion) * 0.52f;
 
             _lens.center.value = new Vector2(
-                0.5f + Mathf.Sin(t * 0.25f) * 0.035f * peak * motion,
-                0.5f + Mathf.Cos(t * 0.21f) * 0.025f * peak * motion
+                0.5f + Mathf.Sin(t * 0.25f) * 0.058f * peak * motion,
+                0.5f + Mathf.Cos(t * 0.21f) * 0.042f * peak * motion
             );
 
-            _lens.xMultiplier.value = 1f - 0.20f * peak * breath;
-            _lens.yMultiplier.value = 1f - 0.15f * peak * (1f - breath);
+            _lens.xMultiplier.value = 1f - 0.34f * peak * breath;
+            _lens.yMultiplier.value = 1f - 0.26f * peak * (1f - breath);
 
-            _vignette.intensity.value = 0.12f + peak * 0.6f;
+            _vignette.intensity.value = 0.14f + peak * 0.88f;
             _vignette.color.value = Color.Lerp(
                 new Color(0.06f, 0.04f, 0.08f),
                 new Color(0.16f, 0.06f, 0.26f),
                 peak
             );
 
-            _grain.intensity.value = 0.05f + peak * 0.30f;
+            _grain.intensity.value = 0.06f + peak * 0.48f;
 
-            float channelMix = peak * 70f;
+            float channelMix = peak * 110f;
             float a = colorCycle;
 
             _channels.redOutRedIn.value = 100f - channelMix;
@@ -715,24 +725,24 @@ namespace CustomNPCExample.Products
             _channels.blueOutBlueIn.value = 100f - channelMix;
 
             _whiteBalance.temperature.value =
-                10f + Mathf.Sin(t * 0.18f) * 40f * peak;
+                12f + Mathf.Sin(t * 0.18f) * 66f * peak;
 
             _whiteBalance.tint.value =
-                Mathf.Sin(t * 0.16f) * 30f * peak;
+                Mathf.Sin(t * 0.16f) * 50f * peak;
 
             _splitToning.shadows.value = Color.Lerp(
                 Color.gray,
                 Color.Lerp(Violet, Teal, colorCycle),
-                peak * 0.45f
+                peak * 0.66f
             );
 
             _splitToning.highlights.value = Color.Lerp(
                 Color.gray,
                 Gold,
-                0.06f + peak * 0.20f
+                0.08f + peak * 0.36f
             );
 
-            _splitToning.balance.value = peak * 20f;
+            _splitToning.balance.value = peak * 36f;
 
             // The grade the curves cannot do on their own: the darks, the middle and the highlights are
             // each pulled a different way, and they swap over through the trip as the palette cycles.
@@ -753,19 +763,19 @@ namespace CustomNPCExample.Products
             _grade.shadows.value = Color.Lerp(
                 Color.gray,
                 shadowsTarget,
-                peak * 0.30f
+                peak * 0.52f
             );
 
             _grade.midtones.value = Color.Lerp(
                 Color.gray,
                 midTarget,
-                peak * 0.20f
+                peak * 0.40f
             );
 
             _grade.highlights.value = Color.Lerp(
                 Color.gray,
                 Color.Lerp(Gold, Rose, breath),
-                peak * 0.12f
+                peak * 0.25f
             );
 
             _grade.shadowsStart.value = 0.05f + breath * 0.06f * peak;
@@ -775,7 +785,7 @@ namespace CustomNPCExample.Products
 
             // The view through a warped lens: the picture bows outwards and back as the trip breathes.
             _panini.distance.value =
-                (0.16f + breath * 0.38f) * peak * motion;
+                (0.21f + breath * 0.58f) * peak * motion;
         }
 
         private void ConfigureCameraLayers(Camera camera)
@@ -893,7 +903,7 @@ namespace CustomNPCExample.Products
                 _patternsReady = true;
 
                 WvcLog.Msg(
-                    "[DMT Effect] Three geometry textures and " +
+                    "[DMT Effect] " + PatternVariantCount + " geometry textures and " +
                     PatternPoolSize + " pooled surface patterns ready."
                 );
             }
@@ -1016,7 +1026,7 @@ namespace CustomNPCExample.Products
             if (free == null || activeCount >= targetCount)
                 return false;
 
-            for (int attempt = 0; attempt < 4; attempt++)
+            for (int attempt = 0; attempt < 8; attempt++)
             {
                 // The golden ratio spread over the viewport: successive aims land far apart from each
                 // other and only come back near an earlier one after many of them, so the patterns end
@@ -1136,7 +1146,7 @@ namespace CustomNPCExample.Products
             );
 
             pattern.BaseSize = Mathf.Min(
-                Mathf.Clamp(hit.distance * 0.42f, 1.8f, 8f),
+                Mathf.Clamp(hit.distance * 0.48f, 2.2f, 9f),
                 pattern.MaxHalfWidth * 2f
             );
 
@@ -1256,12 +1266,12 @@ namespace CustomNPCExample.Products
 
                 float breath =
                     0.5f + Mathf.Sin(
-                        _animationTime * 0.80f + pattern.Phase
+                        _animationTime * 0.95f + pattern.Phase
                     ) * 0.5f;
 
                 float colorShift =
                     0.5f + Mathf.Sin(
-                        _animationTime * 0.22f + pattern.Phase
+                        _animationTime * 0.34f + pattern.Phase
                     ) * 0.5f;
 
                 // Two palette colours either side of the pattern's own, so the wall is never one flat
@@ -1279,10 +1289,10 @@ namespace CustomNPCExample.Products
                 Color color = Color.Lerp(
                     pattern.BaseColor,
                     shimmer,
-                    0.5f
+                    0.66f
                 );
 
-                color.a = strength * lifeFade * (0.30f + breath * 0.14f);
+                color.a = strength * lifeFade * (0.48f + breath * 0.22f);
                 SetPatternColor(pattern.Material, color);
 
                 Vector3 normal = pattern.Surface.TransformDirection(
@@ -1308,11 +1318,11 @@ namespace CustomNPCExample.Products
                 // out over the couple of seconds it is up - but never past the edge of the surface its
                 // own size was measured against.
                 float opening =
-                    1f + Ramp(0f, pattern.Lifetime * 0.85f, pattern.Age) * 1.1f * motion;
+                    1f + Ramp(0f, pattern.Lifetime * 0.85f, pattern.Age) * 1.4f * motion;
 
                 float size =
                     pattern.BaseSize * opening *
-                    (1f + (breath - 0.5f) * 0.22f * motion * _peakBlend);
+                    (1f + (breath - 0.5f) * 0.34f * motion * _peakBlend);
 
                 size = Mathf.Min(size, pattern.MaxHalfWidth * 2f);
 
@@ -1909,6 +1919,91 @@ namespace CustomNPCExample.Products
                 float trace = 1f - Ramp(0.035f, 0.070f, ring);
 
                 value = Math.Max(pad, trace);
+            }
+            else if (type == 28)
+            {
+                // Broken rings: each ring is drawn as a run of dashes rather than all the way round, so
+                // the figure turns even where it is only still.
+                float rings = Line(
+                    (float)Math.Sin(radius * 22f),
+                    0.06f
+                );
+
+                float dashes = Line(
+                    (float)Math.Sin(angle * 14f),
+                    0.45f
+                );
+
+                value = Math.Max(
+                    rings * (0.40f + 0.60f * dashes),
+                    Line(radius - 0.92f, 0.02f)
+                );
+            }
+            else if (type == 29)
+            {
+                // A basket weave: short bars that turn ninety degrees from one block to the next, so the
+                // whole reads as over-and-under rather than as a single set of stripes.
+                float cell = 0.25f;
+
+                float gx = (float)Math.Floor(x / cell + 0.5f);
+                float gy = (float)Math.Floor(y / cell + 0.5f);
+
+                bool odd = ((((int)gx) + ((int)gy)) & 1) == 0;
+
+                float bars = odd
+                    ? Line((float)Math.Sin(x * 40f), 0.09f)
+                    : Line((float)Math.Sin(y * 40f), 0.09f);
+
+                value = bars;
+            }
+            else if (type == 30)
+            {
+                // Contour lines over a smooth field: the rings a map would draw around a hill, which no
+                // straight-edged figure here gives.
+                float field = Noise(x * 3.2f + 11.3f, y * 3.2f + 7.9f);
+
+                float contour = Line(field - 0.50f, 0.035f);
+                float second = Line(field - 0.28f, 0.030f) * 0.7f;
+
+                value = Math.Max(contour, second);
+            }
+            else if (type == 31)
+            {
+                // Two sources a fixed way apart, their waves added: bars where the two agree and open
+                // cells where they do not, which is the pattern neither source makes on its own.
+                float d1 = (float)Math.Sqrt(
+                    (x + 0.42f) * (x + 0.42f) + (y + 0.42f) * (y + 0.42f));
+                float d2 = (float)Math.Sqrt(
+                    (x - 0.42f) * (x - 0.42f) + (y - 0.42f) * (y - 0.42f));
+
+                float wave =
+                    (float)Math.Sin(d1 * 24f) + (float)Math.Sin(d2 * 24f);
+
+                value = Line(wave, 0.32f);
+            }
+            else if (type == 32)
+            {
+                // Filled wedges turning about the middle: solid pie slices, where the rays figure is
+                // only their outline.
+                float wedges = Fraction(
+                    angle / (2f * (float)Math.PI) * 10f + 0.5f);
+
+                float wedge = 1f - Ramp(
+                    0.32f, 0.58f, Math.Abs(wedges - 0.5f) * 2f);
+
+                value = wedge * Ramp(0.12f, 0.34f, radius);
+            }
+            else if (type == 33)
+            {
+                // Broad ribbons flowing across the square, crossed by a finer set so the two move
+                // against each other when the pattern turns.
+                float ribbon = (float)Math.Sin(
+                    x * 6f + (float)Math.Sin(y * 5f) * 1.6f);
+
+                float ribbons = Line(ribbon, 0.16f);
+                float fine = Line((float)Math.Sin(y * 30f + x * 4f), 0.05f) * 0.5f;
+
+                value = Math.Max(ribbons, fine);
             }
             else
             {

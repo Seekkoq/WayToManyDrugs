@@ -294,8 +294,20 @@ namespace CustomNPCExample.Products
             try
             {
                 _definition.Discover(false);
-                ConsoleItemAliases.Register("brownie", ProductId);
-                ConsoleItemAliases.Register("edible", ProductId);
+
+                // Aliases are a debug convenience; the backing item is not registered until a few
+                // frames after start-up, so a too-early call is caught here and retried by the
+                // caller rather than logged as an error.
+                try
+                {
+                    ConsoleItemAliases.Register("brownie", ProductId);
+                    ConsoleItemAliases.Register("edible", ProductId);
+                }
+                catch (ArgumentException)
+                {
+                    return false;
+                }
+
                 _discovered = true;
                 global::CustomNPCExample.Utils.WvcLog.Msg("[Westville Connection] Brownie registered and discovered.");
                 return true;

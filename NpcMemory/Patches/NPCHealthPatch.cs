@@ -16,6 +16,36 @@ namespace CustomNPCExample.NpcMemory.Patches
         private const float HitPenalty = -0.15f;
         private const float KillPenalty = -0.35f;
 
+        // 0.4.7 turned NPCHealth.npc (property) into a private backing field exposed as the
+        // public _npc. Our reference assembly still has the old property, so read whichever
+        // member the running game exposes, by reflection, to work across both builds.
+        private static NPC ResolveNpc(NPCHealth health)
+        {
+            if (health == null)
+                return null;
+
+            var type = health.GetType();
+
+            var npcProp = type.GetProperty("npc",
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Instance);
+            if (npcProp != null && npcProp.PropertyType == typeof(NPC))
+                return npcProp.GetValue(health, null) as NPC;
+
+            var npcField = type.GetField("_npc",
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance)
+                ?? type.GetField("npc",
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+            if (npcField != null && npcField.FieldType == typeof(NPC))
+                return npcField.GetValue(health) as NPC;
+
+            return null;
+        }
+
         private static readonly Dictionary<string, float> LastPlayerHitTimes =
             new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
@@ -25,15 +55,16 @@ namespace CustomNPCExample.NpcMemory.Patches
         {
             try
             {
-                if (__instance == null || __instance.npc == null) return;
-                string npcId = __instance.npc.ID;
+                var npc = ResolveNpc(__instance);
+                if (npc == null) return;
+                string npcId = npc.ID;
                 if (string.IsNullOrWhiteSpace(npcId)) return;
 
                 LastPlayerHitTimes[npcId] = Time.time;
 
-                if (HitPenalty < 0f && __instance.npc.RelationData != null)
+                if (HitPenalty < 0f && npc.RelationData != null)
                 {
-                    __instance.npc.RelationData.ChangeRelationship(HitPenalty, true);
+                    npc.RelationData.ChangeRelationship(HitPenalty, true);
                 }
 
                 global::CustomNPCExample.Utils.WvcLog.Msg($"[WVC NPC Memory] {npcId} was hit by player.");
@@ -62,8 +93,9 @@ namespace CustomNPCExample.NpcMemory.Patches
         {
             try
             {
-                if (health == null || health.npc == null) return;
-                string npcId = health.npc.ID;
+                var npc = ResolveNpc(health);
+                if (npc == null) return;
+                string npcId = npc.ID;
                 if (string.IsNullOrWhiteSpace(npcId)) return;
 
                 if (!LastPlayerHitTimes.TryGetValue(npcId, out float lastHit))
@@ -78,9 +110,9 @@ namespace CustomNPCExample.NpcMemory.Patches
 
                 NpcMemoryManager.RequireSample(npcId);
 
-                if (health.npc.RelationData != null)
+                if (npc.RelationData != null)
                 {
-                    health.npc.RelationData.ChangeRelationship(KillPenalty, true);
+                    npc.RelationData.ChangeRelationship(KillPenalty, true);
                 }
 
                 NpcMemoryManager.Save();

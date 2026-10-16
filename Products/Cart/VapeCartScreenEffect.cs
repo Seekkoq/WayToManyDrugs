@@ -16,6 +16,8 @@ namespace CustomNPCExample.Products
         private float _pulseTimer;
         private bool _active;
 
+        public bool IsActive => _active;
+
         private Volume _volume;
         private VolumeProfile _profile;
 
